@@ -135,15 +135,13 @@ async function initAdmin() {
 // ================================
 const storage = new CloudinaryStorage({
   cloudinary,
-  params: async (req, file) => {
-    const original = Buffer.from(file.originalname, 'latin1').toString('utf8');
-    file.originalname = original;
-    return {
-      folder: 'studyshare',
-      resource_type: 'raw',
-      public_id: Date.now() + '_' + Math.random().toString(36).slice(2),
-      
-    };
+  params: {
+    folder: 'studyshare',
+    resource_type: 'raw',
+    public_id: (req, file) => {
+      file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
+      return Date.now() + '_' + Math.random().toString(36).slice(2);
+    }
   }
 });
 const upload = multer({
