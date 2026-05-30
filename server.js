@@ -28,6 +28,10 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+// 🔍 디버그용 - 나중에 지울 것
+console.log('CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME);
+console.log('API_KEY:', process.env.CLOUDINARY_API_KEY);
+console.log('API_SECRET 길이:', process.env.CLOUDINARY_API_SECRET?.length);
 
 
 // ================================
