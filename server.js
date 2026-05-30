@@ -11,7 +11,6 @@ const path = require('path');
 const fs = require('fs');
 const https = require('https');
 const cloudinaryModule = require('cloudinary');
-const cloudinary = cloudinaryModule.v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -134,7 +133,7 @@ async function initAdmin() {
 //  Multer Cloudinary 설정
 // ================================
 const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
+  cloudinary: cloudinary,  // 명시적으로 작성
   params: {
     folder: 'studyshare',
     resource_type: 'raw',
