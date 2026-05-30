@@ -28,10 +28,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// MongoDB 연결
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('MongoDB 연결 성공!'))
-  .catch(err => console.log('MongoDB 연결 실패:', err));
+
 
 // ================================
 //  MONGOOSE 모델
@@ -544,11 +541,15 @@ app.post('/api/admin/userinfo', async (req, res) => {
 // ================================
 //  서버 시작
 // ================================
-downloadFont().then(async () => {
-  await mongoose.connection.once('open', () => {});
+async function startServer() {
+  await downloadFont();
+  await mongoose.connect(process.env.MONGODB_URI);
+  console.log('MongoDB 연결 성공!');
   await initAdmin();
   app.listen(PORT, () => {
     console.log(`StudyShare 실행 중 → http://localhost:${PORT}`);
     console.log('관리자 계정: admin / admin1234');
   });
-});
+}
+
+startServer().catch(err => console.error('서버 시작 실패:', err));
