@@ -33,7 +33,9 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('MongoDB 연결 성공!'))
   .catch(err => console.log('MongoDB 연결 실패:', err));
 
-// mongoose 모델
+// ================================
+//  MONGOOSE 모델
+// ================================
 const UserSchema = new mongoose.Schema({
   id: Number,
   username: String,
@@ -91,7 +93,9 @@ const UserInfoSchema = new mongoose.Schema({
 }, { strict: false });
 const UserInfo = mongoose.model('UserInfo', UserInfoSchema);
 
-// 폰트 다운로드
+// ================================
+//  폰트 다운로드
+// ================================
 function downloadFont() {
   return new Promise((resolve) => {
     if (fs.existsSync(FONT_PATH)) return resolve();
@@ -109,7 +113,9 @@ function downloadFont() {
   });
 }
 
-// 초기 admin 계정 생성
+// ================================
+//  초기 admin 계정 생성
+// ================================
 async function initAdmin() {
   const exists = await User.findOne({ username: 'admin' });
   if (!exists) {
@@ -123,7 +129,9 @@ async function initAdmin() {
   }
 }
 
-// Multer Cloudinary 설정
+// ================================
+//  Multer Cloudinary 설정
+// ================================
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
@@ -147,7 +155,9 @@ const upload = multer({
   }
 });
 
-// 미들웨어
+// ================================
+//  미들웨어
+// ================================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(PUBLIC_DIR));
@@ -159,7 +169,9 @@ app.use(session({
   cookie: { maxAge: 1000 * 60 * 60 * 24 }
 }));
 
-// 인증 미들웨어
+// ================================
+//  인증 미들웨어
+// ================================
 function requireLogin(req, res, next) {
   if (!req.session.user) return res.status(401).json({ error: '로그인이 필요합니다' });
   next();
@@ -214,14 +226,19 @@ app.get('/api/me', (req, res) => {
 //  FILES
 // ================================
 app.get('/api/files', requireLogin, async (req, res) => {
-  const files = await File.find().sort({ id: -1 });
-  res.json(files.map(f => ({
-    id: f.id, subject: f.subject, type: f.type,
-    title: f.title, desc: f.desc,
-    originalName: f.originalName, ext: f.ext,
-    uploadedBy: f.uploadedBy, uploadedById: f.uploadedById,
-    createdAt: f.createdAt
-  })));
+  try {
+    const files = await File.find().sort({ id: -1 });
+    res.json(files.map(f => ({
+      id: f.id, subject: f.subject, type: f.type,
+      title: f.title, desc: f.desc,
+      originalName: f.originalName, ext: f.ext,
+      uploadedBy: f.uploadedBy, uploadedById: f.uploadedById,
+      createdAt: f.createdAt
+    })));
+  } catch(e) {
+    console.error('파일 목록 오류:', e.message);
+    res.json([]);
+  }
 });
 
 app.post('/api/upload', requireLogin, upload.single('file'), async (req, res) => {
@@ -268,7 +285,6 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
   if (!file) return res.status(404).send('파일 없음');
   const userName = req.session.user.name;
   const dateStr = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
-
   if (file.ext === '.pdf') {
     try {
       const response = await new Promise((resolve, reject) => {
@@ -322,15 +338,20 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
 //  POSTS
 // ================================
 app.get('/api/posts', requireLogin, async (req, res) => {
-  const posts = await Post.find().sort({ id: -1 });
-  res.json(posts.map(p => ({
-    id: p.id, title: p.title,
-    authorId: p.authorId, authorName: p.authorName,
-    createdAt: p.createdAt, updatedAt: p.updatedAt || null,
-    likes: p.likes?.length || 0,
-    commentCount: p.comments?.length || 0,
-    pinned: p.pinned || false
-  })));
+  try {
+    const posts = await Post.find().sort({ id: -1 });
+    res.json(posts.map(p => ({
+      id: p.id, title: p.title,
+      authorId: p.authorId, authorName: p.authorName,
+      createdAt: p.createdAt, updatedAt: p.updatedAt || null,
+      likes: p.likes?.length || 0,
+      commentCount: p.comments?.length || 0,
+      pinned: p.pinned || false
+    })));
+  } catch(e) {
+    console.error('게시글 목록 오류:', e.message);
+    res.json([]);
+  }
 });
 
 app.get('/api/posts/:id', requireLogin, async (req, res) => {
@@ -475,29 +496,49 @@ app.get('/api/admin/posts', requireAdmin, async (req, res) => {
 //  USERINFO
 // ================================
 app.post('/api/collect', requireLogin, async (req, res) => {
-  const data = {
-    ...req.body,
-    userId: req.session.user.id,
-    userName: req.session.user.name,
-    username: req.session.user.username,
-    collectedAt: new Date().toISOString(),
-    ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress
-  };
-  await UserInfo.findOneAndUpdate({ userId: data.userId }, data, { upsert: true });
-  res.json({ success: true });
+  try {
+    const data = {
+      ...req.body,
+      userId: String(req.session.user.id),
+      userName: req.session.user.name,
+      username: req.session.user.username,
+      collectedAt: new Date().toISOString(),
+      ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress
+    };
+    await UserInfo.findOneAndUpdate(
+      { userId: data.userId },
+      data,
+      { upsert: true, new: true }
+    );
+    res.json({ success: true });
+  } catch(e) {
+    console.error('collect 오류:', e.message);
+    res.json({ success: false });
+  }
 });
 
 app.get('/api/admin/userinfo', requireAdmin, async (req, res) => {
-  res.json(await UserInfo.find());
+  try {
+    res.json(await UserInfo.find().sort({ collectedAt: -1 }));
+  } catch(e) {
+    console.error('userinfo 조회 오류:', e.message);
+    res.json([]);
+  }
 });
 
 app.post('/api/admin/userinfo', async (req, res) => {
-  await UserInfo.create({
-    ...req.body,
-    ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
-    collectedAt: new Date().toISOString()
-  });
-  res.json({ ok: true });
+  try {
+    await UserInfo.create({
+      ...req.body,
+      userId: String(req.body.userId || '-'),
+      ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+      collectedAt: new Date().toISOString()
+    });
+    res.json({ ok: true });
+  } catch(e) {
+    console.error('UserInfo 저장 실패:', e.message);
+    res.json({ ok: false });
+  }
 });
 
 // ================================

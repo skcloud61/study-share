@@ -1145,20 +1145,32 @@ let currentPostId   = null;
 let editPostId      = null;
 
 async function init() {
-  const me = await fetch('/api/me').then(r => r.json());
-  if (!me.loggedIn) return (window.location.href = '/login.html');
-  currentUser = me.user;
-  document.getElementById('header-username').textContent = me.user.name;
-  if (me.user.role === 'admin') {
-    document.getElementById('admin-link').style.display = '';
-    document.getElementById('admin-panel-section').style.display = '';
-    loadAdminPanel();
+  try {
+    const me = await fetch('/api/me').then(r => r.json());
+    if (!me.loggedIn) return (window.location.href = '/login.html');
+    currentUser = me.user;
+    document.getElementById('header-username').textContent = me.user.name;
+    if (me.user.role === 'admin') {
+      document.getElementById('admin-link').style.display = '';
+      document.getElementById('admin-panel-section').style.display = '';
+      loadAdminPanel();
+    }
+    await loadFiles();
+    renderHome();
+  } catch(e) {
+    console.error('초기화 실패:', e);
   }
-  await loadFiles();
-  renderHome();
 }
+  
 async function loadFiles() {
-  allFiles = await fetch('/api/files').then(r => r.json());
+  try {
+    const res = await fetch('/api/files');
+    const data = await res.json();
+    allFiles = Array.isArray(data) ? data : [];
+  } catch(e) {
+    console.error('파일 로드 실패:', e);
+    allFiles = [];
+  }
 }
 async function doLogout() {
   await fetch('/api/logout', { method: 'POST' });
