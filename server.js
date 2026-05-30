@@ -138,7 +138,7 @@ const storage = new CloudinaryStorage({
       folder: 'studyshare',
       resource_type: 'raw',
       public_id: Date.now() + '_' + Math.random().toString(36).slice(2),
-      format: path.extname(original).slice(1)
+      
     };
   }
 });
