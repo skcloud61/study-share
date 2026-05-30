@@ -1,0 +1,11 @@
+[
+  {
+    "id": 1,
+    "username": "admin",
+    "password": "$2a$10$6FknKC2eIAXTb2JF2ZHw0u.Ufz8aDGaLDdY15TrJVmE/B6Y3zwoR.",
+    "name": "관리자",
+    "role": "admin",
+    "approved": true,
+    "createdAt": "2026-05-30T07:44:39.338Z"
+  }
+]

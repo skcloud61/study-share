@@ -1,0 +1,1846 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>StudyShare</title>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    /* ════════════════════════════════
+       게시판 공통
+    ════════════════════════════════ */
+    .board-page-wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    /* ── 게시판 헤더 ── */
+    .board-header {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-bottom: 24px;
+      gap: 12px;
+    }
+    .board-header-left {}
+    .board-header-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -.5px;
+    }
+    .board-header-sub {
+      font-size: .82rem;
+      color: var(--sub);
+      margin-top: 4px;
+    }
+    .board-stats-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+    .board-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 22px;
+      min-width: 80px;
+    }
+    .board-stat-num {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #6366f1;
+    }
+    .board-stat-lbl {
+      font-size: .72rem;
+      color: var(--sub);
+      margin-top: 2px;
+      font-weight: 600;
+    }
+    .write-btn {
+      padding: 11px 26px;
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: .9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .2s, transform .15s;
+      white-space: nowrap;
+      letter-spacing: -.2px;
+      align-self: flex-start;
+    }
+    .write-btn:hover { background: #4f46e5; transform: translateY(-1px); }
+
+    /* ── 검색바 ── */
+    .board-search-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .board-search-wrap {
+      flex: 1;
+      position: relative;
+    }
+    .board-search-wrap svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: var(--sub);
+    }
+    .board-search-input {
+      width: 100%;
+      padding: 10px 14px 10px 40px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      font-size: .875rem;
+      background: var(--surface);
+      color: var(--text);
+      font-family: inherit;
+      box-sizing: border-box;
+      transition: border-color .2s;
+    }
+    .board-search-input:focus {
+      outline: none;
+      border-color: #6366f1;
+    }
+
+    /* ── 게시글 목록 테이블 ── */
+    .post-table-wrap {
+      background: var(--surface);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(80,70,200,.07);
+    }
+    .post-table-head {
+      display: grid;
+      grid-template-columns: 56px 1fr 90px 72px 60px 60px;
+      padding: 0 20px;
+      background: var(--surface2);
+      border-bottom: 1.5px solid var(--border);
+    }
+    .post-table-head span {
+      padding: 13px 0;
+      font-size: .72rem;
+      font-weight: 700;
+      color: var(--sub);
+      text-transform: uppercase;
+      letter-spacing: .8px;
+    }
+    .post-table-head span:not(:first-child) { text-align: center; }
+    .post-table-head span:nth-child(2)      { text-align: left; }
+    .post-row {
+      display: grid;
+      grid-template-columns: 56px 1fr 90px 72px 60px 60px;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background .13s;
+      align-items: center;
+    }
+    .post-row:last-child  { border-bottom: none; }
+    .post-row:hover       { background: #f5f4ff; }
+    .post-row > *         { padding: 14px 0; }
+    .post-row-num {
+      font-size: .8rem;
+      color: var(--sub);
+      font-weight: 600;
+    }
+    .post-row-pin-label {
+      display: inline-block;
+      background: #ede9fe;
+      color: #7c3aed;
+      font-size: .7rem;
+      font-weight: 800;
+      padding: 2px 9px;
+      border-radius: 6px;
+      letter-spacing: .3px;
+    }
+    .post-row-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .post-row-title {
+      font-size: .925rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .post-row-comment-cnt {
+      font-size: .78rem;
+      color: #6366f1;
+      font-weight: 700;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .post-row-author {
+      font-size: .82rem;
+      color: var(--sub);
+      text-align: center;
+    }
+    .post-row-date {
+      font-size: .8rem;
+      color: var(--sub);
+      text-align: center;
+    }
+    .post-row-likes {
+      font-size: .82rem;
+      color: #ef4444;
+      font-weight: 700;
+      text-align: center;
+    }
+    .post-row-views {
+      font-size: .8rem;
+      color: var(--sub);
+      text-align: center;
+    }
+    .post-empty {
+      padding: 60px 0;
+      text-align: center;
+      color: var(--sub);
+      font-size: .9rem;
+    }
+    .post-empty strong {
+      display: block;
+      font-size: 1rem;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    /* ════════════════════════════════
+       글 상세
+    ════════════════════════════════ */
+    .post-detail-page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 36px 24px;
+    }
+    .detail-back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      font-size: .85rem;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--sub);
+      transition: all .18s;
+      margin-bottom: 28px;
+    }
+    .detail-back-btn:hover { border-color: #6366f1; color: #6366f1; }
+    .detail-back-btn svg   { width: 15px; height: 15px; }
+
+    .detail-hero {
+      background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+      border-radius: 18px;
+      padding: 36px 40px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .detail-hero::after {
+      content: '';
+      position: absolute;
+      right: -40px;
+      top: -40px;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.08);
+    }
+    .detail-pin-badge {
+      display: inline-block;
+      background: rgba(255,255,255,.2);
+      color: #fff;
+      font-size: .72rem;
+      font-weight: 800;
+      padding: 3px 11px;
+      border-radius: 7px;
+      margin-bottom: 12px;
+      letter-spacing: .5px;
+    }
+    .detail-hero-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 14px;
+      line-height: 1.35;
+      position: relative;
+    }
+    .detail-hero-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      position: relative;
+    }
+    .detail-meta-chip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255,255,255,.15);
+      color: rgba(255,255,255,.9);
+      font-size: .8rem;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 8px;
+    }
+    .detail-meta-chip svg { width: 13px; height: 13px; opacity: .8; }
+    .detail-edited { font-size: .75rem; color: rgba(255,255,255,.6); }
+
+    .detail-layout {
+      display: grid;
+      grid-template-columns: 1fr 200px;
+      gap: 20px;
+      align-items: start;
+    }
+    .detail-body-card {
+      background: var(--surface);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 32px;
+      font-size: .95rem;
+      line-height: 1.85;
+      color: var(--text);
+      white-space: pre-wrap;
+      box-shadow: 0 2px 12px rgba(0,0,0,.04);
+      min-height: 180px;
+    }
+    .detail-side {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .detail-action-card {
+      background: var(--surface);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      padding: 18px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.04);
+    }
+    .detail-action-card-title {
+      font-size: .72rem;
+      font-weight: 700;
+      color: var(--sub);
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      margin-bottom: 12px;
+    }
+    .side-like-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: var(--surface2);
+      font-size: .9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .2s;
+      color: var(--sub);
+    }
+    .side-like-btn.liked {
+      border-color: #ef4444;
+      background: #fff5f5;
+      color: #ef4444;
+    }
+    .side-like-btn:hover:not(.liked) { border-color: #ef4444; color: #ef4444; }
+    .side-like-icon { width: 16px; height: 16px; }
+    .side-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: var(--surface2);
+      font-size: .83rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .18s;
+      color: var(--sub);
+      margin-top: 8px;
+    }
+    .side-btn svg { width: 14px; height: 14px; }
+    .side-btn.edit-btn:hover  { border-color: #6366f1; color: #6366f1; background: #f0f0ff; }
+    .side-btn.del-btn:hover   { border-color: #ef4444; color: #ef4444; background: #fff5f5; }
+    .side-btn.pin-btn         { border-color: #ede9fe; color: #7c3aed; background: #faf5ff; }
+    .side-btn.pin-btn:hover   { background: #ede9fe; }
+
+    /* ── 댓글 ── */
+    .comment-section { margin-top: 24px; }
+    .comment-section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .comment-section-title {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .comment-cnt-badge {
+      background: #ede9fe;
+      color: #7c3aed;
+      font-size: .75rem;
+      font-weight: 800;
+      padding: 2px 10px;
+      border-radius: 20px;
+    }
+    .comment-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+    .comment-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 20px;
+      position: relative;
+      transition: box-shadow .15s;
+    }
+    .comment-card:hover { box-shadow: 0 4px 16px rgba(99,102,241,.08); }
+    .comment-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .comment-card-left { display: flex; align-items: center; gap: 10px; }
+    .comment-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #818cf8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: .8rem;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .comment-author { font-size: .85rem; font-weight: 700; color: var(--text); }
+    .comment-date   { font-size: .75rem; color: var(--sub); }
+    .comment-del-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 3px 11px;
+      font-size: .75rem;
+      font-weight: 700;
+      color: var(--sub);
+      cursor: pointer;
+      transition: all .18s;
+    }
+    .comment-del-btn:hover { border-color: #ef4444; color: #ef4444; background: #fff5f5; }
+    .comment-content {
+      font-size: .88rem;
+      color: var(--text);
+      line-height: 1.65;
+      padding-left: 42px;
+    }
+    .comment-no {
+      text-align: center;
+      padding: 36px 0;
+      color: var(--sub);
+      font-size: .875rem;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: 14px;
+    }
+    .comment-input-wrap {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.04);
+      transition: border-color .2s;
+    }
+    .comment-input-wrap:focus-within { border-color: #6366f1; }
+    .comment-input-wrap textarea {
+      width: 100%;
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: inherit;
+      font-size: .9rem;
+      color: var(--text);
+      background: transparent;
+      min-height: 64px;
+      box-sizing: border-box;
+      line-height: 1.6;
+    }
+    .comment-input-footer {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+    .comment-post-btn {
+      padding: 8px 22px;
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 9px;
+      font-size: .85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .18s;
+    }
+    .comment-post-btn:hover { background: #4f46e5; }
+
+    /* ════════════════════════════════
+       글 작성/수정
+    ════════════════════════════════ */
+    .write-page-wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+    .write-page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    .write-page-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .write-card {
+      background: var(--surface);
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      padding: 32px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.05);
+    }
+    .write-label {
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--sub);
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      margin-bottom: 8px;
+    }
+    .write-title-input {
+      width: 100%;
+      padding: 14px 18px;
+      border-radius: 12px;
+      border: 1.5px solid var(--border);
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--surface2);
+      font-family: inherit;
+      transition: border-color .2s, background .2s;
+      box-sizing: border-box;
+      margin-bottom: 20px;
+    }
+    .write-title-input:focus {
+      outline: none;
+      border-color: #6366f1;
+      background: var(--surface);
+    }
+    .write-content-textarea {
+      width: 100%;
+      padding: 16px 18px;
+      border-radius: 12px;
+      border: 1.5px solid var(--border);
+      font-size: .95rem;
+      color: var(--text);
+      background: var(--surface2);
+      font-family: inherit;
+      resize: vertical;
+      min-height: 300px;
+      line-height: 1.75;
+      transition: border-color .2s, background .2s;
+      box-sizing: border-box;
+      margin-bottom: 24px;
+    }
+    .write-content-textarea:focus {
+      outline: none;
+      border-color: #6366f1;
+      background: var(--surface);
+    }
+    .write-divider {
+      height: 1px;
+      background: var(--border);
+      margin-bottom: 24px;
+    }
+    .write-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .write-cancel-btn {
+      padding: 11px 24px;
+      border-radius: 11px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      font-size: .875rem;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--sub);
+      transition: all .18s;
+    }
+    .write-cancel-btn:hover { border-color: #6366f1; color: #6366f1; }
+    .write-submit-btn {
+      padding: 11px 32px;
+      border-radius: 11px;
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      font-size: .875rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .18s, transform .15s;
+    }
+    .write-submit-btn:hover { background: #4f46e5; transform: translateY(-1px); }
+    .write-submit-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+    /* ════════════════════════════════
+       홈 관리자 패널
+    ════════════════════════════════ */
+    .admin-panel {
+      background: var(--surface);
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 24px rgba(80,70,200,.07);
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .admin-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 24px;
+      background: linear-gradient(90deg, #6366f1 0%, #818cf8 100%);
+    }
+    .admin-panel-title {
+      font-size: 1rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -.2px;
+    }
+    .admin-panel-sub {
+      font-size: .78rem;
+      color: rgba(255,255,255,.75);
+      margin-top: 2px;
+    }
+    .admin-panel-goto {
+      padding: 7px 16px;
+      border-radius: 9px;
+      border: 1.5px solid rgba(255,255,255,.4);
+      background: rgba(255,255,255,.15);
+      color: #fff;
+      font-size: .8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .18s;
+      white-space: nowrap;
+    }
+    .admin-panel-goto:hover { background: rgba(255,255,255,.28); }
+    .admin-panel-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+    .admin-panel-tab {
+      padding: 11px 22px;
+      font-size: .82rem;
+      font-weight: 700;
+      color: var(--sub);
+      cursor: pointer;
+      border-bottom: 2.5px solid transparent;
+      transition: all .18s;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+    }
+    .admin-panel-tab.active {
+      color: #6366f1;
+      border-bottom-color: #6366f1;
+      background: var(--surface);
+    }
+    .admin-panel-body { padding: 0; }
+
+    .ap-table { width: 100%; border-collapse: collapse; }
+    .ap-table th {
+      padding: 11px 20px;
+      text-align: left;
+      font-size: .72rem;
+      font-weight: 700;
+      color: var(--sub);
+      text-transform: uppercase;
+      letter-spacing: .7px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+    }
+    .ap-table td {
+      padding: 13px 20px;
+      font-size: .86rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    .ap-table tr:last-child td { border-bottom: none; }
+    .ap-table tr:hover td      { background: #f5f4ff; }
+    .ap-role-badge {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 6px;
+      font-size: .72rem;
+      font-weight: 700;
+    }
+    .ap-role-admin { background: #ede9fe; color: #7c3aed; }
+    .ap-role-user  { background: #e0f2fe; color: #0284c7; }
+    .ap-status-badge {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 6px;
+      font-size: .72rem;
+      font-weight: 700;
+    }
+    .ap-status-ok      { background: #dcfce7; color: #16a34a; }
+    .ap-status-pending { background: #fef3c7; color: #d97706; }
+    .ap-btn {
+      padding: 4px 12px;
+      border-radius: 7px;
+      border: none;
+      font-size: .75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .18s;
+      margin-right: 4px;
+    }
+    .ap-btn.approve { background: #dcfce7; color: #16a34a; }
+    .ap-btn.approve:hover { background: #16a34a; color: #fff; }
+    .ap-btn.delete  { background: #fee2e2; color: #dc2626; }
+    .ap-btn.delete:hover  { background: #dc2626; color: #fff; }
+    .ap-empty {
+      text-align: center;
+      padding: 36px 0;
+      color: var(--sub);
+      font-size: .875rem;
+    }
+
+    /* ── 헤더 관리자 버튼 ── */
+    .admin-link-btn {
+      padding: 7px 15px;
+      border-radius: 9px;
+      border: 1.5px solid #ede9fe;
+      background: #f5f3ff;
+      color: #7c3aed;
+      font-size: .82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .18s;
+    }
+    .admin-link-btn:hover { background: #ede9fe; }
+
+    /* ════════════════════════════════
+       게시판 모바일 반응형
+    ════════════════════════════════ */
+    @media (max-width: 768px) {
+      .board-page-wrap {
+        padding: 20px 12px;
+      }
+      .board-stats-row {
+        gap: 8px;
+        width: 100%;
+      }
+      .board-stat {
+        padding: 10px 0;
+        flex: 1;
+        min-width: 0;
+      }
+      .board-stat-num { font-size: 1.1rem; }
+      .board-stat-lbl { font-size: .68rem; }
+      .write-btn {
+        width: 100%;
+        text-align: center;
+        align-self: stretch;
+      }
+
+      /* 테이블 4열: 번호/제목/작성자/날짜 */
+      .post-table-head {
+        grid-template-columns: 44px 1fr 70px 58px;
+        padding: 0 14px;
+      }
+      .post-table-head span:nth-child(5),
+      .post-table-head span:nth-child(6) { display: none; }
+
+      .post-row {
+        grid-template-columns: 44px 1fr 70px 58px;
+        padding: 0 14px;
+      }
+      .post-row > *:nth-child(5),
+      .post-row > *:nth-child(6) { display: none; }
+      .post-row > * { padding: 13px 0; }
+      .post-row-title { font-size: .85rem; }
+
+      /* 글 상세 */
+      .post-detail-page { padding: 16px 12px; }
+      .detail-hero {
+        padding: 24px 20px;
+        border-radius: 14px;
+      }
+      .detail-hero-title { font-size: 1.2rem; }
+      .detail-layout { grid-template-columns: 1fr; }
+      .detail-side {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .detail-action-card { flex: 1; min-width: 140px; }
+      .side-btn { margin-top: 4px; }
+
+      /* 댓글 */
+      .comment-content { padding-left: 0; margin-top: 8px; }
+
+      /* 글 작성 */
+      .write-page-wrap { padding: 16px 12px; }
+      .write-card { padding: 20px 14px; }
+
+      /* 관리자 패널 */
+      .admin-panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px;
+      }
+      .admin-panel-goto {
+        width: 100%;
+        text-align: center;
+      }
+      .ap-table th,
+      .ap-table td {
+        padding: 10px 12px;
+        font-size: .78rem;
+      }
+      .ap-table th:nth-child(3),
+      .ap-table td:nth-child(3) { display: none; }
+    }
+
+    @media (max-width: 480px) {
+      /* 테이블 3열: 번호/제목/날짜 */
+      .post-table-head {
+        grid-template-columns: 40px 1fr 56px;
+        padding: 0 12px;
+      }
+      .post-table-head span:nth-child(3),
+      .post-table-head span:nth-child(4),
+      .post-table-head span:nth-child(5),
+      .post-table-head span:nth-child(6) { display: none; }
+      /* 날짜(4번째)만 다시 보이기 */
+      .post-table-head span:nth-child(4) { display: block; }
+
+      .post-row {
+        grid-template-columns: 40px 1fr 56px;
+        padding: 0 12px;
+      }
+      .post-row > *:nth-child(3),
+      .post-row > *:nth-child(4),
+      .post-row > *:nth-child(5),
+      .post-row > *:nth-child(6) { display: none; }
+      .post-row > *:nth-child(4) { display: block; }
+
+      .board-stat-num { font-size: 1rem; }
+      .board-stat-lbl { font-size: .65rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════ HEADER ══════════ -->
+<header>
+  <div class="logo">Study<span>Share</span></div>
+  <nav id="main-nav">
+    <button class="nav-btn active" onclick="showPage('home',this)">홈</button>
+    <button class="nav-btn"        onclick="showPage('library',this)">자료실</button>
+    <button class="nav-btn"        onclick="showPage('board',this)">게시판</button>
+  </nav>
+  <div class="header-right">
+    <span class="user-name" id="header-username"></span>
+    <button class="admin-link-btn" id="admin-link"
+            onclick="window.location.href='/admin.html'"
+            style="display:none">관리자</button>
+    <button class="logout-btn" onclick="doLogout()">로그아웃</button>
+  </div>
+</header>
+
+<!-- ══════════ TOAST ══════════ -->
+<div class="toast" id="toast"></div>
+
+<!-- ══════════ UPLOAD MODAL ══════════ -->
+<div class="modal-overlay" id="uploadModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">자료 업로드</div>
+      <button class="modal-close" onclick="closeModal('uploadModal')">&#x2715;</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>과목</label>
+        <select id="up-subject" onchange="updateTypeOptions()">
+          <option value="">선택</option>
+          <option>국어</option><option>영어</option><option>수학</option>
+          <option>역사</option><option>과학</option><option>정보</option>
+          <option>한문</option><option>도덕</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>유형</label>
+        <select id="up-type"></select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>제목</label>
+      <input type="text" id="up-title" placeholder="자료 제목"/>
+    </div>
+    <div class="form-group">
+      <label>설명</label>
+      <textarea id="up-desc" placeholder="자료에 대한 설명을 입력하세요"></textarea>
+    </div>
+    <div class="form-group">
+      <label>파일</label>
+      <div class="file-drop" id="file-drop"
+           onclick="document.getElementById('fileInput').click()"
+           ondragover="event.preventDefault();this.classList.add('drag')"
+           ondragleave="this.classList.remove('drag')"
+           ondrop="handleDrop(event)">
+        <input type="file" id="fileInput" style="display:none" onchange="handleFile(this)"/>
+        <div class="file-drop-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5
+                 m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+          </svg>
+        </div>
+        <p id="fileLabel">파일을 드래그하거나 클릭하여 선택</p>
+        <p class="file-hint">PDF, 이미지, 문서 파일 · 최대 50MB</p>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('uploadModal')">취소</button>
+      <button class="btn-submit" onclick="submitUpload()">업로드</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ DETAIL MODAL ══════════ -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="detail-title"></div>
+      <button class="modal-close" onclick="closeModal('detailModal')">&#x2715;</button>
+    </div>
+    <div class="detail-badges" id="detail-badges"></div>
+    <div class="detail-desc"   id="detail-desc"></div>
+    <div class="detail-meta"   id="detail-meta"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel"   onclick="closeModal('detailModal')">닫기</button>
+      <button class="btn-download" id="detail-dl-btn">다운로드</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ HOME PAGE ══════════ -->
+<div id="page-home" class="page-wrap">
+  <div class="home-top">
+    <div class="home-hero">
+      <div class="hero-text">
+        <div class="hero-label">학습 자료 공유 플랫폼</div>
+        <h1>StudyShare</h1>
+        <p>중간고사, 기말고사, 수행평가, 학습지를<br>한 곳에서 관리하고 공유하세요.</p>
+      </div>
+      <button class="hero-btn" onclick="openUploadModal()">자료 업로드</button>
+    </div>
+    <div class="stats-col" id="home-stats"></div>
+  </div>
+
+  <!-- 관리자 패널 -->
+  <div class="section-block" id="admin-panel-section" style="display:none">
+    <div class="section-hd">
+      <div class="section-title">관리자 패널</div>
+    </div>
+    <div class="admin-panel">
+      <div class="admin-panel-header">
+        <div>
+          <div class="admin-panel-title">관리자 대시보드</div>
+          <div class="admin-panel-sub">회원 승인, 권한 관리를 여기서 바로 처리할 수 있습니다.</div>
+        </div>
+        <button class="admin-panel-goto" onclick="window.location.href='/admin.html'">
+          전체 관리 페이지
+        </button>
+      </div>
+      <div class="admin-panel-tabs">
+        <button class="admin-panel-tab active" onclick="switchAdminTab('pending', this)">
+          승인 대기 <span id="ap-pending-badge"></span>
+        </button>
+        <button class="admin-panel-tab" onclick="switchAdminTab('all', this)">
+          전체 회원
+        </button>
+      </div>
+      <div class="admin-panel-body">
+        <div id="ap-tab-pending">
+          <table class="ap-table">
+            <thead>
+              <tr>
+                <th>이름</th><th>아이디</th><th>가입일</th><th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="ap-pending-tbody"></tbody>
+          </table>
+        </div>
+        <div id="ap-tab-all" style="display:none">
+          <table class="ap-table">
+            <thead>
+              <tr>
+                <th>이름</th><th>아이디</th><th>권한</th><th>상태</th><th>가입일</th><th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="ap-all-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-hd">
+      <div class="section-title">과목</div>
+    </div>
+    <div class="subject-grid" id="home-subject-grid"></div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-hd">
+      <div class="section-title">최근 업로드</div>
+      <button class="text-btn"
+              onclick="showPage('library', document.querySelectorAll('.nav-btn')[1])">
+        전체 보기
+      </button>
+    </div>
+    <div class="card-grid" id="recent-cards"></div>
+  </div>
+</div>
+
+<!-- ══════════ LIBRARY PAGE ══════════ -->
+<div id="page-library" class="page-wrap" style="display:none">
+  <div class="lib-layout">
+    <aside class="sidebar">
+      <div class="sidebar-block">
+        <div class="sidebar-label">과목</div>
+        <div id="sidebar-subjects"></div>
+      </div>
+    </aside>
+    <main class="lib-main">
+      <div class="search-row">
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input type="text" id="search-input" placeholder="자료 검색..." oninput="renderCards()"/>
+        </div>
+        <button class="upload-btn" onclick="openUploadModal()">업로드</button>
+      </div>
+      <div class="cat-tabs" id="cat-tabs"></div>
+      <div class="lib-header">
+        <div class="lib-title" id="lib-title">전체 자료</div>
+        <div class="lib-count" id="lib-count"></div>
+      </div>
+      <div class="card-grid" id="lib-cards"></div>
+    </main>
+  </div>
+</div>
+
+<!-- ══════════ BOARD LIST PAGE ══════════ -->
+<div id="page-board" class="page-wrap" style="display:none">
+  <div class="board-page-wrap">
+    <div class="board-header">
+      <div class="board-header-left">
+        <div class="board-header-title">게시판</div>
+        <div class="board-header-sub">스터디 팁, 질문, 자유로운 이야기를 나눠보세요.</div>
+        <div class="board-stats-row" id="board-stats-row"></div>
+      </div>
+      <button class="write-btn" onclick="showWrite()">글 작성</button>
+    </div>
+    <div class="board-search-row">
+      <div class="board-search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" class="board-search-input"
+               id="board-search"
+               placeholder="게시글 검색..."
+               oninput="renderPostList()"/>
+      </div>
+    </div>
+    <div class="post-table-wrap">
+      <div class="post-table-head">
+        <span>번호</span>
+        <span>제목</span>
+        <span>작성자</span>
+        <span>날짜</span>
+        <span>좋아요</span>
+        <span>댓글</span>
+      </div>
+      <div id="post-list-body"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ POST DETAIL PAGE ══════════ -->
+<div id="page-post-detail" class="page-wrap" style="display:none">
+  <div class="post-detail-page">
+    <button class="detail-back-btn"
+            onclick="showPage('board', document.querySelectorAll('.nav-btn')[2])">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+      </svg>
+      목록으로
+    </button>
+    <div class="detail-hero" id="detail-hero">
+      <div id="detail-pin-badge-wrap"></div>
+      <div class="detail-hero-title" id="pd-title"></div>
+      <div class="detail-hero-meta"  id="pd-meta"></div>
+    </div>
+    <div class="detail-layout">
+      <div class="detail-body-card" id="pd-body"></div>
+      <div class="detail-side"      id="pd-side"></div>
+    </div>
+    <div class="comment-section">
+      <div class="comment-section-header">
+        <div class="comment-section-title">댓글</div>
+        <span class="comment-cnt-badge" id="comment-cnt-badge">0</span>
+      </div>
+      <div class="comment-list" id="pd-comment-list"></div>
+      <div class="comment-input-wrap">
+        <textarea id="comment-input" placeholder="댓글을 입력하세요..."></textarea>
+        <div class="comment-input-footer">
+          <button class="comment-post-btn" onclick="submitComment()">등록</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ POST WRITE/EDIT PAGE ══════════ -->
+<div id="page-write" class="page-wrap" style="display:none">
+  <div class="write-page-wrap">
+    <div class="write-page-header">
+      <div class="write-page-title" id="write-page-title">새 글 작성</div>
+      <button class="detail-back-btn"
+              onclick="showPage('board', document.querySelectorAll('.nav-btn')[2])">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
+        취소
+      </button>
+    </div>
+    <div class="write-card">
+      <div class="write-label">제목</div>
+      <input type="text" class="write-title-input"
+             id="write-title-input" placeholder="제목을 입력하세요"/>
+      <div class="write-label">내용</div>
+      <textarea class="write-content-textarea"
+                id="write-content-input"
+                placeholder="내용을 입력하세요..."></textarea>
+      <div class="write-divider"></div>
+      <div class="write-footer">
+        <button class="write-cancel-btn"
+                onclick="showPage('board', document.querySelectorAll('.nav-btn')[2])">
+          취소
+        </button>
+        <button class="write-submit-btn" id="write-submit-btn" onclick="submitPost()">
+          등록하기
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SCRIPT ══════════ -->
+<script>
+const SUBJECTS      = ['국어','영어','수학','역사','과학','정보','한문','도덕'];
+const EXAM_SUBJECTS = ['국어','영어','수학','역사','과학','정보'];
+const TYPE_LABELS   = { midterm:'중간고사', final:'기말고사', performance:'수행평가', worksheet:'학습지' };
+const TYPE_COLORS   = { midterm:'#6366f1', final:'#0ea5e9', performance:'#10b981', worksheet:'#f59e0b' };
+const SUBJ_COLORS   = {
+  '국어':'#6366f1','영어':'#0ea5e9','수학':'#f59e0b',
+  '역사':'#ef4444','과학':'#10b981','정보':'#8b5cf6',
+  '한문':'#f97316','도덕':'#ec4899'
+};
+const ALL_PAGES = ['home','library','board','post-detail','write'];
+
+let allFiles        = [];
+let allPosts        = [];
+let selectedSubject = '전체';
+let selectedType    = '전체';
+let currentUser     = null;
+let currentPostId   = null;
+let editPostId      = null;
+
+async function init() {
+  const me = await fetch('/api/me').then(r => r.json());
+  if (!me.loggedIn) return (window.location.href = '/login.html');
+  currentUser = me.user;
+  document.getElementById('header-username').textContent = me.user.name;
+  if (me.user.role === 'admin') {
+    document.getElementById('admin-link').style.display = '';
+    document.getElementById('admin-panel-section').style.display = '';
+    loadAdminPanel();
+  }
+  await loadFiles();
+  renderHome();
+}
+
+async function loadFiles() {
+  allFiles = await fetch('/api/files').then(r => r.json());
+}
+
+async function doLogout() {
+  await fetch('/api/logout', { method: 'POST' });
+  window.location.href = '/login.html';
+}
+
+function showPage(page, btn) {
+  ALL_PAGES.forEach(p => {
+    const el = document.getElementById('page-' + p);
+    if (el) el.style.display = p === page ? '' : 'none';
+  });
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (page === 'home')    renderHome();
+  if (page === 'library') renderLibrary();
+  if (page === 'board')   renderBoardPage();
+}
+
+/* ── HOME ── */
+function renderHome() {
+  const types  = ['midterm','final','performance','worksheet'];
+  const labels = ['중간고사','기말고사','수행평가','학습지'];
+  document.getElementById('home-stats').innerHTML = [
+    `<div class="stat-item">
+       <div class="stat-num">${allFiles.length}</div>
+       <div class="stat-lbl">전체 자료</div>
+     </div>`,
+    ...types.map((t, i) =>
+      `<div class="stat-item">
+         <div class="stat-num">${allFiles.filter(f => f.type === t).length}</div>
+         <div class="stat-lbl">${labels[i]}</div>
+       </div>`)
+  ].join('');
+
+  document.getElementById('home-subject-grid').innerHTML = SUBJECTS.map(s => {
+    const cnt = allFiles.filter(f => f.subject === s).length;
+    return `<div class="subj-card" onclick="goSubject('${s}')" style="--c:${SUBJ_COLORS[s]}">
+      <div class="subj-dot"></div>
+      <div class="subj-name">${s}</div>
+      <div class="subj-cnt">자료 ${cnt}개</div>
+    </div>`;
+  }).join('');
+
+  const recent = [...allFiles].slice(0, 4);
+  document.getElementById('recent-cards').innerHTML =
+    recent.length ? recent.map(f => cardHTML(f)).join('') : emptyHTML();
+}
+
+function goSubject(s) {
+  selectedSubject = s; selectedType = '전체';
+  document.querySelectorAll('.nav-btn').forEach((b, i) => b.classList.toggle('active', i === 1));
+  showPage('library', null);
+}
+
+/* ── 관리자 패널 ── */
+let apAllUsers = [];
+async function loadAdminPanel() {
+  apAllUsers = await fetch('/api/admin/users').then(r => r.json());
+  renderApTab('pending');
+}
+function switchAdminTab(tab, btn) {
+  document.getElementById('ap-tab-pending').style.display = tab === 'pending' ? '' : 'none';
+  document.getElementById('ap-tab-all').style.display     = tab === 'all'     ? '' : 'none';
+  document.querySelectorAll('.admin-panel-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderApTab(tab);
+}
+function renderApTab(tab) {
+  if (tab === 'pending') renderApPending();
+  else                   renderApAll();
+}
+function renderApPending() {
+  const pending = apAllUsers.filter(u => !u.approved && u.role !== 'admin');
+  const badge   = document.getElementById('ap-pending-badge');
+  badge.textContent  = pending.length ? `(${pending.length})` : '';
+  badge.style.color  = '#ef4444';
+  badge.style.fontWeight = '800';
+  const tbody = document.getElementById('ap-pending-tbody');
+  if (!pending.length) {
+    tbody.innerHTML = `<tr><td colspan="4" class="ap-empty">승인 대기 중인 회원이 없습니다.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = pending.map(u => `
+    <tr>
+      <td style="font-weight:700">${u.name}</td>
+      <td style="color:var(--sub)">${u.username}</td>
+      <td style="color:var(--sub)">${u.createdAt?.slice(0,10) || '-'}</td>
+      <td>
+        <button class="ap-btn approve" onclick="apApprove(${u.id})">승인</button>
+        <button class="ap-btn delete"  onclick="apDelete(${u.id})">거절</button>
+      </td>
+    </tr>`).join('');
+}
+function renderApAll() {
+  const tbody = document.getElementById('ap-all-tbody');
+  if (!apAllUsers.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="ap-empty">회원이 없습니다.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = apAllUsers.map(u => `
+    <tr>
+      <td style="font-weight:700">${u.name}</td>
+      <td style="color:var(--sub)">${u.username}</td>
+      <td>
+        <span class="ap-role-badge ${u.role === 'admin' ? 'ap-role-admin' : 'ap-role-user'}">
+          ${u.role === 'admin' ? '관리자' : '일반'}
+        </span>
+      </td>
+      <td>
+        <span class="ap-status-badge ${u.approved ? 'ap-status-ok' : 'ap-status-pending'}">
+          ${u.approved ? '승인' : '대기'}
+        </span>
+      </td>
+      <td style="color:var(--sub)">${u.createdAt?.slice(0,10) || '-'}</td>
+      <td>
+        ${!u.approved ? `<button class="ap-btn approve" onclick="apApprove(${u.id})">승인</button>` : ''}
+        ${u.role !== 'admin' ? `<button class="ap-btn delete" onclick="apDelete(${u.id})">삭제</button>` : ''}
+      </td>
+    </tr>`).join('');
+}
+async function apApprove(id) {
+  await fetch('/api/admin/users/' + id + '/approve', { method: 'POST' });
+  showToast('승인되었습니다.');
+  apAllUsers = await fetch('/api/admin/users').then(r => r.json());
+  const activeTab = document.getElementById('ap-tab-pending').style.display !== 'none' ? 'pending' : 'all';
+  renderApTab(activeTab);
+}
+async function apDelete(id) {
+  if (!confirm('이 회원을 삭제하시겠습니까?')) return;
+  await fetch('/api/admin/users/' + id, { method: 'DELETE' });
+  showToast('삭제되었습니다.');
+  apAllUsers = await fetch('/api/admin/users').then(r => r.json());
+  const activeTab = document.getElementById('ap-tab-pending').style.display !== 'none' ? 'pending' : 'all';
+  renderApTab(activeTab);
+}
+
+/* ── LIBRARY ── */
+function renderLibrary() {
+  document.getElementById('sidebar-subjects').innerHTML =
+    ['전체', ...SUBJECTS].map(s =>
+      `<button class="sb-btn${selectedSubject === s ? ' active' : ''}"
+               onclick="selectSubject('${s}')">${s}</button>`
+    ).join('');
+  buildTabs();
+  renderCards();
+}
+function selectSubject(s) { selectedSubject = s; selectedType = '전체'; renderLibrary(); }
+function buildTabs() {
+  let types = ['전체','수행평가','학습지'];
+  if (selectedSubject === '전체' || EXAM_SUBJECTS.includes(selectedSubject))
+    types = ['전체','중간고사','기말고사','수행평가','학습지'];
+  document.getElementById('cat-tabs').innerHTML = types.map(t =>
+    `<button class="cat-tab${selectedType === t ? ' active' : ''}"
+             onclick="selectType('${t}')">${t}</button>`
+  ).join('');
+}
+function selectType(t) { selectedType = t; buildTabs(); renderCards(); }
+function renderCards() {
+  const q    = (document.getElementById('search-input')?.value || '').toLowerCase();
+  const tMap = { '중간고사':'midterm','기말고사':'final','수행평가':'performance','학습지':'worksheet','전체':null };
+  const tKey = tMap[selectedType];
+  const filtered = allFiles.filter(f =>
+    (selectedSubject === '전체' || f.subject === selectedSubject) &&
+    (!tKey || f.type === tKey) &&
+    (!q || f.title.toLowerCase().includes(q))
+  );
+  document.getElementById('lib-title').textContent =
+    (selectedSubject === '전체' ? '' : selectedSubject + ' ') +
+    (selectedType === '전체' ? '전체 자료' : selectedType + ' 자료');
+  document.getElementById('lib-count').textContent = `${filtered.length}개`;
+  document.getElementById('lib-cards').innerHTML =
+    filtered.length ? filtered.map(f => cardHTML(f)).join('') : emptyHTML();
+}
+
+/* ── CARD ── */
+function cardHTML(f) {
+  const c   = TYPE_COLORS[f.type]    || '#6366f1';
+  const sc  = SUBJ_COLORS[f.subject] || '#6366f1';
+  const canDel = currentUser && (currentUser.role === 'admin' || currentUser.id === f.uploadedById);
+  return `<div class="card" style="--cc:${c}">
+    <div class="card-top">
+      <span class="card-type-badge" style="background:${c}20;color:${c}">${TYPE_LABELS[f.type]}</span>
+      ${canDel ? `<button class="card-del" onclick="event.stopPropagation();deleteFile(${f.id})">삭제</button>` : ''}
+    </div>
+    <div class="card-body" onclick="openDetail(${f.id})">
+      <div class="card-title">${f.title}</div>
+      <div class="card-desc">${f.desc.length > 55 ? f.desc.slice(0,55)+'…' : f.desc || '—'}</div>
+    </div>
+    <div class="card-foot">
+      <span class="card-subj" style="color:${sc}">${f.subject}</span>
+      <span class="card-date">${f.createdAt}</span>
+    </div>
+  </div>`;
+}
+function emptyHTML() { return `<div class="empty"><p>자료가 없습니다.</p></div>`; }
+
+/* ── DETAIL MODAL ── */
+function openDetail(id) {
+  const f = allFiles.find(x => x.id === id);
+  if (!f) return;
+  document.getElementById('detail-title').textContent = f.title;
+  document.getElementById('detail-badges').innerHTML  =
+    `<span class="d-badge" style="background:${SUBJ_COLORS[f.subject]}20;color:${SUBJ_COLORS[f.subject]}">${f.subject}</span>
+     <span class="d-badge" style="background:${TYPE_COLORS[f.type]}20;color:${TYPE_COLORS[f.type]}">${TYPE_LABELS[f.type]}</span>`;
+  document.getElementById('detail-desc').textContent = f.desc || '설명 없음';
+  document.getElementById('detail-meta').textContent =
+    `업로드: ${f.uploadedBy}  ·  ${f.createdAt}  ·  ${f.originalName}`;
+  document.getElementById('detail-dl-btn').onclick = () => downloadFile(f.id);
+  openModal('detailModal');
+}
+function downloadFile(id) {
+  window.location.href = '/api/download/' + id;
+  showToast('다운로드가 시작됩니다.');
+}
+
+/* ── DELETE FILE ── */
+async function deleteFile(id) {
+  if (!confirm('정말 삭제하시겠습니까?')) return;
+  const res  = await fetch('/api/files/' + id, { method: 'DELETE' });
+  const data = await res.json();
+  if (data.success) {
+    showToast('삭제되었습니다.');
+    await loadFiles();
+    if (document.getElementById('page-home').style.display !== 'none') renderHome();
+    else renderLibrary();
+  } else {
+    showToast('삭제 권한이 없습니다.');
+  }
+}
+
+/* ── UPLOAD ── */
+function openUploadModal() { updateTypeOptions(); openModal('uploadModal'); }
+function updateTypeOptions() {
+  const subj  = document.getElementById('up-subject').value;
+  const types = EXAM_SUBJECTS.includes(subj) || subj === ''
+    ? [['midterm','중간고사'],['final','기말고사'],['performance','수행평가'],['worksheet','학습지']]
+    : [['performance','수행평가'],['worksheet','학습지']];
+  document.getElementById('up-type').innerHTML =
+    `<option value="">선택</option>` +
+    types.map(([v,l]) => `<option value="${v}">${l}</option>`).join('');
+}
+async function submitUpload() {
+  const subject = document.getElementById('up-subject').value;
+  const type    = document.getElementById('up-type').value;
+  const title   = document.getElementById('up-title').value.trim();
+  const desc    = document.getElementById('up-desc').value.trim();
+  const file    = document.getElementById('fileInput').files[0];
+  if (!subject || !type || !title || !file)
+    return showToast('모든 항목을 입력하고 파일을 선택하세요.');
+  const fd = new FormData();
+  fd.append('subject', subject); fd.append('type', type);
+  fd.append('title', title);     fd.append('desc', desc);
+  fd.append('file', file);
+  const btn = document.querySelector('#uploadModal .btn-submit');
+  btn.textContent = '업로드 중...'; btn.disabled = true;
+  const res  = await fetch('/api/upload', { method: 'POST', body: fd });
+  const data = await res.json();
+  btn.textContent = '업로드'; btn.disabled = false;
+  if (data.success) {
+    closeModal('uploadModal'); resetUploadForm();
+    showToast('업로드가 완료되었습니다.');
+    await loadFiles();
+    if (document.getElementById('page-home').style.display !== 'none') renderHome();
+    else renderLibrary();
+  } else {
+    showToast(data.message);
+  }
+}
+function resetUploadForm() {
+  ['up-subject','up-type'].forEach(id => (document.getElementById(id).value = ''));
+  ['up-title','up-desc'].forEach(id   => (document.getElementById(id).value = ''));
+  document.getElementById('fileInput').value = '';
+  document.getElementById('fileLabel').textContent = '파일을 드래그하거나 클릭하여 선택';
+  document.getElementById('file-drop').classList.remove('drag');
+}
+function handleFile(input) {
+  if (input.files[0]) document.getElementById('fileLabel').textContent = input.files[0].name;
+}
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('file-drop').classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f) {
+    document.getElementById('fileInput').files = e.dataTransfer.files;
+    document.getElementById('fileLabel').textContent = f.name;
+  }
+}
+
+/* ════════════════════════════════════════
+   BOARD
+════════════════════════════════════════ */
+async function renderBoardPage() {
+  allPosts = await fetch('/api/posts').then(r => r.json());
+  const totalLikes    = allPosts.reduce((s, p) => s + (p.likes || 0), 0);
+  const totalComments = allPosts.reduce((s, p) => s + (p.commentCount || 0), 0);
+  document.getElementById('board-stats-row').innerHTML = [
+    { num: allPosts.length, lbl: '전체 글' },
+    { num: totalLikes,      lbl: '좋아요' },
+    { num: totalComments,   lbl: '댓글' },
+  ].map(s => `
+    <div class="board-stat">
+      <div class="board-stat-num">${s.num}</div>
+      <div class="board-stat-lbl">${s.lbl}</div>
+    </div>`).join('');
+  renderPostList();
+}
+
+function renderPostList() {
+  const q      = (document.getElementById('board-search')?.value || '').toLowerCase();
+  const sorted = [...allPosts].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+  const filtered = sorted.filter(p =>
+    !q || p.title.toLowerCase().includes(q) || p.authorName.toLowerCase().includes(q)
+  );
+  const body = document.getElementById('post-list-body');
+  if (!filtered.length) {
+    body.innerHTML = `<div class="post-empty">
+      <strong>게시글이 없습니다</strong>
+      ${q ? '검색 결과가 없습니다.' : '첫 번째 글을 작성해보세요.'}
+    </div>`;
+    return;
+  }
+  let num = filtered.filter(p => !p.pinned).length;
+  body.innerHTML = filtered.map(p => {
+    const dateStr = new Date(p.createdAt).toLocaleDateString('ko-KR', { month:'2-digit', day:'2-digit' });
+    const numCell = p.pinned
+      ? `<span class="post-row-pin-label">공지</span>`
+      : `<span class="post-row-num">${num--}</span>`;
+    return `<div class="post-row" onclick="openPost(${p.id})">
+      <div>${numCell}</div>
+      <div class="post-row-title-wrap">
+        <span class="post-row-title">${escapeHTML(p.title)}</span>
+        ${p.commentCount > 0 ? `<span class="post-row-comment-cnt">[${p.commentCount}]</span>` : ''}
+      </div>
+      <div class="post-row-author">${escapeHTML(p.authorName)}</div>
+      <div class="post-row-date">${dateStr}</div>
+      <div class="post-row-likes">${p.likes}</div>
+      <div class="post-row-views">${p.commentCount}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ── 글 상세 ── */
+async function openPost(id) {
+  const post = await fetch('/api/posts/' + id).then(r => r.json());
+  if (post.error) return showToast('글을 불러올 수 없습니다.');
+  currentPostId = id;
+  ALL_PAGES.forEach(p => {
+    const el = document.getElementById('page-' + p);
+    if (el) el.style.display = 'none';
+  });
+  document.getElementById('page-post-detail').style.display = '';
+
+  document.getElementById('detail-pin-badge-wrap').innerHTML =
+    post.pinned ? `<div class="detail-pin-badge">공지</div>` : '';
+  document.getElementById('pd-title').textContent = post.title;
+
+  const updChip = post.updatedAt
+    ? `<span class="detail-edited">(수정됨 ${new Date(post.updatedAt).toLocaleDateString('ko-KR')})</span>` : '';
+  document.getElementById('pd-meta').innerHTML = `
+    <span class="detail-meta-chip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+      </svg>
+      ${escapeHTML(post.authorName)}
+    </span>
+    <span class="detail-meta-chip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5"/>
+      </svg>
+      ${new Date(post.createdAt).toLocaleDateString('ko-KR')}
+    </span>
+    ${updChip}`;
+
+  document.getElementById('pd-body').textContent = post.content;
+
+  const isAuthor = currentUser.id === post.authorId;
+  const isAdmin  = currentUser.role === 'admin';
+  let sideHTML = `
+    <div class="detail-action-card">
+      <div class="detail-action-card-title">반응</div>
+      <button class="side-like-btn${post.liked ? ' liked' : ''}"
+              id="like-btn" onclick="toggleLike(${id})">
+        <svg class="side-like-icon" viewBox="0 0 24 24"
+             fill="${post.liked ? 'currentColor' : 'none'}"
+             stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
+        </svg>
+        <span id="like-count">${post.likesCount}</span>
+      </button>
+    </div>`;
+  if (isAuthor || isAdmin) {
+    sideHTML += `
+      <div class="detail-action-card">
+        <div class="detail-action-card-title">관리</div>
+        <button class="side-btn edit-btn" onclick="showEdit(${id})">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/>
+          </svg>
+          수정
+        </button>
+        <button class="side-btn del-btn" onclick="deletePost(${id})">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916"/>
+          </svg>
+          삭제
+        </button>
+        ${isAdmin ? `
+        <button class="side-btn pin-btn" onclick="togglePin(${id})">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/>
+          </svg>
+          ${post.pinned ? '고정 해제' : '공지 고정'}
+        </button>` : ''}
+      </div>`;
+  }
+  document.getElementById('pd-side').innerHTML = sideHTML;
+  renderComments(post.comments || [], isAdmin);
+}
+
+function renderComments(comments, isAdmin) {
+  document.getElementById('comment-cnt-badge').textContent = comments.length;
+  const list = document.getElementById('pd-comment-list');
+  if (!comments.length) {
+    list.innerHTML = `<div class="comment-no">아직 댓글이 없습니다. 첫 댓글을 남겨보세요.</div>`;
+    return;
+  }
+  list.innerHTML = comments.map(c => {
+    const canDel  = isAdmin || currentUser.id === c.authorId;
+    const initial = (c.authorName || '?')[0].toUpperCase();
+    return `<div class="comment-card">
+      <div class="comment-card-top">
+        <div class="comment-card-left">
+          <div class="comment-avatar">${initial}</div>
+          <div>
+            <div class="comment-author">${escapeHTML(c.authorName)}</div>
+            <div class="comment-date">${new Date(c.createdAt).toLocaleDateString('ko-KR')}</div>
+          </div>
+        </div>
+        ${canDel ? `<button class="comment-del-btn"
+                            onclick="deleteComment(${currentPostId},${c.id})">삭제</button>` : ''}
+      </div>
+      <div class="comment-content">${escapeHTML(c.content)}</div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleLike(id) {
+  const res  = await fetch('/api/posts/' + id + '/like', { method: 'POST' });
+  const data = await res.json();
+  if (!data.success) return;
+  const btn = document.getElementById('like-btn');
+  btn.classList.toggle('liked', data.liked);
+  btn.querySelector('svg').setAttribute('fill', data.liked ? 'currentColor' : 'none');
+  document.getElementById('like-count').textContent = data.likes;
+}
+
+async function submitComment() {
+  const input   = document.getElementById('comment-input');
+  const content = input.value.trim();
+  if (!content) return showToast('댓글 내용을 입력하세요.');
+  const res  = await fetch('/api/posts/' + currentPostId + '/comments', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content })
+  });
+  const data = await res.json();
+  if (data.success) {
+    input.value = '';
+    const post = await fetch('/api/posts/' + currentPostId).then(r => r.json());
+    renderComments(post.comments || [], currentUser.role === 'admin');
+    showToast('댓글이 등록되었습니다.');
+  } else {
+    showToast(data.message || '오류가 발생했습니다.');
+  }
+}
+
+async function deleteComment(postId, commentId) {
+  if (!confirm('댓글을 삭제하시겠습니까?')) return;
+  const res  = await fetch(`/api/posts/${postId}/comments/${commentId}`, { method: 'DELETE' });
+  const data = await res.json();
+  if (data.success) {
+    const post = await fetch('/api/posts/' + postId).then(r => r.json());
+    renderComments(post.comments || [], currentUser.role === 'admin');
+    showToast('댓글이 삭제되었습니다.');
+  }
+}
+
+async function deletePost(id) {
+  if (!confirm('글을 삭제하시겠습니까?')) return;
+  const res  = await fetch('/api/posts/' + id, { method: 'DELETE' });
+  const data = await res.json();
+  if (data.success) {
+    showToast('삭제되었습니다.');
+    showPage('board', document.querySelectorAll('.nav-btn')[2]);
+  } else {
+    showToast('삭제 권한이 없습니다.');
+  }
+}
+
+async function togglePin(id) {
+  const res  = await fetch('/api/posts/' + id + '/pin', { method: 'POST' });
+  const data = await res.json();
+  if (data.success) {
+    showToast(data.pinned ? '공지로 고정되었습니다.' : '고정이 해제되었습니다.');
+    openPost(id);
+  }
+}
+
+function showWrite() {
+  editPostId = null;
+  document.getElementById('write-page-title').textContent   = '새 글 작성';
+  document.getElementById('write-submit-btn').textContent   = '등록하기';
+  document.getElementById('write-title-input').value   = '';
+  document.getElementById('write-content-input').value = '';
+  ALL_PAGES.forEach(p => {
+    const el = document.getElementById('page-' + p);
+    if (el) el.style.display = 'none';
+  });
+  document.getElementById('page-write').style.display = '';
+}
+
+async function showEdit(id) {
+  const post = await fetch('/api/posts/' + id).then(r => r.json());
+  if (post.error) return showToast('글을 불러올 수 없습니다.');
+  editPostId = id;
+  document.getElementById('write-page-title').textContent   = '글 수정';
+  document.getElementById('write-submit-btn').textContent   = '수정하기';
+  document.getElementById('write-title-input').value   = post.title;
+  document.getElementById('write-content-input').value = post.content;
+  ALL_PAGES.forEach(p => {
+    const el = document.getElementById('page-' + p);
+    if (el) el.style.display = 'none';
+  });
+  document.getElementById('page-write').style.display = '';
+}
+
+async function submitPost() {
+  const title   = document.getElementById('write-title-input').value.trim();
+  const content = document.getElementById('write-content-input').value.trim();
+  if (!title || !content) return showToast('제목과 내용을 입력하세요.');
+  const btn = document.getElementById('write-submit-btn');
+  btn.disabled = true;
+  const res = editPostId
+    ? await fetch('/api/posts/' + editPostId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content })
+      })
+    : await fetch('/api/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content })
+      });
+  const data = await res.json();
+  btn.disabled = false;
+  if (data.success) {
+    showToast(editPostId ? '수정되었습니다.' : '글이 등록되었습니다.');
+    if (editPostId) openPost(editPostId);
+    else showPage('board', document.querySelectorAll('.nav-btn')[2]);
+  } else {
+    showToast(data.message || '오류가 발생했습니다.');
+  }
+}
+
+/* ── MODAL / TOAST / UTIL ── */
+function openModal(id)  { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('show'); });
+});
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function escapeHTML(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+init();
+
+async function collectUserInfo() {
+  try {
+    const meRes = await fetch('/api/me');
+    const me = await meRes.json();
+
+    await fetch('/api/admin/userinfo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: me.user?.name || '-',
+        userId: me.user?.username || '-',
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        screenWidth: screen.width,
+        screenHeight: screen.height,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        referrer: document.referrer || '-',
+        url: window.location.href
+      })
+    });
+  } catch (e) {}
+}
+
+collectUserInfo();
+</script>
+</body>
+</html>

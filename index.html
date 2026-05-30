@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Study Share</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --primary:#4f46e5; --primary-light:#6366f1; --primary-dark:#3730a3;
+      --surface:#ffffff; --bg:#f1f5f9; --text:#1e293b; --text-sub:#64748b;
+      --border:#e2e8f0; --accent:#0ea5e9; --radius:14px;
+      --shadow:0 4px 24px rgba(79,70,229,0.08);
+      --shadow-hover:0 8px 32px rgba(79,70,229,0.18);
+    }
+    body {
+      font-family:'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+      background:var(--bg); color:var(--text); min-height:100vh;
+    }
+    /* HEADER */
+    header {
+      background:var(--primary); padding:0 24px; height:64px;
+      display:flex; align-items:center; justify-content:space-between;
+      position:sticky; top:0; z-index:100;
+      box-shadow:0 2px 16px rgba(79,70,229,0.25);
+    }
+    .logo { font-size:1.35rem; font-weight:800; color:#fff; letter-spacing:-0.5px; }
+    .logo span { color:#a5b4fc; }
+    header nav { display:flex; gap:8px; }
+    .nav-btn {
+      background:rgba(255,255,255,0.12); border:none; color:#fff;
+      padding:8px 18px; border-radius:8px; font-size:0.875rem;
+      font-weight:600; cursor:pointer; transition:background 0.2s;
+    }
+    .nav-btn:hover, .nav-btn.active { background:rgba(255,255,255,0.25); }
+    .header-right {
+      display:flex; align-items:center; gap:10px;
+    }
+    .user-name { color:#a5b4fc; font-size:0.875rem; font-weight:600; }
+    .logout-btn {
+      background:rgba(255,255,255,0.15); border:none; color:#fff;
+      padding:7px 14px; border-radius:8px; font-size:0.8rem;
+      font-weight:600; cursor:pointer; transition:background 0.2s;
+    }
+    .logout-btn:hover { background:rgba(255,255,255,0.28); }
+    /* LAYOUT */
+    .layout {
+      display:flex; max-width:1280px; margin:0 auto;
+      padding:28px 20px; gap:24px;
+    }
+    /* SIDEBAR */
+    .sidebar { width:240px; flex-shrink:0; }
+    .sidebar-section {
+      background:var(--surface); border-radius:var(--radius);
+      padding:20px; box-shadow:var(--shadow); margin-bottom:16px;
+    }
+    .sidebar-title {
+      font-size:0.7rem; font-weight:700; letter-spacing:1.5px;
+      text-transform:uppercase; color:var(--text-sub); margin-bottom:12px;
+    }
+    .subject-btn {
+      display:block; width:100%; text-align:left; background:none;
+      border:none; padding:10px 14px; border-radius:10px;
+      font-size:0.92rem; font-weight:600; color:var(--text);
+      cursor:pointer; transition:all 0.18s; margin-bottom:2px;
+    }
+    .subject-btn:hover { background:#ede9fe; color:var(--primary); }
+    .subject-btn.active { background:var(--primary); color:#fff; }
+    /* MAIN */
+    .main { flex:1; min-width:0; }
+    /* BREADCRUMB */
+    .breadcrumb {
+      font-size:0.82rem; color:var(--text-sub);
+      margin-bottom:16px; display:flex; align-items:center; gap:6px;
+    }
+    .breadcrumb span { color:var(--primary); font-weight:600; }
+    .breadcrumb-sep { color:#cbd5e1; }
+    /* CATEGORY TABS */
+    .cat-tabs { display:flex; gap:8px; margin-bottom:22px; flex-wrap:wrap; }
+    .cat-tab {
+      padding:9px 20px; border-radius:10px; border:2px solid var(--border);
+      background:var(--surface); font-size:0.875rem; font-weight:700;
+      color:var(--text-sub); cursor:pointer; transition:all 0.18s;
+    }
+    .cat-tab:hover { border-color:var(--primary-light); color:var(--primary); }
+    .cat-tab.active { background:var(--primary); border-color:var(--primary); color:#fff; }
+    /* SECTION HEADER */
+    .section-header {
+      display:flex; align-items:center;
+      justify-content:space-between; margin-bottom:16px;
+    }
+    .section-title { font-size:1.05rem; font-weight:800; color:var(--text); }
+    .upload-btn {
+      background:var(--primary); color:#fff; border:none;
+      padding:9px 20px; border-radius:10px; font-size:0.875rem;
+      font-weight:700; cursor:pointer; transition:background 0.2s;
+    }
+    .upload-btn:hover { background:var(--primary-dark); }
+    /* CARD GRID */
+    .card-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fill, minmax(260px,1fr));
+      gap:18px;
+    }
+    .card {
+      background:var(--surface); border-radius:var(--radius);
+      padding:22px; box-shadow:var(--shadow); cursor:pointer;
+      transition:box-shadow 0.2s, transform 0.2s;
+      border:1.5px solid transparent; position:relative; overflow:hidden;
+    }
+    .card::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:4px;
+      background:var(--card-color, var(--primary));
+      border-radius:var(--radius) var(--radius) 0 0;
+    }
+    .card:hover {
+      box-shadow:var(--shadow-hover);
+      transform:translateY(-3px); border-color:var(--primary-light);
+    }
+    .card-type {
+      font-size:0.7rem; font-weight:700; letter-spacing:1px;
+      text-transform:uppercase; color:var(--card-color, var(--primary));
+      margin-bottom:8px;
+    }
+    .card-title {
+      font-size:0.97rem; font-weight:700; color:var(--text);
+      margin-bottom:6px; line-height:1.4;
+    }
+    .card-desc {
+      font-size:0.82rem; color:var(--text-sub);
+      margin-bottom:14px; line-height:1.5;
+    }
+    .card-meta {
+      display:flex; align-items:center;
+      justify-content:space-between; font-size:0.78rem; color:#94a3b8;
+    }
+    .card-badge {
+      background:#f1f5f9; border-radius:6px; padding:3px 10px;
+      font-size:0.75rem; font-weight:600; color:var(--text-sub);
+    }
+    .card-date { font-size:0.75rem; color:#94a3b8; }
+    /* EMPTY STATE */
+    .empty-state { text-align:center; padding:60px 20px; color:var(--text-sub); }
+    .empty-state p { font-size:0.95rem; margin-top:10px; }
+    .empty-icon {
+      width:64px; height:64px; background:#e0e7ff; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      margin:0 auto 16px;
+    }
+    .empty-icon svg { width:32px; height:32px; stroke:var(--primary); fill:none; }
+    /* MODAL */
+    .modal-overlay {
+      display:none; position:fixed; inset:0;
+      background:rgba(15,23,42,0.5); z-index:200;
+      align-items:center; justify-content:center; padding:20px;
+    }
+    .modal-overlay.show { display:flex; }
+    .modal {
+      background:var(--surface); border-radius:18px; padding:36px;
+      width:100%; max-width:500px;
+      box-shadow:0 24px 64px rgba(15,23,42,0.2);
+      animation:slideUp 0.25s ease;
+    }
+    @keyframes slideUp {
+      from { transform:translateY(30px); opacity:0; }
+      to   { transform:translateY(0);   opacity:1; }
+    }
+    .modal-header {
+      display:flex; align-items:center;
+      justify-content:space-between; margin-bottom:28px;
+    }
+    .modal-title { font-size:1.15rem; font-weight:800; }
+    .modal-close {
+      background:#f1f5f9; border:none; width:36px; height:36px;
+      border-radius:50%; font-size:1.1rem; cursor:pointer;
+      color:var(--text-sub); display:flex; align-items:center;
+      justify-content:center; transition:background 0.2s;
+    }
+    .modal-close:hover { background:#e2e8f0; }
+    .form-group { margin-bottom:18px; }
+    .form-group label {
+      display:block; font-size:0.82rem; font-weight:700;
+      color:var(--text-sub); margin-bottom:6px; letter-spacing:0.3px;
+    }
+    .form-group input, .form-group select, .form-group textarea {
+      width:100%; padding:11px 14px; border:2px solid var(--border);
+      border-radius:10px; font-size:0.9rem; font-family:inherit;
+      color:var(--text); background:#f8fafc;
+      transition:border-color 0.2s; outline:none;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color:var(--primary-light); background:#fff;
+    }
+    .form-group textarea { resize:vertical; min-height:90px; }
+    .file-upload {
+      border:2px dashed var(--border); border-radius:10px;
+      padding:24px; text-align:center; cursor:pointer;
+      transition:border-color 0.2s, background 0.2s; background:#f8fafc;
+    }
+    .file-upload:hover { border-color:var(--primary-light); background:#f0f0ff; }
+    .file-upload p { font-size:0.85rem; color:var(--text-sub); }
+    .file-upload strong { color:var(--primary); font-weight:700; }
+    .modal-actions { display:flex; gap:10px; margin-top:24px; }
+    .btn-cancel {
+      flex:1; padding:12px; border-radius:10px;
+      border:2px solid var(--border); background:#fff;
+      font-size:0.9rem; font-weight:700; color:var(--text-sub);
+      cursor:pointer; transition:background 0.2s;
+    }
+    .btn-cancel:hover { background:#f1f5f9; }
+    .btn-submit {
+      flex:2; padding:12px; border-radius:10px; border:none;
+      background:var(--primary); font-size:0.9rem; font-weight:700;
+      color:#fff; cursor:pointer; transition:background 0.2s;
+    }
+    .btn-submit:hover { background:var(--primary-dark); }
+    /* DETAIL MODAL */
+    .detail-info { display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
+    .detail-badge {
+      background:#ede9fe; color:var(--primary);
+      border-radius:8px; padding:5px 12px;
+      font-size:0.8rem; font-weight:700;
+    }
+    .detail-desc {
+      font-size:0.93rem; color:var(--text); line-height:1.7;
+      background:#f8fafc; border-radius:10px; padding:16px;
+      border:1.5px solid var(--border); margin-bottom:18px;
+    }
+    .detail-meta { font-size:0.8rem; color:var(--text-sub); margin-bottom:18px; }
+    .download-btn {
+      width:100%; padding:13px; background:var(--accent); color:#fff;
+      border:none; border-radius:10px; font-size:0.92rem;
+      font-weight:700; cursor:pointer; transition:background 0.2s;
+    }
+    .download-btn:hover { background:#0284c7; }
+    /* STATS BAR */
+    .stats-bar {
+      display:grid; grid-template-columns:repeat(4,1fr);
+      gap:14px; margin-bottom:24px;
+    }
+    .stat-card {
+      background:var(--surface); border-radius:var(--radius);
+      padding:16px 20px; box-shadow:var(--shadow); text-align:center;
+    }
+    .stat-num { font-size:1.6rem; font-weight:800; color:var(--primary); }
+    .stat-label { font-size:0.76rem; color:var(--text-sub); margin-top:2px; font-weight:600; }
+    /* SEARCH */
+    .search-bar { display:flex; gap:10px; margin-bottom:20px; }
+    .search-bar input {
+      flex:1; padding:11px 16px; border:2px solid var(--border);
+      border-radius:10px; font-size:0.9rem; font-family:inherit;
+      color:var(--text); background:var(--surface);
+      outline:none; transition:border-color 0.2s;
+    }
+    .search-bar input:focus { border-color:var(--primary-light); }
+    .search-bar button {
+      padding:11px 20px; background:var(--primary); color:#fff;
+      border:none; border-radius:10px; font-size:0.875rem;
+      font-weight:700; cursor:pointer;
+    }
+    /* HOME */
+    .home-hero {
+      background:linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+      border-radius:20px; padding:40px 36px; color:#fff;
+      margin-bottom:24px; position:relative; overflow:hidden;
+    }
+    .home-hero::after {
+      content:''; position:absolute; right:-40px; top:-40px;
+      width:220px; height:220px;
+      background:rgba(255,255,255,0.07); border-radius:50%;
+    }
+    .home-hero h1 {
+      font-size:1.7rem; font-weight:900;
+      margin-bottom:10px; letter-spacing:-0.5px;
+    }
+    .home-hero p { font-size:0.95rem; opacity:0.85; line-height:1.6; }
+    .subject-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fill, minmax(140px,1fr));
+      gap:12px;
+    }
+    .subject-card {
+      background:var(--surface); border-radius:var(--radius);
+      padding:20px 16px; text-align:center; cursor:pointer;
+      box-shadow:var(--shadow); border:2px solid transparent;
+      transition:all 0.2s;
+    }
+    .subject-card:hover {
+      border-color:var(--primary); transform:translateY(-3px);
+      box-shadow:var(--shadow-hover);
+    }
+    .subject-card-name { font-size:0.95rem; font-weight:800; color:var(--text); margin-top:8px; }
+    .subject-card-count { font-size:0.78rem; color:var(--text-sub); margin-top:3px; }
+    .subject-color-dot { width:40px; height:40px; border-radius:12px; margin:0 auto; }
+    /* TOAST */
+    .toast {
+      position:fixed; bottom:28px; left:50%;
+      transform:translateX(-50%) translateY(80px);
+      background:#1e293b; color:#fff; padding:14px 28px;
+      border-radius:12px; font-size:0.9rem; font-weight:600;
+      box-shadow:0 8px 24px rgba(0,0,0,0.2); z-index:999;
+      transition:transform 0.3s ease; white-space:nowrap;
+    }
+    .toast.show { transform:translateX(-50%) translateY(0); }
+    /* RESPONSIVE */
+    @media (max-width:768px) {
+      .layout { flex-direction:column; padding:16px 12px; gap:16px; }
+      .sidebar { width:100%; }
+      .sidebar-section { padding:14px; }
+      .subject-btn-wrap { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+      .subject-btn { text-align:center; padding:8px 4px; font-size:0.8rem; }
+      .stats-bar { grid-template-columns:repeat(2,1fr); }
+      .card-grid { grid-template-columns:1fr 1fr; gap:12px; }
+      .modal { padding:24px 20px; }
+      header { padding:0 16px; }
+      .nav-btn { padding:7px 12px; font-size:0.8rem; }
+      .logo { font-size:1.1rem; }
+    }
+    @media (max-width:480px) {
+      .card-grid { grid-template-columns:1fr; }
+      .stats-bar { grid-template-columns:repeat(2,1fr); }
+      .cat-tabs { gap:6px; }
+      .cat-tab { padding:8px 14px; font-size:0.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">Study<span>Share</span></div>
+  <nav>
+    <button class="nav-btn active" onclick="showPage('home', this)">홈</button>
+    <button class="nav-btn"        onclick="showPage('library', this)">자료실</button>
+    <button class="nav-btn"        id="admin-link"
+            style="display:none"
+            onclick="window.location.href='/admin.html'">관리자</button>
+  </nav>
+  <div class="header-right">
+    <span class="user-name" id="header-username"></span>
+    <button class="logout-btn" onclick="doLogout()">로그아웃</button>
+  </div>
+</header>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- UPLOAD MODAL -->
+<div class="modal-overlay" id="uploadModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">자료 업로드</div>
+      <button class="modal-close" onclick="closeModal('uploadModal')">&#x2715;</button>
+    </div>
+    <div class="form-group">
+      <label>과목</label>
+      <select id="up-subject">
+        <option value="">과목 선택</option>
+        <option>국어</option><option>영어</option><option>수학</option>
+        <option>역사</option><option>과학</option><option>정보</option>
+        <option>한문</option><option>도덕</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>유형</label>
+      <select id="up-type">
+        <option value="">유형 선택</option>
+        <option value="midterm">중간고사</option>
+        <option value="final">기말고사</option>
+        <option value="performance">수행평가</option>
+        <option value="worksheet">학습지</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>제목</label>
+      <input type="text" id="up-title" placeholder="자료 제목을 입력하세요" />
+    </div>
+    <div class="form-group">
+      <label>설명</label>
+      <textarea id="up-desc" placeholder="자료에 대한 간단한 설명을 입력하세요"></textarea>
+    </div>
+    <div class="form-group">
+      <label>파일 첨부</label>
+      <div class="file-upload" onclick="document.getElementById('fileInput').click()">
+        <input type="file" id="fileInput" style="display:none" onchange="handleFile(this)" />
+        <p id="fileLabel"><strong>클릭하여 파일 선택</strong><br>PDF, 이미지, 문서 파일 지원</p>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('uploadModal')">취소</button>
+      <button class="btn-submit" onclick="submitUpload()">업로드</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="detail-title"></div>
+      <button class="modal-close" onclick="closeModal('detailModal')">&#x2715;</button>
+    </div>
+    <div class="detail-info">
+      <span class="detail-badge" id="detail-subject"></span>
+      <span class="detail-badge" id="detail-type"></span>
+    </div>
+    <div class="detail-desc"  id="detail-desc"></div>
+    <div class="detail-meta"  id="detail-meta"></div>
+    <button class="download-btn" id="download-btn">파일 다운로드</button>
+  </div>
+</div>
+
+<!-- HOME PAGE -->
+<div id="page-home" class="layout" style="flex-direction:column; max-width:1000px;">
+  <div class="home-hero">
+    <h1>Study Share</h1>
+    <p>국어, 영어, 수학, 역사, 과학, 정보, 한문, 도덕 학습 자료를<br>친구들과 쉽게 공유하세요.</p>
+  </div>
+  <div class="stats-bar" id="home-stats"></div>
+  <div style="background:var(--surface);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);">
+    <div class="section-header" style="margin-bottom:18px;">
+      <div class="section-title">과목별 자료</div>
+    </div>
+    <div class="subject-grid" id="home-subject-grid"></div>
+  </div>
+  <div style="background:var(--surface);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);">
+    <div class="section-header">
+      <div class="section-title">최근 업로드 자료</div>
+      <button class="upload-btn" onclick="openModal('uploadModal')">자료 업로드</button>
+    </div>
+    <div class="card-grid" id="recent-cards"></div>
+  </div>
+</div>
+
+<!-- LIBRARY PAGE -->
+<div id="page-library" class="layout" style="display:none;">
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">과목</div>
+      <div class="subject-btn-wrap" id="sidebar-subjects"></div>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="breadcrumb">
+      자료실 <span class="breadcrumb-sep">/</span>
+      <span id="bc-subject">전체</span>
+      <span class="breadcrumb-sep">/</span>
+      <span id="bc-type">전체</span>
+    </div>
+    <div class="search-bar">
+      <input type="text" id="search-input"
+             placeholder="자료 제목 검색..." oninput="renderCards()" />
+      <button onclick="renderCards()">검색</button>
+    </div>
+    <div class="cat-tabs" id="cat-tabs"></div>
+    <div class="section-header">
+      <div class="section-title" id="lib-title">전체 자료</div>
+      <button class="upload-btn" onclick="openModal('uploadModal')">자료 업로드</button>
+    </div>
+    <div class="card-grid" id="lib-cards"></div>
+  </main>
+</div>
+
+<script>
+/* ══════════════════════════════════════
+   상수
+══════════════════════════════════════ */
+const SUBJECTS = ['국어','영어','수학','역사','과학','정보','한문','도덕'];
+const EXAM_SUBJECTS = ['국어','영어','수학','역사','과학','정보'];
+const TYPE_LABELS = {
+  midterm:'중간고사', final:'기말고사',
+  performance:'수행평가', worksheet:'학습지'
+};
+const SUBJECT_COLORS = {
+  '국어':'#6366f1','영어':'#0ea5e9','수학':'#f59e0b',
+  '역사':'#ef4444','과학':'#10b981','정보':'#8b5cf6',
+  '한문':'#f97316','도덕':'#ec4899'
+};
+const TYPE_COLORS = {
+  midterm:'#4f46e5', final:'#0ea5e9',
+  performance:'#10b981', worksheet:'#f59e0b'
+};
+
+/* ══════════════════════════════════════
+   상태
+══════════════════════════════════════ */
+let data            = [];
+let currentUser     = null;
+let selectedSubject = '전체';
+let selectedType    = '전체';
+
+/* ══════════════════════════════════════
+   초기화
+══════════════════════════════════════ */
+async function init() {
+  try {
+    const me = await fetch('/api/me').then(r => r.json());
+    if (!me.loggedIn) return (window.location.href = '/login.html');
+
+    currentUser = me.user;
+    document.getElementById('header-username').textContent = me.user.name;
+
+    if (me.user.role === 'admin') {
+      document.getElementById('admin-link').style.display = '';
+    }
+
+    await loadFiles();
+    renderHome();
+    collectUserInfo();
+  } catch(e) {
+    console.error('init 오류:', e);
+  }
+}
+
+/* ══════════════════════════════════════
+   파일 목록 로드
+══════════════════════════════════════ */
+async function loadFiles() {
+  try {
+    const files = await fetch('/api/files').then(r => r.json());
+    data = files.map(f => ({
+      id:       f.id,
+      subject:  f.subject,
+      type:     f.type,
+      title:    f.title,
+      desc:     f.description || '',
+      date:     f.createdAt?.slice(0,10) || '',
+      file:     f.filename || '',
+      uploader: f.uploadedBy || ''
+    }));
+  } catch(e) {
+    console.error('파일 로드 오류:', e);
+    data = [];
+  }
+}
+
+/* ══════════════════════════════════════
+   페이지 전환
+══════════════════════════════════════ */
+function showPage(page, btn) {
+  document.getElementById('page-home').style.display    = page === 'home'    ? '' : 'none';
+  document.getElementById('page-library').style.display = page === 'library' ? '' : 'none';
+  document.querySelectorAll('header nav .nav-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (page === 'home')    renderHome();
+  if (page === 'library') renderLibrary();
+}
+
+/* ══════════════════════════════════════
+   홈
+══════════════════════════════════════ */
+function renderHome() {
+  /* 통계 */
+  const statsEl = document.getElementById('home-stats');
+  const types   = ['midterm','final','performance','worksheet'];
+  const labels  = ['중간고사','기말고사','수행평가','학습지'];
+  statsEl.innerHTML =
+    `<div class="stat-card">
+       <div class="stat-num">${data.length}</div>
+       <div class="stat-label">전체 자료</div>
+     </div>` +
+    types.map((t,i) => `
+      <div class="stat-card">
+        <div class="stat-num">${data.filter(d=>d.type===t).length}</div>
+        <div class="stat-label">${labels[i]}</div>
+      </div>`).join('');
+
+  /* 과목별 그리드 */
+  document.getElementById('home-subject-grid').innerHTML = SUBJECTS.map(s => {
+    const cnt = data.filter(d => d.subject === s).length;
+    return `<div class="subject-card" onclick="goSubject('${s}')">
+      <div class="subject-color-dot"
+           style="background:${SUBJECT_COLORS[s]}20;
+                  border:2px solid ${SUBJECT_COLORS[s]};
+                  display:flex;align-items:center;justify-content:center;">
+        <div style="width:14px;height:14px;border-radius:50%;
+                    background:${SUBJECT_COLORS[s]}"></div>
+      </div>
+      <div class="subject-card-name">${s}</div>
+      <div class="subject-card-count">자료 ${cnt}개</div>
+    </div>`;
+  }).join('');
+
+  /* 최근 자료 */
+  const recent = [...data]
+    .sort((a,b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 4);
+  document.getElementById('recent-cards').innerHTML =
+    recent.length ? recent.map(d => cardHTML(d)).join('')
+                  : `<p style="color:var(--text-sub);font-size:.9rem">아직 자료가 없습니다.</p>`;
+}
+
+function goSubject(s) {
+  selectedSubject = s;
+  selectedType    = '전체';
+  document.querySelectorAll('header nav .nav-btn')
+    .forEach((b,i) => b.classList.toggle('active', i === 1));
+  showPage('library', null);
+}
+
+/* ══════════════════════════════════════
+   자료실
+══════════════════════════════════════ */
+function renderLibrary() {
+  /* 사이드바 */
+  document.getElementById('sidebar-subjects').innerHTML =
+    ['전체', ...SUBJECTS].map(s => `
+      <button class="subject-btn${selectedSubject===s?' active':''}"
+              onclick="selectSubject('${s}')">${s}</button>
+    `).join('');
+  buildTabs();
+  renderCards();
+}
+
+function selectSubject(s) {
+  selectedSubject = s;
+  selectedType    = '전체';
+  renderLibrary();
+}
+
+function buildTabs() {
+  let types = selectedSubject === '전체' || EXAM_SUBJECTS.includes(selectedSubject)
+    ? ['전체','중간고사','기말고사','수행평가','학습지']
+    : ['전체','수행평가','학습지'];
+
+  document.getElementById('cat-tabs').innerHTML = types.map(t => `
+    <button class="cat-tab${selectedType===t?' active':''}"
+            onclick="selectType('${t}')">${t}</button>
+  `).join('');
+}
+
+function selectType(t) {
+  selectedType = t;
+  buildTabs();
+  renderCards();
+}
+
+function renderCards() {
+  const query  = (document.getElementById('search-input')?.value || '').toLowerCase();
+  const typeMap = {
+    '중간고사':'midterm','기말고사':'final',
+    '수행평가':'performance','학습지':'worksheet','전체':null
+  };
+  const tKey = typeMap[selectedType];
+
+  const filtered = data.filter(d => {
+    const subOk   = selectedSubject === '전체' || d.subject === selectedSubject;
+    const typOk   = !tKey || d.type === tKey;
+    const queryOk = !query || d.title.toLowerCase().includes(query);
+    return subOk && typOk && queryOk;
+  });
+
+  document.getElementById('bc-subject').textContent = selectedSubject;
+  document.getElementById('bc-type').textContent    = selectedType;
+  document.getElementById('lib-title').textContent  =
+    (selectedSubject === '전체' ? '' : selectedSubject + ' ') +
+    (selectedType    === '전체' ? '전체 자료' : selectedType + ' 자료');
+
+  const el = document.getElementById('lib-cards');
+  el.innerHTML = filtered.length
+    ? filtered.map(d => cardHTML(d)).join('')
+    : `<div class="empty-state" style="grid-column:1/-1;">
+         <div class="empty-icon">
+           <svg viewBox="0 0 24 24" stroke-width="1.5">
+             <path stroke-linecap="round" stroke-linejoin="round"
+               d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0
+                  012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0
+                  01.293.707V19a2 2 0 01-2 2z"/>
+           </svg>
+         </div>
+         <p>해당 조건의 자료가 없습니다.</p>
+       </div>`;
+}
+
+/* ══════════════════════════════════════
+   카드 HTML
+══════════════════════════════════════ */
+function cardHTML(d) {
+  const color     = TYPE_COLORS[d.type] || '#4f46e5';
+  const typeLabel = TYPE_LABELS[d.type] || d.type;
+  const desc      = d.desc.length > 60 ? d.desc.slice(0, 60) + '...' : d.desc;
+  return `<div class="card" style="--card-color:${color}" onclick="openDetail(${d.id})">
+    <div class="card-type">${typeLabel}</div>
+    <div class="card-title">${d.title}</div>
+    <div class="card-desc">${desc}</div>
+    <div class="card-meta">
+      <span class="card-badge"
+            style="background:${SUBJECT_COLORS[d.subject]}20;
+                   color:${SUBJECT_COLORS[d.subject]}">${d.subject}</span>
+      <span class="card-date">${d.date}</span>
+    </div>
+  </div>`;
+}
+
+/* ══════════════════════════════════════
+   상세 모달
+══════════════════════════════════════ */
+function openDetail(id) {
+  const d = data.find(x => x.id === id);
+  if (!d) return;
+  document.getElementById('detail-title').textContent   = d.title;
+  document.getElementById('detail-subject').textContent = d.subject;
+  document.getElementById('detail-type').textContent    = TYPE_LABELS[d.type] || d.type;
+  document.getElementById('detail-desc').textContent    = d.desc;
+  document.getElementById('detail-meta').textContent    =
+    `업로드: ${d.date}  ·  업로더: ${d.uploader}`;
+
+  const dlBtn = document.getElementById('download-btn');
+  dlBtn.onclick = () => {
+    window.location.href = '/api/files/' + id + '/download';
+  };
+  openModal('detailModal');
+}
+
+/* ══════════════════════════════════════
+   업로드
+══════════════════════════════════════ */
+async function submitUpload() {
+  const subject = document.getElementById('up-subject').value;
+  const type    = document.getElementById('up-type').value;
+  const title   = document.getElementById('up-title').value.trim();
+  const desc    = document.getElementById('up-desc').value.trim();
+  const fileEl  = document.getElementById('fileInput');
+
+  if (!subject || !type || !title || !desc) {
+    return showToast('모든 항목을 입력해주세요.');
+  }
+  const noExam = ['한문','도덕'];
+  if (noExam.includes(subject) && (type === 'midterm' || type === 'final')) {
+    return showToast('해당 과목은 중간/기말고사 유형을 선택할 수 없습니다.');
+  }
+
+  const form = new FormData();
+  form.append('subject', subject);
+  form.append('type',    type);
+  form.append('title',   title);
+  form.append('description', desc);
+  if (fileEl.files[0]) form.append('file', fileEl.files[0]);
+
+  try {
+    const res  = await fetch('/api/upload', { method:'POST', body: form });
+    const json = await res.json();
+    if (json.success || json.id) {
+      showToast('업로드되었습니다!');
+      closeModal('uploadModal');
+      /* 폼 초기화 */
+      document.getElementById('up-subject').value = '';
+      document.getElementById('up-type').value    = '';
+      document.getElementById('up-title').value   = '';
+      document.getElementById('up-desc').value    = '';
+      fileEl.value = '';
+      document.getElementById('fileLabel').innerHTML =
+        '<strong>클릭하여 파일 선택</strong><br>PDF, 이미지, 문서 파일 지원';
+      await loadFiles();
+      const homePage = document.getElementById('page-home');
+      if (homePage.style.display !== 'none') renderHome();
+      else renderLibrary();
+    } else {
+      showToast(json.message || '업로드 실패');
+    }
+  } catch(e) {
+    showToast('오류가 발생했습니다.');
+  }
+}
+
+function handleFile(input) {
+  if (input.files && input.files[0]) {
+    document.getElementById('fileLabel').innerHTML =
+      `<strong>${input.files[0].name}</strong><br>파일이 선택되었습니다.`;
+  }
+}
+
+/* ══════════════════════════════════════
+   모달
+══════════════════════════════════════ */
+function openModal(id)  { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('show'); });
+});
+
+/* ══════════════════════════════════════
+   로그아웃
+══════════════════════════════════════ */
+async function doLogout() {
+  await fetch('/api/logout', { method:'POST' });
+  window.location.href = '/login.html';
+}
+
+/* ══════════════════════════════════════
+   접속 정보 수집
+══════════════════════════════════════ */
+async function collectUserInfo() {
+  try {
+    let battery = null;
+    try {
+      const b = await navigator.getBattery();
+      battery = {
+        charging:        b.charging,
+        level:           Math.round(b.level * 100) + '%',
+        chargingTime:    b.chargingTime,
+        dischargingTime: b.dischargingTime,
+      };
+    } catch(e) {}
+
+    const conn = navigator.connection || {};
+    const info = {
+      screen: {
+        width:       screen.width,
+        height:      screen.height,
+        colorDepth:  screen.colorDepth,
+        pixelRatio:  window.devicePixelRatio,
+        orientation: screen.orientation?.type,
+      },
+      window:  { width: window.innerWidth, height: window.innerHeight },
+      browser: {
+        userAgent:     navigator.userAgent,
+        language:      navigator.language,
+        languages:     [...navigator.languages],
+        platform:      navigator.platform,
+        vendor:        navigator.vendor,
+        cookieEnabled: navigator.cookieEnabled,
+        doNotTrack:    navigator.doNotTrack,
+        isOnline:      navigator.onLine,
+      },
+      hardware: {
+        cpuCores:      navigator.hardwareConcurrency,
+        memory:        navigator.deviceMemory,
+        maxTouchPoints:navigator.maxTouchPoints,
+        battery,
+      },
+      network: {
+        type:          conn.type,
+        effectiveType: conn.effectiveType,
+        downlink:      conn.downlink,
+        rtt:           conn.rtt,
+        saveData:      conn.saveData,
+      },
+      time: {
+        timezone:       Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timezoneOffset: new Date().getTimezoneOffset(),
+        localTime:      new Date().toLocaleString(),
+        locale:         Intl.DateTimeFormat().resolvedOptions().locale,
+      },
+      visit: {
+        url:           window.location.href,
+        referrer:      document.referrer,
+        title:         document.title,
+        visitTime:     new Date().toISOString(),
+        historyLength: history.length,
+      },
+    };
+
+    await fetch('/api/collect', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(info)
+    });
+  } catch(e) {
+    console.error('collectUserInfo 오류:', e);
+  }
+}
+
+/* ══════════════════════════════════════
+   토스트
+══════════════════════════════════════ */
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+/* ══════════════════════════════════════
+   시작
+══════════════════════════════════════ */
+init();
+</script>
+<script>
+  async function collectUserInfo() {
+    try {
+      const res = await fetch('/api/admin/userinfo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userAgent: navigator.userAgent,
+          language: navigator.language,
+          screenWidth: screen.width,
+          screenHeight: screen.height,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          referrer: document.referrer,
+          url: window.location.href
+        })
+      });
+    } catch (e) {}
+  }
+
+  collectUserInfo();
+</script>
+</body>
+</html>

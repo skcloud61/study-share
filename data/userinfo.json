@@ -1,0 +1,108 @@
+[
+  {
+    "userName": "관리자",
+    "username": "admin",
+    "browser": {
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
+      "language": "ko-KR"
+    },
+    "screen": {
+      "width": 1920,
+      "height": 1080
+    },
+    "time": {
+      "timezone": "Asia/Seoul"
+    },
+    "network": {
+      "effectiveType": "-",
+      "type": "-"
+    },
+    "hardware": {
+      "cpuCores": 6,
+      "memory": 16,
+      "battery": {
+        "level": "100%",
+        "charging": true
+      }
+    },
+    "referrer": "http://localhost:3000/login.html",
+    "url": "http://localhost:3000/admin.html",
+    "ip": "::1",
+    "collectedAt": "2026-05-30T07:40:12.895Z"
+  },
+  {
+    "userName": "관리자",
+    "username": "admin",
+    "browser": {
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
+      "language": "ko-KR"
+    },
+    "screen": {
+      "width": 1920,
+      "height": 1080
+    },
+    "time": {
+      "timezone": "Asia/Seoul"
+    },
+    "network": {
+      "effectiveType": "-",
+      "type": "-"
+    },
+    "hardware": {
+      "cpuCores": 6,
+      "memory": 16,
+      "battery": {
+        "level": "100%",
+        "charging": true
+      }
+    },
+    "referrer": "http://localhost:3000/login.html",
+    "url": "http://localhost:3000/admin.html",
+    "ip": "::1",
+    "collectedAt": "2026-05-30T07:44:53.357Z"
+  },
+  {
+    "name": "-",
+    "userId": "-",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
+    "language": "ko-KR",
+    "screenWidth": 1920,
+    "screenHeight": 1080,
+    "timezone": "Asia/Seoul",
+    "referrer": "-",
+    "url": "http://localhost:3000/",
+    "ip": "::1",
+    "collectedAt": "2026-05-30T10:10:05.064Z"
+  },
+  {
+    "userName": "관리자",
+    "username": "admin",
+    "browser": {
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
+      "language": "ko-KR"
+    },
+    "screen": {
+      "width": 1920,
+      "height": 1080
+    },
+    "time": {
+      "timezone": "Asia/Seoul"
+    },
+    "network": {
+      "effectiveType": "-",
+      "type": "-"
+    },
+    "hardware": {
+      "cpuCores": 6,
+      "memory": 16,
+      "battery": {
+        "level": "100%",
+        "charging": true
+      }
+    },
+    "referrer": "http://localhost:3000/login.html",
+    "url": "http://localhost:3000/admin.html",
+    "ip": "::1",
+    "collectedAt": "2026-05-30T10:10:56.949Z"
+  }
+]
