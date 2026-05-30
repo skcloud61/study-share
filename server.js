@@ -83,7 +83,7 @@ const PostSchema = new mongoose.Schema({
 const Post = mongoose.model('Post', PostSchema);
 
 const UserInfoSchema = new mongoose.Schema({
-  userId: Number,
+  userId: String,
   userName: String,
   username: String,
   ip: String,
