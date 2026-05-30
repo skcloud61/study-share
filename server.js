@@ -238,26 +238,32 @@ app.get('/api/files', requireLogin, async (req, res) => {
   }
 });
 
-app.post('/api/upload', requireLogin, upload.single('file'), async (req, res) => {
-  if (!req.file) return res.json({ success: false, message: '파일을 선택해주세요' });
-  const { subject, type, title, desc } = req.body;
-  if (!subject || !type || !title)
-    return res.json({ success: false, message: '모든 항목을 입력해주세요' });
-  const original = req.file.originalname;
-  const item = await File.create({
-    id: Date.now(),
-    subject, type, title,
-    desc: desc || '',
-    originalName: original,
-    savedName: req.file.filename,
-    cloudinaryId: req.file.filename,
-    cloudinaryUrl: req.file.path,
-    ext: path.extname(original).toLowerCase(),
-    uploadedBy: req.session.user.name,
-    uploadedById: req.session.user.id,
-    createdAt: new Date().toISOString().slice(0, 10)
+app.post('/api/upload', requireLogin, (req, res) => {
+  upload.single('file')(req, res, async (err) => {
+    if (err) {
+      console.error('업로드 오류:', JSON.stringify(err), err.message);
+      return res.json({ success: false, message: '파일 업로드 실패: ' + err.message });
+    }
+    if (!req.file) return res.json({ success: false, message: '파일을 선택해주세요' });
+    const { subject, type, title, desc } = req.body;
+    if (!subject || !type || !title)
+      return res.json({ success: false, message: '모든 항목을 입력해주세요' });
+    const original = req.file.originalname;
+    const item = await File.create({
+      id: Date.now(),
+      subject, type, title,
+      desc: desc || '',
+      originalName: original,
+      savedName: req.file.filename,
+      cloudinaryId: req.file.filename,
+      cloudinaryUrl: req.file.path,
+      ext: path.extname(original).toLowerCase(),
+      uploadedBy: req.session.user.name,
+      uploadedById: req.session.user.id,
+      createdAt: new Date().toISOString().slice(0, 10)
+    });
+    res.json({ success: true, item });
   });
-  res.json({ success: true, item });
 });
 
 app.delete('/api/files/:id', requireLogin, async (req, res) => {
