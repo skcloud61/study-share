@@ -6,16 +6,11 @@
   <title>StudyShare</title>
   <link rel="stylesheet" href="style.css"/>
   <style>
-    /* ════════════════════════════════
-       게시판 공통
-    ════════════════════════════════ */
     .board-page-wrap {
       max-width: 960px;
       margin: 0 auto;
       padding: 40px 24px;
     }
-
-    /* ── 게시판 헤더 ── */
     .board-header {
       display: flex;
       flex-direction: column;
@@ -32,7 +27,7 @@
     }
     .board-header-sub {
       font-size: .82rem;
-      color: var(--sub);
+      color: var(--text-sub);
       margin-top: 4px;
     }
     .board-stats-row {
@@ -58,7 +53,7 @@
     }
     .board-stat-lbl {
       font-size: .72rem;
-      color: var(--sub);
+      color: var(--text-sub);
       margin-top: 2px;
       font-weight: 600;
     }
@@ -77,8 +72,6 @@
       align-self: flex-start;
     }
     .write-btn:hover { background: #4f46e5; transform: translateY(-1px); }
-
-    /* ── 검색바 ── */
     .board-search-row {
       display: flex;
       gap: 10px;
@@ -95,7 +88,7 @@
       transform: translateY(-50%);
       width: 16px;
       height: 16px;
-      color: var(--sub);
+      color: var(--text-sub);
     }
     .board-search-input {
       width: 100%;
@@ -113,8 +106,6 @@
       outline: none;
       border-color: #6366f1;
     }
-
-    /* ── 게시글 목록 테이블 ── */
     .post-table-wrap {
       background: var(--surface);
       border-radius: 16px;
@@ -133,7 +124,7 @@
       padding: 13px 0;
       font-size: .72rem;
       font-weight: 700;
-      color: var(--sub);
+      color: var(--text-sub);
       text-transform: uppercase;
       letter-spacing: .8px;
     }
@@ -153,7 +144,7 @@
     .post-row > *         { padding: 14px 0; }
     .post-row-num {
       font-size: .8rem;
-      color: var(--sub);
+      color: var(--text-sub);
       font-weight: 600;
     }
     .post-row-pin-label {
@@ -189,12 +180,12 @@
     }
     .post-row-author {
       font-size: .82rem;
-      color: var(--sub);
+      color: var(--text-sub);
       text-align: center;
     }
     .post-row-date {
       font-size: .8rem;
-      color: var(--sub);
+      color: var(--text-sub);
       text-align: center;
     }
     .post-row-likes {
@@ -205,13 +196,13 @@
     }
     .post-row-views {
       font-size: .8rem;
-      color: var(--sub);
+      color: var(--text-sub);
       text-align: center;
     }
     .post-empty {
       padding: 60px 0;
       text-align: center;
-      color: var(--sub);
+      color: var(--text-sub);
       font-size: .9rem;
     }
     .post-empty strong {
@@ -220,10 +211,6 @@
       color: var(--text);
       margin-bottom: 6px;
     }
-
-    /* ════════════════════════════════
-       글 상세
-    ════════════════════════════════ */
     .post-detail-page {
       max-width: 960px;
       margin: 0 auto;
@@ -240,13 +227,12 @@
       font-size: .85rem;
       font-weight: 700;
       cursor: pointer;
-      color: var(--sub);
+      color: var(--text-sub);
       transition: all .18s;
       margin-bottom: 28px;
     }
     .detail-back-btn:hover { border-color: #6366f1; color: #6366f1; }
     .detail-back-btn svg   { width: 15px; height: 15px; }
-
     .detail-hero {
       background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
       border-radius: 18px;
@@ -304,7 +290,6 @@
     }
     .detail-meta-chip svg { width: 13px; height: 13px; opacity: .8; }
     .detail-edited { font-size: .75rem; color: rgba(255,255,255,.6); }
-
     .detail-layout {
       display: grid;
       grid-template-columns: 1fr 200px;
@@ -338,7 +323,7 @@
     .detail-action-card-title {
       font-size: .72rem;
       font-weight: 700;
-      color: var(--sub);
+      color: var(--text-sub);
       text-transform: uppercase;
       letter-spacing: .8px;
       margin-bottom: 12px;
@@ -357,7 +342,7 @@
       font-weight: 700;
       cursor: pointer;
       transition: all .2s;
-      color: var(--sub);
+      color: var(--text-sub);
     }
     .side-like-btn.liked {
       border-color: #ef4444;
@@ -380,7 +365,7 @@
       font-weight: 700;
       cursor: pointer;
       transition: all .18s;
-      color: var(--sub);
+      color: var(--text-sub);
       margin-top: 8px;
     }
     .side-btn svg { width: 14px; height: 14px; }
@@ -388,8 +373,6 @@
     .side-btn.del-btn:hover   { border-color: #ef4444; color: #ef4444; background: #fff5f5; }
     .side-btn.pin-btn         { border-color: #ede9fe; color: #7c3aed; background: #faf5ff; }
     .side-btn.pin-btn:hover   { background: #ede9fe; }
-
-    /* ── 댓글 ── */
     .comment-section { margin-top: 24px; }
     .comment-section-header {
       display: flex;
@@ -441,7 +424,7 @@
       flex-shrink: 0;
     }
     .comment-author { font-size: .85rem; font-weight: 700; color: var(--text); }
-    .comment-date   { font-size: .75rem; color: var(--sub); }
+    .comment-date   { font-size: .75rem; color: var(--text-sub); }
     .comment-del-btn {
       background: none;
       border: 1px solid var(--border);
@@ -449,7 +432,7 @@
       padding: 3px 11px;
       font-size: .75rem;
       font-weight: 700;
-      color: var(--sub);
+      color: var(--text-sub);
       cursor: pointer;
       transition: all .18s;
     }
@@ -463,7 +446,7 @@
     .comment-no {
       text-align: center;
       padding: 36px 0;
-      color: var(--sub);
+      color: var(--text-sub);
       font-size: .875rem;
       background: var(--surface);
       border: 1px dashed var(--border);
@@ -510,10 +493,6 @@
       transition: background .18s;
     }
     .comment-post-btn:hover { background: #4f46e5; }
-
-    /* ════════════════════════════════
-       글 작성/수정
-    ════════════════════════════════ */
     .write-page-wrap {
       max-width: 860px;
       margin: 0 auto;
@@ -540,7 +519,7 @@
     .write-label {
       font-size: .78rem;
       font-weight: 700;
-      color: var(--sub);
+      color: var(--text-sub);
       text-transform: uppercase;
       letter-spacing: .8px;
       margin-bottom: 8px;
@@ -603,7 +582,7 @@
       font-size: .875rem;
       font-weight: 700;
       cursor: pointer;
-      color: var(--sub);
+      color: var(--text-sub);
       transition: all .18s;
     }
     .write-cancel-btn:hover { border-color: #6366f1; color: #6366f1; }
@@ -620,10 +599,6 @@
     }
     .write-submit-btn:hover { background: #4f46e5; transform: translateY(-1px); }
     .write-submit-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
-
-    /* ════════════════════════════════
-       홈 관리자 패널
-    ════════════════════════════════ */
     .admin-panel {
       background: var(--surface);
       border-radius: 18px;
@@ -672,7 +647,7 @@
       padding: 11px 22px;
       font-size: .82rem;
       font-weight: 700;
-      color: var(--sub);
+      color: var(--text-sub);
       cursor: pointer;
       border-bottom: 2.5px solid transparent;
       transition: all .18s;
@@ -687,14 +662,13 @@
       background: var(--surface);
     }
     .admin-panel-body { padding: 0; }
-
     .ap-table { width: 100%; border-collapse: collapse; }
     .ap-table th {
       padding: 11px 20px;
       text-align: left;
       font-size: .72rem;
       font-weight: 700;
-      color: var(--sub);
+      color: var(--text-sub);
       text-transform: uppercase;
       letter-spacing: .7px;
       background: var(--surface2);
@@ -743,56 +717,38 @@
     .ap-empty {
       text-align: center;
       padding: 36px 0;
-      color: var(--sub);
+      color: var(--text-sub);
       font-size: .875rem;
     }
-
-    /* ── 헤더 관리자 버튼 ── */
     .admin-link-btn {
       padding: 7px 15px;
       border-radius: 9px;
-      border: 1.5px solid #ede9fe;
-      background: #f5f3ff;
-      color: #7c3aed;
+      border: 1.5px solid rgba(255,255,255,.35);
+      background: rgba(255,255,255,.15);
+      color: #fff;
       font-size: .82rem;
       font-weight: 700;
       cursor: pointer;
       transition: all .18s;
     }
-    .admin-link-btn:hover { background: #ede9fe; }
+    .admin-link-btn:hover { background: rgba(255,255,255,.28); }
 
     /* ════════════════════════════════
        게시판 모바일 반응형
     ════════════════════════════════ */
     @media (max-width: 768px) {
-      .board-page-wrap {
-        padding: 20px 12px;
-      }
-      .board-stats-row {
-        gap: 8px;
-        width: 100%;
-      }
-      .board-stat {
-        padding: 10px 0;
-        flex: 1;
-        min-width: 0;
-      }
+      .board-page-wrap { padding: 20px 12px; }
+      .board-stats-row { gap: 8px; width: 100%; }
+      .board-stat { padding: 10px 0; flex: 1; min-width: 0; }
       .board-stat-num { font-size: 1.1rem; }
       .board-stat-lbl { font-size: .68rem; }
-      .write-btn {
-        width: 100%;
-        text-align: center;
-        align-self: stretch;
-      }
-
-      /* 테이블 4열: 번호/제목/작성자/날짜 */
+      .write-btn { width: 100%; text-align: center; align-self: stretch; }
       .post-table-head {
         grid-template-columns: 44px 1fr 70px 58px;
         padding: 0 14px;
       }
       .post-table-head span:nth-child(5),
       .post-table-head span:nth-child(6) { display: none; }
-
       .post-row {
         grid-template-columns: 44px 1fr 70px 58px;
         padding: 0 14px;
@@ -801,52 +757,29 @@
       .post-row > *:nth-child(6) { display: none; }
       .post-row > * { padding: 13px 0; }
       .post-row-title { font-size: .85rem; }
-
-      /* 글 상세 */
       .post-detail-page { padding: 16px 12px; }
-      .detail-hero {
-        padding: 24px 20px;
-        border-radius: 14px;
-      }
+      .detail-hero { padding: 24px 20px; border-radius: 14px; }
       .detail-hero-title { font-size: 1.2rem; }
       .detail-layout { grid-template-columns: 1fr; }
-      .detail-side {
-        flex-direction: row;
-        flex-wrap: wrap;
-        gap: 10px;
-      }
+      .detail-side { flex-direction: row; flex-wrap: wrap; gap: 10px; }
       .detail-action-card { flex: 1; min-width: 140px; }
       .side-btn { margin-top: 4px; }
-
-      /* 댓글 */
       .comment-content { padding-left: 0; margin-top: 8px; }
-
-      /* 글 작성 */
       .write-page-wrap { padding: 16px 12px; }
       .write-card { padding: 20px 14px; }
-
-      /* 관리자 패널 */
       .admin-panel-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 12px;
         padding: 16px;
       }
-      .admin-panel-goto {
-        width: 100%;
-        text-align: center;
-      }
+      .admin-panel-goto { width: 100%; text-align: center; }
       .ap-table th,
-      .ap-table td {
-        padding: 10px 12px;
-        font-size: .78rem;
-      }
+      .ap-table td { padding: 10px 12px; font-size: .78rem; }
       .ap-table th:nth-child(3),
       .ap-table td:nth-child(3) { display: none; }
     }
-
     @media (max-width: 480px) {
-      /* 테이블 3열: 번호/제목/날짜 */
       .post-table-head {
         grid-template-columns: 40px 1fr 56px;
         padding: 0 12px;
@@ -855,9 +788,7 @@
       .post-table-head span:nth-child(4),
       .post-table-head span:nth-child(5),
       .post-table-head span:nth-child(6) { display: none; }
-      /* 날짜(4번째)만 다시 보이기 */
       .post-table-head span:nth-child(4) { display: block; }
-
       .post-row {
         grid-template-columns: 40px 1fr 56px;
         padding: 0 12px;
@@ -867,7 +798,6 @@
       .post-row > *:nth-child(5),
       .post-row > *:nth-child(6) { display: none; }
       .post-row > *:nth-child(4) { display: block; }
-
       .board-stat-num { font-size: 1rem; }
       .board-stat-lbl { font-size: .65rem; }
     }
@@ -877,7 +807,24 @@
 
 <!-- ══════════ HEADER ══════════ -->
 <header>
-  <div class="logo">Study<span>Share</span></div>
+  <div class="logo">
+    <svg width="160" height="36" viewBox="0 0 160 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- 공유 아이콘 -->
+      <circle cx="8"  cy="18" r="4.5" fill="rgba(255,255,255,0.95)"/>
+      <circle cx="28" cy="6"  r="4.5" fill="#a5b4fc"/>
+      <circle cx="28" cy="30" r="4.5" fill="#a5b4fc"/>
+      <line x1="12" y1="15.5" x2="24" y2="8.5"  stroke="rgba(255,255,255,0.8)" stroke-width="2" stroke-linecap="round"/>
+      <line x1="12" y1="20.5" x2="24" y2="27.5" stroke="rgba(255,255,255,0.8)" stroke-width="2" stroke-linecap="round"/>
+      <!-- Study (흰색) -->
+      <text x="40" y="25"
+            font-family="Segoe UI, Apple SD Gothic Neo, sans-serif"
+            font-size="20" font-weight="800" fill="white" letter-spacing="-0.5">Study</text>
+      <!-- Share (연보라) -->
+      <text x="100" y="25"
+            font-family="Segoe UI, Apple SD Gothic Neo, sans-serif"
+            font-size="20" font-weight="800" fill="#a5b4fc" letter-spacing="-0.5">Share</text>
+    </svg>
+  </div>
   <nav id="main-nav">
     <button class="nav-btn active" onclick="showPage('home',this)">홈</button>
     <button class="nav-btn"        onclick="showPage('library',this)">자료실</button>
@@ -981,7 +928,6 @@
     </div>
     <div class="stats-col" id="home-stats"></div>
   </div>
-
   <!-- 관리자 패널 -->
   <div class="section-block" id="admin-panel-section" style="display:none">
     <div class="section-hd">
@@ -1009,9 +955,7 @@
         <div id="ap-tab-pending">
           <table class="ap-table">
             <thead>
-              <tr>
-                <th>이름</th><th>아이디</th><th>가입일</th><th>관리</th>
-              </tr>
+              <tr><th>이름</th><th>아이디</th><th>가입일</th><th>관리</th></tr>
             </thead>
             <tbody id="ap-pending-tbody"></tbody>
           </table>
@@ -1019,9 +963,7 @@
         <div id="ap-tab-all" style="display:none">
           <table class="ap-table">
             <thead>
-              <tr>
-                <th>이름</th><th>아이디</th><th>권한</th><th>상태</th><th>가입일</th><th>관리</th>
-              </tr>
+              <tr><th>이름</th><th>아이디</th><th>권한</th><th>상태</th><th>가입일</th><th>관리</th></tr>
             </thead>
             <tbody id="ap-all-tbody"></tbody>
           </table>
@@ -1029,14 +971,12 @@
       </div>
     </div>
   </div>
-
   <div class="section-block">
     <div class="section-hd">
       <div class="section-title">과목</div>
     </div>
     <div class="subject-grid" id="home-subject-grid"></div>
   </div>
-
   <div class="section-block">
     <div class="section-hd">
       <div class="section-title">최근 업로드</div>
@@ -1196,7 +1136,6 @@ const SUBJ_COLORS   = {
   '한문':'#f97316','도덕':'#ec4899'
 };
 const ALL_PAGES = ['home','library','board','post-detail','write'];
-
 let allFiles        = [];
 let allPosts        = [];
 let selectedSubject = '전체';
@@ -1218,16 +1157,13 @@ async function init() {
   await loadFiles();
   renderHome();
 }
-
 async function loadFiles() {
   allFiles = await fetch('/api/files').then(r => r.json());
 }
-
 async function doLogout() {
   await fetch('/api/logout', { method: 'POST' });
   window.location.href = '/login.html';
 }
-
 function showPage(page, btn) {
   ALL_PAGES.forEach(p => {
     const el = document.getElementById('page-' + p);
@@ -1255,7 +1191,6 @@ function renderHome() {
          <div class="stat-lbl">${labels[i]}</div>
        </div>`)
   ].join('');
-
   document.getElementById('home-subject-grid').innerHTML = SUBJECTS.map(s => {
     const cnt = allFiles.filter(f => f.subject === s).length;
     return `<div class="subj-card" onclick="goSubject('${s}')" style="--c:${SUBJ_COLORS[s]}">
@@ -1264,12 +1199,10 @@ function renderHome() {
       <div class="subj-cnt">자료 ${cnt}개</div>
     </div>`;
   }).join('');
-
   const recent = [...allFiles].slice(0, 4);
   document.getElementById('recent-cards').innerHTML =
     recent.length ? recent.map(f => cardHTML(f)).join('') : emptyHTML();
 }
-
 function goSubject(s) {
   selectedSubject = s; selectedType = '전체';
   document.querySelectorAll('.nav-btn').forEach((b, i) => b.classList.toggle('active', i === 1));
@@ -1307,8 +1240,8 @@ function renderApPending() {
   tbody.innerHTML = pending.map(u => `
     <tr>
       <td style="font-weight:700">${u.name}</td>
-      <td style="color:var(--sub)">${u.username}</td>
-      <td style="color:var(--sub)">${u.createdAt?.slice(0,10) || '-'}</td>
+      <td style="color:var(--text-sub)">${u.username}</td>
+      <td style="color:var(--text-sub)">${u.createdAt?.slice(0,10) || '-'}</td>
       <td>
         <button class="ap-btn approve" onclick="apApprove(${u.id})">승인</button>
         <button class="ap-btn delete"  onclick="apDelete(${u.id})">거절</button>
@@ -1324,7 +1257,7 @@ function renderApAll() {
   tbody.innerHTML = apAllUsers.map(u => `
     <tr>
       <td style="font-weight:700">${u.name}</td>
-      <td style="color:var(--sub)">${u.username}</td>
+      <td style="color:var(--text-sub)">${u.username}</td>
       <td>
         <span class="ap-role-badge ${u.role === 'admin' ? 'ap-role-admin' : 'ap-role-user'}">
           ${u.role === 'admin' ? '관리자' : '일반'}
@@ -1335,7 +1268,7 @@ function renderApAll() {
           ${u.approved ? '승인' : '대기'}
         </span>
       </td>
-      <td style="color:var(--sub)">${u.createdAt?.slice(0,10) || '-'}</td>
+      <td style="color:var(--text-sub)">${u.createdAt?.slice(0,10) || '-'}</td>
       <td>
         ${!u.approved ? `<button class="ap-btn approve" onclick="apApprove(${u.id})">승인</button>` : ''}
         ${u.role !== 'admin' ? `<button class="ap-btn delete" onclick="apDelete(${u.id})">삭제</button>` : ''}
@@ -1528,7 +1461,6 @@ async function renderBoardPage() {
     </div>`).join('');
   renderPostList();
 }
-
 function renderPostList() {
   const q      = (document.getElementById('board-search')?.value || '').toLowerCase();
   const sorted = [...allPosts].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
@@ -1573,11 +1505,9 @@ async function openPost(id) {
     if (el) el.style.display = 'none';
   });
   document.getElementById('page-post-detail').style.display = '';
-
   document.getElementById('detail-pin-badge-wrap').innerHTML =
     post.pinned ? `<div class="detail-pin-badge">공지</div>` : '';
   document.getElementById('pd-title').textContent = post.title;
-
   const updChip = post.updatedAt
     ? `<span class="detail-edited">(수정됨 ${new Date(post.updatedAt).toLocaleDateString('ko-KR')})</span>` : '';
   document.getElementById('pd-meta').innerHTML = `
@@ -1596,9 +1526,7 @@ async function openPost(id) {
       ${new Date(post.createdAt).toLocaleDateString('ko-KR')}
     </span>
     ${updChip}`;
-
   document.getElementById('pd-body').textContent = post.content;
-
   const isAuthor = currentUser.id === post.authorId;
   const isAdmin  = currentUser.role === 'admin';
   let sideHTML = `
@@ -1648,7 +1576,6 @@ async function openPost(id) {
   document.getElementById('pd-side').innerHTML = sideHTML;
   renderComments(post.comments || [], isAdmin);
 }
-
 function renderComments(comments, isAdmin) {
   document.getElementById('comment-cnt-badge').textContent = comments.length;
   const list = document.getElementById('pd-comment-list');
@@ -1675,7 +1602,6 @@ function renderComments(comments, isAdmin) {
     </div>`;
   }).join('');
 }
-
 async function toggleLike(id) {
   const res  = await fetch('/api/posts/' + id + '/like', { method: 'POST' });
   const data = await res.json();
@@ -1685,7 +1611,6 @@ async function toggleLike(id) {
   btn.querySelector('svg').setAttribute('fill', data.liked ? 'currentColor' : 'none');
   document.getElementById('like-count').textContent = data.likes;
 }
-
 async function submitComment() {
   const input   = document.getElementById('comment-input');
   const content = input.value.trim();
@@ -1705,7 +1630,6 @@ async function submitComment() {
     showToast(data.message || '오류가 발생했습니다.');
   }
 }
-
 async function deleteComment(postId, commentId) {
   if (!confirm('댓글을 삭제하시겠습니까?')) return;
   const res  = await fetch(`/api/posts/${postId}/comments/${commentId}`, { method: 'DELETE' });
@@ -1716,7 +1640,6 @@ async function deleteComment(postId, commentId) {
     showToast('댓글이 삭제되었습니다.');
   }
 }
-
 async function deletePost(id) {
   if (!confirm('글을 삭제하시겠습니까?')) return;
   const res  = await fetch('/api/posts/' + id, { method: 'DELETE' });
@@ -1728,7 +1651,6 @@ async function deletePost(id) {
     showToast('삭제 권한이 없습니다.');
   }
 }
-
 async function togglePin(id) {
   const res  = await fetch('/api/posts/' + id + '/pin', { method: 'POST' });
   const data = await res.json();
@@ -1737,7 +1659,6 @@ async function togglePin(id) {
     openPost(id);
   }
 }
-
 function showWrite() {
   editPostId = null;
   document.getElementById('write-page-title').textContent   = '새 글 작성';
@@ -1750,7 +1671,6 @@ function showWrite() {
   });
   document.getElementById('page-write').style.display = '';
 }
-
 async function showEdit(id) {
   const post = await fetch('/api/posts/' + id).then(r => r.json());
   if (post.error) return showToast('글을 불러올 수 없습니다.');
@@ -1765,7 +1685,6 @@ async function showEdit(id) {
   });
   document.getElementById('page-write').style.display = '';
 }
-
 async function submitPost() {
   const title   = document.getElementById('write-title-input').value.trim();
   const content = document.getElementById('write-content-input').value.trim();
@@ -1800,7 +1719,6 @@ function closeModal(id) { document.getElementById(id).classList.remove('show'); 
 document.querySelectorAll('.modal-overlay').forEach(el => {
   el.addEventListener('click', e => { if (e.target === el) el.classList.remove('show'); });
 });
-
 let toastTimer;
 function showToast(msg) {
   const t = document.getElementById('toast');
@@ -1808,20 +1726,17 @@ function showToast(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
 }
-
 function escapeHTML(str) {
   return String(str)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
-
 init();
 
 async function collectUserInfo() {
   try {
     const meRes = await fetch('/api/me');
     const me = await meRes.json();
-
     await fetch('/api/admin/userinfo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1839,7 +1754,6 @@ async function collectUserInfo() {
     });
   } catch (e) {}
 }
-
 collectUserInfo();
 </script>
 </body>
