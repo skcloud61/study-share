@@ -10,9 +10,9 @@ const fontkit = require('@pdf-lib/fontkit');
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
-const cloudinary = require('cloudinary').v2;
+const cloudinaryModule = require('cloudinary');
+const cloudinary = cloudinaryModule.v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -134,7 +134,7 @@ async function initAdmin() {
 //  Multer Cloudinary 설정
 // ================================
 const storage = new CloudinaryStorage({
-  cloudinary,
+  cloudinary: cloudinary,
   params: {
     folder: 'studyshare',
     resource_type: 'raw',
