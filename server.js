@@ -136,8 +136,7 @@ const storage = new CloudinaryStorage({
     file.originalname = original;
     return {
       folder: 'studyshare',
-      resource_type: 'auto',
-       format: '',  // ← 이거 추가! format 강제로 비우기
+      resource_type: 'raw',
       public_id: Date.now() + '_' + Math.random().toString(36).slice(2),
       
     };
