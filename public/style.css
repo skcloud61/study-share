@@ -74,7 +74,7 @@ header nav {
 .nav-btn {
   background: rgba(255,255,255,.12);
   border: none;
-  color: #fff;
+  color: #1e293b;
   padding: 8px 18px;
   border-radius: var(--radius-sm);
   font-size: .875rem;
