@@ -46,7 +46,7 @@ body {
    HEADER
 ══════════════════════════════════════ */
 header {
-  background: var(--primary);
+  background: #ffffff;
   height: 64px;
   display: flex;
   align-items: center;
