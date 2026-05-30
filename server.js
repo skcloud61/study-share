@@ -136,7 +136,7 @@ const storage = new CloudinaryStorage({
     file.originalname = original;
     return {
       folder: 'studyshare',
-      resource_type: 'raw',
+      resource_type: 'auto',
       public_id: Date.now() + '_' + Math.random().toString(36).slice(2),
       
     };
