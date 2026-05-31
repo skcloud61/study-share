@@ -732,6 +732,7 @@
       transition: all .18s;
     }
     .admin-link-btn:hover { background: rgba(255,255,255,.28); }
+    
 
     /* ════════════════════════════════
        게시판 모바일 반응형
@@ -801,6 +802,100 @@
       .board-stat-num { font-size: 1rem; }
       .board-stat-lbl { font-size: .65rem; }
     }
+        /* ════════════════════════════════
+       다운로드 진행률 표시
+    ════════════════════════════════ */
+    .download-progress-box {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      width: 340px;
+      background: var(--surface, #fff);
+      border: 1px solid var(--border, #e5e7eb);
+      border-radius: 16px;
+      padding: 16px 18px;
+      box-shadow: 0 14px 40px rgba(15, 23, 42, .18);
+      z-index: 99999;
+      display: none;
+      animation: downloadPop .22s ease-out;
+    }
+
+    .download-progress-box.show {
+      display: block;
+    }
+
+    @keyframes downloadPop {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .download-progress-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .download-progress-title {
+      font-size: .86rem;
+      font-weight: 800;
+      color: var(--text, #111827);
+      letter-spacing: -.2px;
+    }
+
+    .download-progress-percent {
+      font-size: .82rem;
+      font-weight: 800;
+      color: #6366f1;
+      white-space: nowrap;
+    }
+
+    .download-progress-text {
+      font-size: .78rem;
+      color: var(--text-sub, #6b7280);
+      margin-bottom: 10px;
+      line-height: 1.45;
+      word-break: keep-all;
+    }
+
+    .download-progress-track {
+      width: 100%;
+      height: 9px;
+      background: #eef2ff;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .download-progress-bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #6366f1, #818cf8);
+      border-radius: 999px;
+      transition: width .18s ease;
+    }
+
+    .download-progress-sub {
+      margin-top: 9px;
+      font-size: .7rem;
+      color: var(--text-sub, #6b7280);
+      line-height: 1.4;
+    }
+
+    @media (max-width: 480px) {
+      .download-progress-box {
+        left: 12px;
+        right: 12px;
+        bottom: 16px;
+        width: auto;
+      }
+    }
   </style>
 </head>
 <body>
@@ -841,6 +936,22 @@
 
 <!-- ══════════ TOAST ══════════ -->
 <div class="toast" id="toast"></div>
+<!-- ══════════ DOWNLOAD PROGRESS ══════════ -->
+<div class="download-progress-box" id="downloadProgressBox">
+  <div class="download-progress-top">
+    <div class="download-progress-title">파일 다운로드</div>
+    <div class="download-progress-percent" id="downloadProgressPercent">0%</div>
+  </div>
+  <div class="download-progress-text" id="downloadProgressText">
+    다운로드 준비 중...
+  </div>
+  <div class="download-progress-track">
+    <div class="download-progress-bar" id="downloadProgressBar"></div>
+  </div>
+  <div class="download-progress-sub" id="downloadProgressSub">
+    워터마크를 적용한 뒤 파일을 저장합니다.
+  </div>
+</div>
 
 <!-- ══════════ UPLOAD MODAL ══════════ -->
 <div class="modal-overlay" id="uploadModal">
@@ -1187,7 +1298,157 @@ function showPage(page, btn) {
   if (page === 'library') renderLibrary();
   if (page === 'board')   renderBoardPage();
 }
+function safeFileName(name) {
+  return String(name || 'download')
+    .replace(/[\\/:*?"<>|]/g, '_')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 80) || 'download';
+}
 
+function getFileExtById(fileId) {
+  const f = allFiles.find(x => x.id === fileId);
+  return f?.ext || '.pdf';
+}
+
+function getFileTitleById(fileId) {
+  const f = allFiles.find(x => x.id === fileId);
+  return f?.title || 'download';
+}
+
+function showDownloadProgressBox() {
+  const box = document.getElementById('downloadProgressBox');
+  if (box) box.classList.add('show');
+}
+
+function hideDownloadProgressBox(delay = 1200) {
+  setTimeout(() => {
+    const box = document.getElementById('downloadProgressBox');
+    if (box) box.classList.remove('show');
+  }, delay);
+}
+
+function updateDownloadProgress(percent, text, subText) {
+  const bar = document.getElementById('downloadProgressBar');
+  const pct = document.getElementById('downloadProgressPercent');
+  const txt = document.getElementById('downloadProgressText');
+  const sub = document.getElementById('downloadProgressSub');
+
+  const safePercent = Math.max(0, Math.min(100, Number(percent) || 0));
+
+  if (bar) bar.style.width = safePercent + '%';
+  if (pct) pct.textContent = safePercent + '%';
+  if (txt && text) txt.textContent = text;
+  if (sub && subText) sub.textContent = subText;
+}
+
+async function downloadFileWithProgress(fileId, fileTitle = 'download', fileExt = '.pdf') {
+  const title = safeFileName(fileTitle || getFileTitleById(fileId));
+  const ext = fileExt || getFileExtById(fileId) || '.pdf';
+
+  showDownloadProgressBox();
+  updateDownloadProgress(
+    0,
+    '다운로드 준비 중...',
+    'PDF는 서버에서 워터마크를 적용한 뒤 다운로드됩니다.'
+  );
+
+  try {
+    const response = await fetch(`/api/download/${fileId}`, {
+      method: 'GET',
+      credentials: 'include',
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      throw new Error('다운로드 실패');
+    }
+
+    if (!response.body) {
+      updateDownloadProgress(0, '브라우저가 진행률 표시를 지원하지 않습니다.', '일반 다운로드로 전환합니다.');
+      window.location.href = `/api/download/${fileId}`;
+      hideDownloadProgressBox(1500);
+      return;
+    }
+
+    const total = Number(response.headers.get('content-length')) || 0;
+    const contentType = response.headers.get('content-type') || 'application/octet-stream';
+
+    const reader = response.body.getReader();
+    const chunks = [];
+    let received = 0;
+
+    updateDownloadProgress(
+      3,
+      '서버에서 파일을 준비하는 중...',
+      total > 0 ? `전체 크기: ${(total / 1024 / 1024).toFixed(2)}MB` : '파일 크기 확인 중...'
+    );
+
+    while (true) {
+      const { done, value } = await reader.read();
+
+      if (done) break;
+
+      chunks.push(value);
+      received += value.length;
+
+      if (total > 0) {
+        const percent = Math.round((received / total) * 100);
+        updateDownloadProgress(
+          percent,
+          `다운로드 중... ${percent}%`,
+          `${(received / 1024 / 1024).toFixed(2)}MB / ${(total / 1024 / 1024).toFixed(2)}MB`
+        );
+      } else {
+        const mb = (received / 1024 / 1024).toFixed(2);
+        updateDownloadProgress(
+          35,
+          `다운로드 중... ${mb}MB`,
+          '전체 파일 크기를 확인할 수 없어 용량 기준으로 표시합니다.'
+        );
+      }
+    }
+
+    updateDownloadProgress(98, '파일 저장 중...', '브라우저 다운로드를 시작합니다.');
+
+    const blob = new Blob(chunks, {
+      type: contentType
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+
+    /*
+      PDF는 서버에서 워터마크 적용 후 .pdf로 내려오고,
+      그 외 파일은 원래 확장자를 최대한 유지합니다.
+    */
+    const finalExt = contentType.includes('pdf') ? '.pdf' : ext;
+    a.download = `${title}${finalExt}`;
+
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    URL.revokeObjectURL(url);
+
+    updateDownloadProgress(100, '다운로드 완료', '파일이 저장되었습니다.');
+    hideDownloadProgressBox(1400);
+  } catch (err) {
+    console.error(err);
+
+    updateDownloadProgress(
+      0,
+      '다운로드 실패',
+      '문제가 계속되면 새로고침 후 다시 시도하세요.'
+    );
+
+    showToast('다운로드에 실패했습니다.');
+
+    hideDownloadProgressBox(2200);
+  }
+}
 /* ── HOME ── */
 function renderHome() {
   const types  = ['midterm','final','performance','worksheet'];
@@ -1374,12 +1635,13 @@ function openDetail(id) {
   document.getElementById('detail-desc').textContent = f.desc || '설명 없음';
   document.getElementById('detail-meta').textContent =
     `업로드: ${f.uploadedBy}  ·  ${f.createdAt}  ·  ${f.originalName}`;
-  document.getElementById('detail-dl-btn').onclick = () => downloadFile(f.id);
+ document.getElementById('detail-dl-btn').onclick = () => downloadFile(f.id, f.title, f.ext);
   openModal('detailModal');
 }
-function downloadFile(id) {
-  window.location.href = '/api/download/' + id;
-  showToast('다운로드가 시작됩니다.');
+function downloadFile(id, title, ext) {
+  closeModal('detailModal');
+  showToast('다운로드를 준비합니다.');
+  downloadFileWithProgress(id, title || getFileTitleById(id), ext || getFileExtById(id));
 }
 
 /* ── DELETE FILE ── */
@@ -1749,7 +2011,7 @@ async function collectUserInfo() {
   try {
     const meRes = await fetch('/api/me');
     const me = await meRes.json();
-    await fetch('/api/admin/userinfo', {
+    await fetch('/api/collect', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -62,8 +62,6 @@ cloudinary.config({
 
 console.log('Cloudinary 설정 완료');
 console.log('CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME);
-console.log('API_KEY:', process.env.CLOUDINARY_API_KEY);
-console.log('API_SECRET 길이:', process.env.CLOUDINARY_API_SECRET.length);
 
 
 // ================================
@@ -220,9 +218,9 @@ const upload = multer({
 
       const ext = path.extname(file.originalname).toLowerCase();
 
-      if (!allowed.includes(ext)) {
-        return cb(new Error('허용되지 않는 파일 형식입니다.'));
-      }
+if (!allowed.includes(ext)) {
+  return cb(new Error('허용되지 않는 파일 형식입니다.'));
+}
 
       cb(null, true);
     } catch (e) {
@@ -234,7 +232,8 @@ const upload = multer({
 
 function uploadToCloudinary(file) {
   return new Promise((resolve, reject) => {
-    const publicId = Date.now() + '_' + Math.random().toString(36).slice(2);
+    const ext = path.extname(file.originalname).toLowerCase();
+    const publicId = Date.now() + '_' + Math.random().toString(36).slice(2) + ext;
 
     const stream = cloudinary.uploader.upload_stream(
       {
@@ -259,6 +258,8 @@ function uploadToCloudinary(file) {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(PUBLIC_DIR));
+
+app.set('trust proxy', 1);
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'studyshare-secret-2025',
@@ -496,6 +497,53 @@ app.post('/api/upload', requireLogin, (req, res) => {
     }
   });
 });
+app.delete('/api/files/:id', requireLogin, async (req, res) => {
+  try {
+    const file = await File.findOne({
+      id: Number(req.params.id)
+    });
+
+    if (!file) {
+      return res.status(404).json({
+        success: false,
+        message: '파일을 찾을 수 없습니다.'
+      });
+    }
+
+    const user = req.session.user;
+
+    if (user.role !== 'admin' && file.uploadedById !== user.id) {
+      return res.status(403).json({
+        success: false,
+        message: '삭제 권한이 없습니다.'
+      });
+    }
+
+    if (file.cloudinaryId) {
+      try {
+        await cloudinary.uploader.destroy(file.cloudinaryId, {
+          resource_type: 'raw'
+        });
+      } catch (e) {
+        console.error('Cloudinary 파일 삭제 실패:', e.message);
+      }
+    }
+
+    await File.deleteOne({
+      id: Number(req.params.id)
+    });
+
+    res.json({
+      success: true
+    });
+  } catch (e) {
+    console.error('파일 삭제 오류:', e.message);
+    res.json({
+      success: false,
+      message: '파일 삭제 중 오류가 발생했습니다.'
+    });
+  }
+});
 
 
 // ================================
@@ -510,9 +558,23 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
     return res.status(404).send('파일 없음');
   }
 
-  const userName = req.session.user.name;
-  const dateStr = new Date().toLocaleString('ko-KR', {
-    timeZone: 'Asia/Seoul'
+  const user = req.session.user;
+
+  const userName = user.name || '-';
+  const username = user.username || '-';
+  const userId = user.id || '-';
+
+  const rawIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '-';
+  const ip = String(rawIp).split(',')[0].trim();
+
+  const downloadedAt = new Date().toLocaleString('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
   });
 
   if (file.ext === '.pdf') {
@@ -528,6 +590,7 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
       }
 
       const pdfBytes = Buffer.concat(chunks);
+
       const pdfDoc = await PDFDocument.load(pdfBytes, {
         ignoreEncryption: true
       });
@@ -543,51 +606,111 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
         font = await pdfDoc.embedFont(StandardFonts.Helvetica);
       }
 
+      pdfDoc.setTitle(file.title || 'StudyShare PDF');
+      pdfDoc.setAuthor('StudyShare');
+      pdfDoc.setSubject('StudyShare protected document');
+      pdfDoc.setCreator('StudyShare');
+      pdfDoc.setProducer('StudyShare Watermark System');
+      pdfDoc.setModificationDate(new Date());
+      pdfDoc.setCreationDate(new Date());
+
       const pages = pdfDoc.getPages();
 
-      pages.forEach(page => {
+      pages.forEach((page, index) => {
         const { width, height } = page.getSize();
 
-        const wText = `${userName}  |  StudyShare`;
+        const mainWatermark = `${userName}  |  StudyShare`;
+        const footerLine = `StudyShare | ${userName} | ${downloadedAt} | 무단 배포 금지`;
+        const detailLine1 = `다운로드: ${downloadedAt}`;
+        const detailLine2 = `IP: ${ip}`;
+        const detailLine3 = `ID: ${username} / UID: ${userId} / 이름: ${userName}`;
+        const detailLine4 = `문서 추적용 워터마크 - 무단 배포 및 편집 금지`;
 
         [
-          { x: width * 0.1, y: height * 0.22 },
-          { x: width * 0.1, y: height * 0.50 },
-          { x: width * 0.1, y: height * 0.78 }
+          { x: width * 0.08, y: height * 0.20 },
+          { x: width * 0.08, y: height * 0.48 },
+          { x: width * 0.08, y: height * 0.76 }
         ].forEach(pos => {
-          page.drawText(wText, {
+          page.drawText(mainWatermark, {
             x: pos.x,
             y: pos.y,
             size: 22,
             font,
             color: rgb(0.6, 0.6, 0.6),
-            opacity: 0.25,
+            opacity: 0.22,
             rotate: degrees(45)
           });
         });
 
-        page.drawText(
-          `StudyShare | ${userName} | ${dateStr} | 무단 배포 금지`,
-          {
-            x: 16,
-            y: 10,
-            size: 8,
-            font,
-            color: rgb(0.4, 0.4, 0.4),
-            opacity: 0.85
-          }
-        );
+        page.drawText(footerLine, {
+          x: 16,
+          y: 10,
+          size: 8,
+          font,
+          color: rgb(0.35, 0.35, 0.35),
+          opacity: 0.9
+        });
+
+        page.drawText(detailLine1, {
+          x: 16,
+          y: 32,
+          size: 7,
+          font,
+          color: rgb(0.25, 0.25, 0.25),
+          opacity: 0.9
+        });
+
+        page.drawText(detailLine2, {
+          x: 16,
+          y: 23,
+          size: 7,
+          font,
+          color: rgb(0.25, 0.25, 0.25),
+          opacity: 0.9
+        });
+
+        page.drawText(detailLine3, {
+          x: 16,
+          y: 46,
+          size: 7,
+          font,
+          color: rgb(0.25, 0.25, 0.25),
+          opacity: 0.9
+        });
+
+        page.drawText(detailLine4, {
+          x: 16,
+          y: 58,
+          size: 7,
+          font,
+          color: rgb(0.55, 0.1, 0.1),
+          opacity: 0.9
+        });
+
+        page.drawText(`Page ${index + 1} / ${pages.length}`, {
+          x: width - 80,
+          y: 10,
+          size: 7,
+          font,
+          color: rgb(0.35, 0.35, 0.35),
+          opacity: 0.8
+        });
       });
 
-      const out = await pdfDoc.save();
+      const out = await pdfDoc.save({
+        useObjectStreams: false
+      });
+
+      const outputBuffer = Buffer.from(out);
 
       res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Length', outputBuffer.length);
       res.setHeader(
         'Content-Disposition',
         `attachment; filename*=UTF-8''${encodeURIComponent(file.title)}.pdf`
       );
 
-      return res.send(Buffer.from(out));
+      return res.send(outputBuffer);
     } catch (e) {
       console.error('PDF 워터마크 오류:', e.message);
       return res.redirect(file.cloudinaryUrl);
@@ -1001,7 +1124,7 @@ app.get('/api/admin/userinfo', requireAdmin, async (req, res) => {
 });
 
 
-app.post('/api/admin/userinfo', async (req, res) => {
+app.post('/api/admin/userinfo', requireAdmin, async (req, res) => {
   try {
     await UserInfo.create({
       ...req.body,
