@@ -11,7 +11,6 @@ const path = require('path');
 const fs = require('fs');
 const https = require('https');
 const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -27,10 +26,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// 🔍 디버그용 - 나중에 지울 것
-console.log('CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME);
-console.log('API_KEY:', process.env.CLOUDINARY_API_KEY);
-console.log('API_SECRET 길이:', process.env.CLOUDINARY_API_SECRET?.length);
+
 
 
 // ================================
@@ -132,17 +128,38 @@ async function initAdmin() {
 // ================================
 //  Multer Cloudinary 설정
 // ================================
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,  // 명시적으로 작성
-  params: {
-    folder: 'studyshare',
-    resource_type: 'raw',
-    public_id: (req, file) => {
-      file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
-      return Date.now() + '_' + Math.random().toString(36).slice(2);
-    }
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
+
+    const allowed = ['.pdf', '.png', '.jpg', '.jpeg', '.docx', '.pptx', '.hwp'];
+    const ext = path.extname(file.originalname).toLowerCase();
+
+    cb(null, allowed.includes(ext));
   }
 });
+
+function uploadToCloudinary(file) {
+  return new Promise((resolve, reject) => {
+    const publicId = Date.now() + '_' + Math.random().toString(36).slice(2);
+
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: 'studyshare',
+        resource_type: 'raw',
+        public_id: publicId
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
+
+    stream.end(file.buffer);
+  });
+}
 const upload = multer({
   storage,
   limits: { fileSize: 50 * 1024 * 1024 },
@@ -242,43 +259,58 @@ app.get('/api/files', requireLogin, async (req, res) => {
 app.post('/api/upload', requireLogin, (req, res) => {
   upload.single('file')(req, res, async (err) => {
     if (err) {
-      console.error('업로드 오류:', JSON.stringify(err), err.message);
-      return res.json({ success: false, message: '파일 업로드 실패: ' + err.message });
+      console.error('업로드 오류:', err);
+      return res.json({
+        success: false,
+        message: '파일 업로드 실패: ' + err.message
+      });
     }
-    if (!req.file) return res.json({ success: false, message: '파일을 선택해주세요' });
-    const { subject, type, title, desc } = req.body;
-    if (!subject || !type || !title)
-      return res.json({ success: false, message: '모든 항목을 입력해주세요' });
-    const original = req.file.originalname;
-    const item = await File.create({
-      id: Date.now(),
-      subject, type, title,
-      desc: desc || '',
-      originalName: original,
-      savedName: req.file.filename,
-      cloudinaryId: req.file.filename,
-      cloudinaryUrl: req.file.path,
-      ext: path.extname(original).toLowerCase(),
-      uploadedBy: req.session.user.name,
-      uploadedById: req.session.user.id,
-      createdAt: new Date().toISOString().slice(0, 10)
-    });
-    res.json({ success: true, item });
-  });
-});
 
-app.delete('/api/files/:id', requireLogin, async (req, res) => {
-  const file = await File.findOne({ id: Number(req.params.id) });
-  if (!file) return res.json({ success: false });
-  if (req.session.user.role !== 'admin' && file.uploadedById !== req.session.user.id)
-    return res.status(403).json({ error: '권한 없음' });
-  try {
-    await cloudinary.uploader.destroy(file.cloudinaryId, { resource_type: 'raw' });
-  } catch (e) {
-    console.log('Cloudinary 삭제 실패:', e.message);
-  }
-  await File.deleteOne({ id: Number(req.params.id) });
-  res.json({ success: true });
+    if (!req.file) {
+      return res.json({
+        success: false,
+        message: '파일을 선택해주세요'
+      });
+    }
+
+    const { subject, type, title, desc } = req.body;
+
+    if (!subject || !type || !title) {
+      return res.json({
+        success: false,
+        message: '모든 항목을 입력해주세요'
+      });
+    }
+
+    try {
+      const original = req.file.originalname;
+      const result = await uploadToCloudinary(req.file);
+
+      const item = await File.create({
+        id: Date.now(),
+        subject,
+        type,
+        title,
+        desc: desc || '',
+        originalName: original,
+        savedName: result.public_id,
+        cloudinaryId: result.public_id,
+        cloudinaryUrl: result.secure_url,
+        ext: path.extname(original).toLowerCase(),
+        uploadedBy: req.session.user.name,
+        uploadedById: req.session.user.id,
+        createdAt: new Date().toISOString().slice(0, 10)
+      });
+
+      res.json({ success: true, item });
+    } catch (e) {
+      console.error('Cloudinary 업로드 실패:', e);
+      res.json({
+        success: false,
+        message: 'Cloudinary 업로드 실패: ' + e.message
+      });
+    }
+  });
 });
 
 // ================================
