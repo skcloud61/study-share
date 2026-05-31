@@ -907,3 +907,53 @@ header nav {
     max-width: 100%;
   }
 }
+/* 모바일 메뉴 글자 세로 깨짐 방지 */
+header nav,
+.nav,
+.navbar,
+.nav-links,
+.menu {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 18px;
+}
+
+header nav a,
+.nav a,
+.navbar a,
+.nav-links a,
+.menu a {
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  writing-mode: horizontal-tb;
+  text-orientation: mixed;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+/* 모바일 헤더 정리 */
+@media (max-width: 768px) {
+  header,
+  .header,
+  .navbar {
+    padding: 16px 18px;
+  }
+
+  header nav,
+  .nav,
+  .nav-links,
+  .menu {
+    gap: 16px;
+  }
+
+  header nav a,
+  .nav a,
+  .nav-links a,
+  .menu a {
+    font-size: 15px;
+    white-space: nowrap;
+    word-break: keep-all;
+  }
+}

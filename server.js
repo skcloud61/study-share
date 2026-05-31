@@ -620,82 +620,79 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
         const { width, height } = page.getSize();
 
         const mainWatermark = `${userName}  |  StudyShare`;
-        const footerLine = `StudyShare | ${userName} | ${downloadedAt} | 무단 배포 금지`;
-        const detailLine1 = `다운로드: ${downloadedAt}`;
-        const detailLine2 = `IP: ${ip}`;
-        const detailLine3 = `ID: ${username} / UID: ${userId} / 이름: ${userName}`;
-        const detailLine4 = `문서 추적용 워터마크 - 무단 배포 및 편집 금지`;
+const footerLine = `StudyShare | ${userName} | ${downloadedAt} | 무단 배포 금지`;
+const detailLine1 = `다운로드: ${downloadedAt}`;
+const detailLine2 = `IP: ${ip}`;
+const detailLine3 = `ID: ${username} / UID: ${userId} / 이름: ${userName}`;
 
-        [
-          { x: width * 0.08, y: height * 0.20 },
-          { x: width * 0.08, y: height * 0.48 },
-          { x: width * 0.08, y: height * 0.76 }
-        ].forEach(pos => {
-          page.drawText(mainWatermark, {
-            x: pos.x,
-            y: pos.y,
-            size: 22,
-            font,
-            color: rgb(0.6, 0.6, 0.6),
-            opacity: 0.22,
-            rotate: degrees(45)
-          });
-        });
+// 여백을 넉넉히 줘서 잘림 방지
+const marginX = 36;
+const bottomY = 34;
 
-        page.drawText(footerLine, {
-          x: 16,
-          y: 10,
-          size: 8,
-          font,
-          color: rgb(0.35, 0.35, 0.35),
-          opacity: 0.9
-        });
+// 대각선 워터마크 위치를 안쪽으로 이동
+[
+  { x: width * 0.18, y: height * 0.22 },
+  { x: width * 0.18, y: height * 0.50 },
+  { x: width * 0.18, y: height * 0.78 }
+].forEach(pos => {
+  page.drawText(mainWatermark, {
+    x: pos.x,
+    y: pos.y,
+    size: 19,
+    font,
+    color: rgb(0.6, 0.6, 0.6),
+    opacity: 0.18,
+    rotate: degrees(45)
+  });
+});
 
-        page.drawText(detailLine1, {
-          x: 16,
-          y: 32,
-          size: 7,
-          font,
-          color: rgb(0.25, 0.25, 0.25),
-          opacity: 0.9
-        });
+// 하단 정보도 페이지 안쪽으로 올림
+page.drawText(detailLine3, {
+  x: marginX,
+  y: bottomY + 36,
+  size: 7,
+  font,
+  color: rgb(0.28, 0.28, 0.28),
+  opacity: 0.85
+});
 
-        page.drawText(detailLine2, {
-          x: 16,
-          y: 23,
-          size: 7,
-          font,
-          color: rgb(0.25, 0.25, 0.25),
-          opacity: 0.9
-        });
+page.drawText(detailLine1, {
+  x: marginX,
+  y: bottomY + 24,
+  size: 7,
+  font,
+  color: rgb(0.28, 0.28, 0.28),
+  opacity: 0.85
+});
 
-        page.drawText(detailLine3, {
-          x: 16,
-          y: 46,
-          size: 7,
-          font,
-          color: rgb(0.25, 0.25, 0.25),
-          opacity: 0.9
-        });
+page.drawText(detailLine2, {
+  x: marginX,
+  y: bottomY + 12,
+  size: 7,
+  font,
+  color: rgb(0.28, 0.28, 0.28),
+  opacity: 0.85
+});
 
-        page.drawText(detailLine4, {
-          x: 16,
-          y: 58,
-          size: 7,
-          font,
-          color: rgb(0.55, 0.1, 0.1),
-          opacity: 0.9
-        });
+page.drawText(footerLine, {
+  x: marginX,
+  y: bottomY,
+  size: 7,
+  font,
+  color: rgb(0.35, 0.35, 0.35),
+  opacity: 0.85
+});
 
-        page.drawText(`Page ${index + 1} / ${pages.length}`, {
-          x: width - 80,
-          y: 10,
-          size: 7,
-          font,
-          color: rgb(0.35, 0.35, 0.35),
-          opacity: 0.8
-        });
-      });
+page.drawText(`Page ${index + 1} / ${pages.length}`, {
+  x: Math.max(width - 110, marginX),
+  y: bottomY,
+  size: 7,
+  font,
+  color: rgb(0.35, 0.35, 0.35),
+  opacity: 0.75
+});
+
+});
 
       const out = await pdfDoc.save({
         useObjectStreams: false
