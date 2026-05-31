@@ -1,4 +1,5 @@
 require('dotenv').config();
+
 const mongoose = require('mongoose');
 const express = require('express');
 const session = require('express-session');
@@ -10,23 +11,59 @@ const fontkit = require('@pdf-lib/fontkit');
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
-const cloudinary = require('cloudinary').v2;
+
+// Cloudinary는 반드시 v2로 불러오기
+const cloudinaryModule = require('cloudinary');
+const cloudinary = cloudinaryModule.v2;
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const FONTS_DIR = path.join(__dirname, 'fonts');
 const FONT_PATH = path.join(FONTS_DIR, 'NotoSansKR.ttf');
 
-if (!fs.existsSync(FONTS_DIR)) fs.mkdirSync(FONTS_DIR, { recursive: true });
+if (!fs.existsSync(FONTS_DIR)) {
+  fs.mkdirSync(FONTS_DIR, { recursive: true });
+}
 
-// Cloudinary 설정
+// ================================
+//  환경변수 확인
+// ================================
+const requiredEnv = [
+  'MONGODB_URI',
+  'CLOUDINARY_CLOUD_NAME',
+  'CLOUDINARY_API_KEY',
+  'CLOUDINARY_API_SECRET'
+];
+
+const missingEnv = requiredEnv.filter((key) => !process.env[key]);
+
+if (missingEnv.length > 0) {
+  console.error('필수 환경변수가 없습니다:', missingEnv.join(', '));
+  process.exit(1);
+}
+
+if (!cloudinary || !cloudinary.uploader) {
+  console.error('Cloudinary v2 로드 실패');
+  console.error('cloudinaryModule keys:', Object.keys(cloudinaryModule || {}));
+  process.exit(1);
+}
+
+// ================================
+//  Cloudinary 설정
+// ================================
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true
 });
 
-
+console.log('Cloudinary 설정 완료');
+console.log('CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME);
+console.log('API_KEY:', process.env.CLOUDINARY_API_KEY);
+console.log('API_SECRET 길이:', process.env.CLOUDINARY_API_SECRET.length);
 
 
 // ================================
@@ -41,7 +78,9 @@ const UserSchema = new mongoose.Schema({
   approved: { type: Boolean, default: false },
   createdAt: String
 });
-const User = mongoose.model('User', UserSchema);
+
+const User = mongoose.models.User || mongoose.model('User', UserSchema);
+
 
 const FileSchema = new mongoose.Schema({
   id: Number,
@@ -58,7 +97,9 @@ const FileSchema = new mongoose.Schema({
   uploadedById: Number,
   createdAt: String
 });
-const File = mongoose.model('File', FileSchema);
+
+const File = mongoose.models.File || mongoose.model('File', FileSchema);
+
 
 const PostSchema = new mongoose.Schema({
   id: Number,
@@ -78,7 +119,9 @@ const PostSchema = new mongoose.Schema({
   }],
   pinned: { type: Boolean, default: false }
 });
-const Post = mongoose.model('Post', PostSchema);
+
+const Post = mongoose.models.Post || mongoose.model('Post', PostSchema);
+
 
 const UserInfoSchema = new mongoose.Schema({
   userId: String,
@@ -87,7 +130,8 @@ const UserInfoSchema = new mongoose.Schema({
   ip: String,
   collectedAt: String
 }, { strict: false });
-const UserInfo = mongoose.model('UserInfo', UserInfoSchema);
+
+const UserInfo = mongoose.models.UserInfo || mongoose.model('UserInfo', UserInfoSchema);
 
 // ================================
 //  폰트 다운로드
