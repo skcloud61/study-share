@@ -907,53 +907,174 @@ header nav {
     max-width: 100%;
   }
 }
-/* 모바일 메뉴 글자 세로 깨짐 방지 */
-header nav,
-.nav,
-.navbar,
-.nav-links,
-.menu {
-  display: flex;
-  align-items: center;
-  flex-wrap: nowrap;
-  gap: 18px;
+/* ================================
+   HEADER / MOBILE NAV 최종 수정
+   - 자료실/게시판 세로 깨짐 방지
+   - 로그아웃 글씨 보이게 수정
+================================ */
+
+/* 데스크톱 포함 기본 헤더 정리 */
+header {
+  gap: 10px;
 }
 
-header nav a,
-.nav a,
-.navbar a,
-.nav-links a,
-.menu a {
-  white-space: nowrap;
-  word-break: keep-all;
-  overflow-wrap: normal;
-  writing-mode: horizontal-tb;
-  text-orientation: mixed;
-  flex-shrink: 0;
-  line-height: 1.2;
+header nav {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  gap: 4px !important;
+  min-width: 0;
 }
 
-/* 모바일 헤더 정리 */
+.nav-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  width: auto !important;
+  min-width: max-content !important;
+  max-width: none !important;
+  flex: 0 0 auto !important;
+
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+
+  color: #1e293b !important;
+}
+
+/* 로그아웃 글씨 보이게 */
+.logout-btn {
+  color: #1e293b !important;
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.logout-btn:hover {
+  color: #4f46e5 !important;
+  background: #eef2ff !important;
+}
+
+/* 사용자 이름도 흰 배경에서 잘 보이게 */
+.user-name {
+  color: #475569 !important;
+}
+
+/* 모바일 헤더 */
 @media (max-width: 768px) {
-  header,
-  .header,
-  .navbar {
-    padding: 16px 18px;
+  header {
+    height: 56px !important;
+    padding: 0 10px !important;
+    gap: 6px !important;
+    overflow: visible !important;
   }
 
-  header nav,
-  .nav,
-  .nav-links,
-  .menu {
-    gap: 16px;
+  .logo {
+    flex: 0 0 auto !important;
   }
 
-  header nav a,
-  .nav a,
-  .nav-links a,
-  .menu a {
-    font-size: 15px;
-    white-space: nowrap;
-    word-break: keep-all;
+  .logo svg {
+    width: 118px !important;
+    height: auto !important;
+  }
+
+  header nav {
+    flex: 0 1 auto !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-wrap: nowrap !important;
+    gap: 2px !important;
+    min-width: 0 !important;
+  }
+
+  .nav-btn {
+    display: inline-flex !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: max-content !important;
+
+    padding: 5px 7px !important;
+    font-size: 13px !important;
+    line-height: 1.1 !important;
+    letter-spacing: -0.04em !important;
+
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+    writing-mode: horizontal-tb !important;
+    text-orientation: mixed !important;
+  }
+
+  .header-right {
+    flex: 0 0 auto !important;
+    gap: 4px !important;
+  }
+
+  .user-name {
+    display: none !important;
+  }
+
+  .logout-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    width: auto !important;
+    min-width: max-content !important;
+    padding: 5px 7px !important;
+    font-size: 12px !important;
+    line-height: 1.1 !important;
+
+    color: #1e293b !important;
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+  }
+}
+
+/* 더 작은 화면 */
+@media (max-width: 420px) {
+  header {
+    padding: 0 8px !important;
+    gap: 4px !important;
+  }
+
+  .logo svg {
+    width: 108px !important;
+  }
+
+  .nav-btn {
+    padding: 4px 6px !important;
+    font-size: 12.5px !important;
+    letter-spacing: -0.05em !important;
+  }
+
+  .logout-btn {
+    padding: 4px 6px !important;
+    font-size: 11.5px !important;
+  }
+}
+
+/* 아이폰 SE급 */
+@media (max-width: 360px) {
+  .logo svg {
+    width: 96px !important;
+  }
+
+  .nav-btn {
+    padding: 4px 5px !important;
+    font-size: 11.5px !important;
+  }
+
+  .logout-btn {
+    padding: 4px 5px !important;
+    font-size: 11px !important;
   }
 }

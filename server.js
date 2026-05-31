@@ -567,15 +567,18 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
   const rawIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '-';
   const ip = String(rawIp).split(',')[0].trim();
 
-  const downloadedAt = new Date().toLocaleString('ko-KR', {
-    timeZone: 'Asia/Seoul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  });
+  function formatKST(date = new Date()) {
+  const kst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+  const yyyy = kst.getUTCFullYear();
+  const mm = String(kst.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(kst.getUTCDate()).padStart(2, '0');
+  const hh = String(kst.getUTCHours()).padStart(2, '0');
+  const mi = String(kst.getUTCMinutes()).padStart(2, '0');
+  const ss = String(kst.getUTCSeconds()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+}
+
+const downloadedAt = formatKST();
 
   if (file.ext === '.pdf') {
     try {
@@ -619,17 +622,16 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
       pages.forEach((page, index) => {
         const { width, height } = page.getSize();
 
-        const mainWatermark = `${userName}  |  StudyShare`;
-const footerLine = `StudyShare | ${userName} | ${downloadedAt} | 무단 배포 금지`;
-const detailLine1 = `다운로드: ${downloadedAt}`;
-const detailLine2 = `IP: ${ip}`;
-const detailLine3 = `ID: ${username} / UID: ${userId} / 이름: ${userName}`;
+        const mainWatermark = `${userName} | StudyShare`;
 
-// 여백을 넉넉히 줘서 잘림 방지
+const detailLine1 = `사용자: ${userName} (${username} / UID:${userId})`;
+const detailLine2 = `다운로드: ${downloadedAt}`;
+const detailLine3 = `IP: ${ip}`;
+const footerLine = `StudyShare`;
+
 const marginX = 36;
-const bottomY = 34;
+const bottomY = 36;
 
-// 대각선 워터마크 위치를 안쪽으로 이동
 [
   { x: width * 0.18, y: height * 0.22 },
   { x: width * 0.18, y: height * 0.50 },
@@ -638,27 +640,17 @@ const bottomY = 34;
   page.drawText(mainWatermark, {
     x: pos.x,
     y: pos.y,
-    size: 19,
+    size: 18,
     font,
     color: rgb(0.6, 0.6, 0.6),
-    opacity: 0.18,
+    opacity: 0.16,
     rotate: degrees(45)
   });
 });
 
-// 하단 정보도 페이지 안쪽으로 올림
-page.drawText(detailLine3, {
-  x: marginX,
-  y: bottomY + 36,
-  size: 7,
-  font,
-  color: rgb(0.28, 0.28, 0.28),
-  opacity: 0.85
-});
-
 page.drawText(detailLine1, {
   x: marginX,
-  y: bottomY + 24,
+  y: bottomY + 32,
   size: 7,
   font,
   color: rgb(0.28, 0.28, 0.28),
@@ -667,7 +659,16 @@ page.drawText(detailLine1, {
 
 page.drawText(detailLine2, {
   x: marginX,
-  y: bottomY + 12,
+  y: bottomY + 20,
+  size: 7,
+  font,
+  color: rgb(0.28, 0.28, 0.28),
+  opacity: 0.85
+});
+
+page.drawText(detailLine3, {
+  x: marginX,
+  y: bottomY + 8,
   size: 7,
   font,
   color: rgb(0.28, 0.28, 0.28),
@@ -676,16 +677,16 @@ page.drawText(detailLine2, {
 
 page.drawText(footerLine, {
   x: marginX,
-  y: bottomY,
+  y: bottomY - 4,
   size: 7,
   font,
   color: rgb(0.35, 0.35, 0.35),
-  opacity: 0.85
+  opacity: 0.75
 });
 
 page.drawText(`Page ${index + 1} / ${pages.length}`, {
-  x: Math.max(width - 110, marginX),
-  y: bottomY,
+  x: Math.max(width - 90, marginX),
+  y: bottomY - 4,
   size: 7,
   font,
   color: rgb(0.35, 0.35, 0.35),
