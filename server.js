@@ -11,6 +11,7 @@ const fontkit = require('@pdf-lib/fontkit');
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
+const http = require('http');
 
 const cloudinaryModule = require('cloudinary');
 const cloudinary = cloudinaryModule.v2;
@@ -149,6 +150,23 @@ function safeFileName(name, fallback = 'download') {
     .slice(0, 120) || fallback;
 }
 
+function getDownloadContentType(ext) {
+  const map = {
+    '.pdf': 'application/pdf',
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    '.hwp': 'application/octet-stream',
+    '.hwpx': 'application/octet-stream',
+    '.indd': 'application/octet-stream'
+  };
+
+  return map[String(ext || '').toLowerCase()] || 'application/octet-stream';
+}
+
 function downloadFileBuffer(url, redirectCount = 0) {
   return new Promise((resolve, reject) => {
     if (!url) {
@@ -159,7 +177,17 @@ function downloadFileBuffer(url, redirectCount = 0) {
       return reject(new Error('리다이렉트가 너무 많습니다.'));
     }
 
-    https.get(url, (response) => {
+    let parsedUrl;
+
+    try {
+      parsedUrl = new URL(url);
+    } catch (e) {
+      return reject(new Error('잘못된 다운로드 URL입니다.'));
+    }
+
+    const client = parsedUrl.protocol === 'http:' ? http : https;
+
+    const request = client.get(parsedUrl, (response) => {
       const statusCode = response.statusCode;
 
       if (
@@ -189,7 +217,12 @@ function downloadFileBuffer(url, redirectCount = 0) {
       });
 
       response.on('error', reject);
-    }).on('error', reject);
+    });
+
+    request.on('error', reject);
+    request.setTimeout(1000 * 60, () => {
+      request.destroy(new Error('파일 다운로드 시간이 초과되었습니다.'));
+    });
   });
 }
 
@@ -272,24 +305,24 @@ async function initAdmin() {
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-  fileSize: 100 * 1024 * 1024
-},
+    fileSize: 100 * 1024 * 1024
+  },
   fileFilter: (req, file, cb) => {
     try {
       file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
 
       const allowed = [
-  '.pdf',
-  '.png',
-  '.jpg',
-  '.jpeg',
-  '.docx',
-  '.pptx',
-  '.hwp',
-  '.hwpx',
-  '.xlsx',
-  '.indd'
-];
+        '.pdf',
+        '.png',
+        '.jpg',
+        '.jpeg',
+        '.docx',
+        '.pptx',
+        '.hwp',
+        '.hwpx',
+        '.xlsx',
+        '.indd'
+      ];
 
       const ext = path.extname(file.originalname).toLowerCase();
 
@@ -632,48 +665,51 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
       return res.status(404).send('파일 URL 없음');
     }
 
-    const user = req.session.user;
-    const userName = user.name || '-';
-    const username = user.username || '-';
-    const userId = user.id || '-';
+    const ext = String(file.ext || '').toLowerCase();
 
-    const rawIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '-';
-    const ip = String(rawIp).split(',')[0].trim();
+    // PDF가 아닌 파일은 워터마크 없이 서버가 받아서 attachment로 다운로드
+    if (ext !== '.pdf') {
+      try {
+        const fileBuffer = await downloadFileBuffer(file.cloudinaryUrl);
 
-    const downloadedAt = formatKST();
+        const filename = safeFileName(
+          file.originalName || `${file.title || 'download'}${ext || ''}`,
+          'download'
+        );
 
-    // PDF가 아니면 워터마크 없이 서버에서 파일을 받아 attachment로 다운로드
-if (file.ext !== '.pdf') {
-  try {
-    const fileBuffer = await downloadFileBuffer(file.cloudinaryUrl);
+        res.setHeader('Content-Type', getDownloadContentType(ext));
+        res.setHeader('Content-Length', fileBuffer.length);
+        res.setHeader(
+          'Content-Disposition',
+          `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`
+        );
 
-    const filename = safeFileName(
-      file.originalName || `${file.title || 'download'}${file.ext || ''}`,
-      'download'
-    );
+        return res.send(fileBuffer);
+      } catch (e) {
+        console.error('일반 파일 다운로드 오류:', e.message);
 
-    res.setHeader('Content-Type', getDownloadContentType(file.ext));
-    res.setHeader('Content-Length', fileBuffer.length);
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`
-    );
+        if (e.message.includes('HTTP 401')) {
+          return res.status(502).send(
+            'Cloudinary에서 파일 접근이 차단되었습니다. Cloudinary 보안 설정을 확인해주세요.'
+          );
+        }
 
-    return res.send(fileBuffer);
-  } catch (e) {
-    console.error('일반 파일 다운로드 오류:', e.message);
-
-    if (e.message.includes('HTTP 401')) {
-      return res.status(502).send(
-        'Cloudinary에서 파일 접근이 차단되었습니다. Cloudinary 보안 설정을 확인해주세요.'
-      );
+        return res.status(500).send('파일 다운로드 중 오류가 발생했습니다.');
+      }
     }
 
-    return res.status(500).send('파일 다운로드 중 오류가 발생했습니다.');
-  }
-}
-
+    // PDF는 워터마크 적용
     try {
+      const user = req.session.user;
+      const userName = user.name || '-';
+      const username = user.username || '-';
+      const userId = user.id || '-';
+
+      const rawIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '-';
+      const ip = String(rawIp).split(',')[0].trim();
+
+      const downloadedAt = formatKST();
+
       const pdfBytes = await downloadFileBuffer(file.cloudinaryUrl);
 
       if (!pdfBytes || pdfBytes.length < 10) {
@@ -695,15 +731,15 @@ if (file.ext !== '.pdf') {
 
       pdfDoc.registerFontkit(fontkit);
 
-      let font;
+      let koreanFont;
 
-if (fs.existsSync(FONT_PATH)) {
-  font = await pdfDoc.embedFont(fs.readFileSync(FONT_PATH));
-} else {
-  font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-}
+      if (fs.existsSync(FONT_PATH)) {
+        koreanFont = await pdfDoc.embedFont(fs.readFileSync(FONT_PATH));
+      } else {
+        koreanFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      }
 
-const latinFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const latinFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
       pdfDoc.setTitle(file.title || 'StudyShare PDF');
       pdfDoc.setAuthor('StudyShare');
@@ -718,14 +754,9 @@ const latinFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
         const { width, height } = page.getSize();
 
         const mainWatermark = `${userName} | StudyShare`;
-        const detailLine1 = `사용자: ${userName}`;
-        const detailLine1Sub = `ID: ${username} / UID: ${userId}`;
-        const detailLine2 = `다운로드: ${downloadedAt}`;
-        const detailLine3 = `IP: ${ip}`;
-        const footerLine = 'StudyShare';
-
-        const marginX = 36;
-        const bottomY = 36;
+        const marginX = 18;
+        const bottomY = 18;
+        const fontSize = 6.5;
 
         [
           { x: width * 0.18, y: height * 0.22 },
@@ -736,54 +767,91 @@ const latinFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
             x: pos.x,
             y: pos.y,
             size: 18,
-            font,
+            font: koreanFont,
             color: rgb(0.6, 0.6, 0.6),
             opacity: 0.16,
             rotate: degrees(45)
           });
         });
 
-        page.drawText(detailLine1, {
+        // 사용자 이름
+        page.drawText('사용자: ', {
           x: marginX,
-          y: bottomY + 32,
-          size: 7,
-          font,
+          y: bottomY + 36,
+          size: fontSize,
+          font: koreanFont,
           color: rgb(0.28, 0.28, 0.28),
           opacity: 0.85
         });
 
-        page.drawText(`Page ${index + 1} / ${pages.length}`, {
-  x: Math.max(width - 90, marginX),
-  y: bottomY - 4,
-  size: 7,
-  font: latinFont,
-  color: rgb(0.35, 0.35, 0.35),
-  opacity: 0.75
-});
+        const userLabelWidth = koreanFont.widthOfTextAtSize('사용자: ', fontSize);
 
-        page.drawText(detailLine3, {
-          x: marginX,
-          y: bottomY + 8,
-          size: 7,
-          font,
+        page.drawText(userName, {
+          x: marginX + userLabelWidth,
+          y: bottomY + 36,
+          size: fontSize,
+          font: koreanFont,
           color: rgb(0.28, 0.28, 0.28),
           opacity: 0.85
         });
 
-        page.drawText(footerLine, {
+        // ID / UID
+        page.drawText(`ID: ${username} / UID: ${userId}`, {
           x: marginX,
-          y: bottomY - 4,
-          size: 7,
-          font,
+          y: bottomY + 24,
+          size: fontSize,
+          font: latinFont,
+          color: rgb(0.28, 0.28, 0.28),
+          opacity: 0.85
+        });
+
+        // 다운로드 시간: 한글 라벨은 한글 폰트, 숫자는 라틴 폰트
+        page.drawText('다운로드: ', {
+          x: marginX,
+          y: bottomY + 12,
+          size: fontSize,
+          font: koreanFont,
+          color: rgb(0.28, 0.28, 0.28),
+          opacity: 0.85
+        });
+
+        const downloadLabelWidth = koreanFont.widthOfTextAtSize('다운로드: ', fontSize);
+
+        page.drawText(downloadedAt, {
+          x: marginX + downloadLabelWidth,
+          y: bottomY + 12,
+          size: fontSize,
+          font: latinFont,
+          color: rgb(0.28, 0.28, 0.28),
+          opacity: 0.85
+        });
+
+        // IP: 라틴 폰트로 처리해서 글자 간격 깨짐 방지
+        page.drawText(`IP: ${ip}`, {
+          x: marginX,
+          y: bottomY,
+          size: fontSize,
+          font: latinFont,
+          color: rgb(0.28, 0.28, 0.28),
+          opacity: 0.85
+        });
+
+        // StudyShare
+        page.drawText('StudyShare', {
+          x: marginX,
+          y: bottomY - 12,
+          size: fontSize,
+          font: latinFont,
           color: rgb(0.35, 0.35, 0.35),
           opacity: 0.75
         });
 
+        // 페이지 번호
         page.drawText(`Page ${index + 1} / ${pages.length}`, {
           x: Math.max(width - 90, marginX),
-          y: bottomY - 4,
-          size: 7,
-          font,
+          y: bottomY - 12,
+          size: fontSize,
+          font: latinFont,
           color: rgb(0.35, 0.35, 0.35),
           opacity: 0.75
         });
@@ -805,33 +873,16 @@ const latinFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
       return res.send(outputBuffer);
     } catch (e) {
-  console.error('PDF 워터마크 오류:', e.message);
+      console.error('PDF 워터마크 오류:', e.message);
 
-  function getDownloadContentType(ext) {
-  const map = {
-    '.pdf': 'application/pdf',
-    '.png': 'image/png',
-    '.jpg': 'image/jpeg',
-    '.jpeg': 'image/jpeg',
-    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    '.hwp': 'application/x-hwp',
-    '.hwpx': 'application/octet-stream',
-    '.indd': 'application/octet-stream'
-  };
+      if (e.message.includes('HTTP 401')) {
+        return res.status(502).send(
+          'Cloudinary에서 PDF 파일 접근이 차단되었습니다. 관리자에게 문의해주세요.'
+        );
+      }
 
-  return map[ext] || 'application/octet-stream';
-}
-
-  if (e.message.includes('HTTP 401')) {
-    return res.status(502).send(
-      'Cloudinary에서 PDF 파일 접근이 차단되었습니다. 관리자에게 문의해주세요.'
-    );
-  }
-
-  return res.redirect(file.cloudinaryUrl);
-}
+      return res.redirect(file.cloudinaryUrl);
+    }
   } catch (e) {
     console.error('다운로드 전체 오류:', e.message);
     return res.status(500).send('다운로드 오류');
