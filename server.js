@@ -272,23 +272,24 @@ async function initAdmin() {
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 50 * 1024 * 1024
-  },
+  fileSize: 100 * 1024 * 1024
+},
   fileFilter: (req, file, cb) => {
     try {
       file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
 
       const allowed = [
-        '.pdf',
-        '.png',
-        '.jpg',
-        '.jpeg',
-        '.docx',
-        '.pptx',
-        '.hwp',
-        '.hwpx',
-        '.xlsx'
-      ];
+  '.pdf',
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.docx',
+  '.pptx',
+  '.hwp',
+  '.hwpx',
+  '.xlsx',
+  '.indd'
+];
 
       const ext = path.extname(file.originalname).toLowerCase();
 
@@ -641,10 +642,36 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
 
     const downloadedAt = formatKST();
 
-    // PDF가 아니면 원본으로 이동
-    if (file.ext !== '.pdf') {
-      return res.redirect(file.cloudinaryUrl);
+    // PDF가 아니면 워터마크 없이 서버에서 파일을 받아 attachment로 다운로드
+if (file.ext !== '.pdf') {
+  try {
+    const fileBuffer = await downloadFileBuffer(file.cloudinaryUrl);
+
+    const filename = safeFileName(
+      file.originalName || `${file.title || 'download'}${file.ext || ''}`,
+      'download'
+    );
+
+    res.setHeader('Content-Type', getDownloadContentType(file.ext));
+    res.setHeader('Content-Length', fileBuffer.length);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`
+    );
+
+    return res.send(fileBuffer);
+  } catch (e) {
+    console.error('일반 파일 다운로드 오류:', e.message);
+
+    if (e.message.includes('HTTP 401')) {
+      return res.status(502).send(
+        'Cloudinary에서 파일 접근이 차단되었습니다. Cloudinary 보안 설정을 확인해주세요.'
+      );
     }
+
+    return res.status(500).send('파일 다운로드 중 오류가 발생했습니다.');
+  }
+}
 
     try {
       const pdfBytes = await downloadFileBuffer(file.cloudinaryUrl);
@@ -670,11 +697,13 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
 
       let font;
 
-      if (fs.existsSync(FONT_PATH)) {
-        font = await pdfDoc.embedFont(fs.readFileSync(FONT_PATH));
-      } else {
-        font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-      }
+if (fs.existsSync(FONT_PATH)) {
+  font = await pdfDoc.embedFont(fs.readFileSync(FONT_PATH));
+} else {
+  font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+}
+
+const latinFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
       pdfDoc.setTitle(file.title || 'StudyShare PDF');
       pdfDoc.setAuthor('StudyShare');
@@ -689,7 +718,8 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
         const { width, height } = page.getSize();
 
         const mainWatermark = `${userName} | StudyShare`;
-        const detailLine1 = `사용자: ${userName} (${username} / UID:${userId})`;
+        const detailLine1 = `사용자: ${userName}`;
+        const detailLine1Sub = `ID: ${username} / UID: ${userId}`;
         const detailLine2 = `다운로드: ${downloadedAt}`;
         const detailLine3 = `IP: ${ip}`;
         const footerLine = 'StudyShare';
@@ -722,14 +752,14 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
           opacity: 0.85
         });
 
-        page.drawText(detailLine2, {
-          x: marginX,
-          y: bottomY + 20,
-          size: 7,
-          font,
-          color: rgb(0.28, 0.28, 0.28),
-          opacity: 0.85
-        });
+        page.drawText(`Page ${index + 1} / ${pages.length}`, {
+  x: Math.max(width - 90, marginX),
+  y: bottomY - 4,
+  size: 7,
+  font: latinFont,
+  color: rgb(0.35, 0.35, 0.35),
+  opacity: 0.75
+});
 
         page.drawText(detailLine3, {
           x: marginX,
@@ -775,9 +805,33 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
 
       return res.send(outputBuffer);
     } catch (e) {
-      console.error('PDF 워터마크 오류:', e.message);
-      return res.redirect(file.cloudinaryUrl);
-    }
+  console.error('PDF 워터마크 오류:', e.message);
+
+  function getDownloadContentType(ext) {
+  const map = {
+    '.pdf': 'application/pdf',
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    '.hwp': 'application/x-hwp',
+    '.hwpx': 'application/octet-stream',
+    '.indd': 'application/octet-stream'
+  };
+
+  return map[ext] || 'application/octet-stream';
+}
+
+  if (e.message.includes('HTTP 401')) {
+    return res.status(502).send(
+      'Cloudinary에서 PDF 파일 접근이 차단되었습니다. 관리자에게 문의해주세요.'
+    );
+  }
+
+  return res.redirect(file.cloudinaryUrl);
+}
   } catch (e) {
     console.error('다운로드 전체 오류:', e.message);
     return res.status(500).send('다운로드 오류');
