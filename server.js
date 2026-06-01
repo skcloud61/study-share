@@ -6,13 +6,12 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
-const { PDFDocument, rgb, degrees } = require('pdf-lib');
+const { PDFDocument, rgb, degrees, StandardFonts } = require('pdf-lib');
 const fontkit = require('@pdf-lib/fontkit');
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
 
-// Cloudinary v2
 const cloudinaryModule = require('cloudinary');
 const cloudinary = cloudinaryModule.v2;
 
@@ -63,7 +62,6 @@ cloudinary.config({
 console.log('Cloudinary 설정 완료');
 console.log('CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME);
 
-
 // ================================
 //  MONGOOSE 모델
 // ================================
@@ -78,7 +76,6 @@ const UserSchema = new mongoose.Schema({
 });
 
 const User = mongoose.models.User || mongoose.model('User', UserSchema);
-
 
 const FileSchema = new mongoose.Schema({
   id: Number,
@@ -97,7 +94,6 @@ const FileSchema = new mongoose.Schema({
 });
 
 const File = mongoose.models.File || mongoose.model('File', FileSchema);
-
 
 const PostSchema = new mongoose.Schema({
   id: Number,
@@ -120,7 +116,6 @@ const PostSchema = new mongoose.Schema({
 
 const Post = mongoose.models.Post || mongoose.model('Post', PostSchema);
 
-
 const UserInfoSchema = new mongoose.Schema({
   userId: String,
   userName: String,
@@ -131,6 +126,72 @@ const UserInfoSchema = new mongoose.Schema({
 
 const UserInfo = mongoose.models.UserInfo || mongoose.model('UserInfo', UserInfoSchema);
 
+// ================================
+//  유틸 함수
+// ================================
+function formatKST(date = new Date()) {
+  const kst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+
+  const yyyy = kst.getUTCFullYear();
+  const mm = String(kst.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(kst.getUTCDate()).padStart(2, '0');
+  const hh = String(kst.getUTCHours()).padStart(2, '0');
+  const mi = String(kst.getUTCMinutes()).padStart(2, '0');
+  const ss = String(kst.getUTCSeconds()).padStart(2, '0');
+
+  return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+}
+
+function safeFileName(name, fallback = 'download') {
+  return String(name || fallback)
+    .replace(/[\\/:*?"<>|]/g, '_')
+    .trim()
+    .slice(0, 120) || fallback;
+}
+
+function downloadFileBuffer(url, redirectCount = 0) {
+  return new Promise((resolve, reject) => {
+    if (!url) {
+      return reject(new Error('다운로드 URL이 없습니다.'));
+    }
+
+    if (redirectCount > 5) {
+      return reject(new Error('리다이렉트가 너무 많습니다.'));
+    }
+
+    https.get(url, (response) => {
+      const statusCode = response.statusCode;
+
+      if (
+        statusCode >= 300 &&
+        statusCode < 400 &&
+        response.headers.location
+      ) {
+        const nextUrl = response.headers.location.startsWith('http')
+          ? response.headers.location
+          : new URL(response.headers.location, url).toString();
+
+        response.resume();
+        return resolve(downloadFileBuffer(nextUrl, redirectCount + 1));
+      }
+
+      if (statusCode < 200 || statusCode >= 300) {
+        response.resume();
+        return reject(new Error(`파일 다운로드 실패: HTTP ${statusCode}`));
+      }
+
+      const chunks = [];
+
+      response.on('data', chunk => chunks.push(chunk));
+
+      response.on('end', () => {
+        resolve(Buffer.concat(chunks));
+      });
+
+      response.on('error', reject);
+    }).on('error', reject);
+  });
+}
 
 // ================================
 //  폰트 다운로드
@@ -146,8 +207,18 @@ function downloadFont() {
 
     function getUrl(u) {
       https.get(u, res => {
-        if (res.statusCode === 301 || res.statusCode === 302) {
+        if (
+          (res.statusCode === 301 || res.statusCode === 302) &&
+          res.headers.location
+        ) {
+          res.resume();
           return getUrl(res.headers.location);
+        }
+
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          console.log('폰트 다운로드 실패 HTTP:', res.statusCode);
+          res.resume();
+          return resolve();
         }
 
         res.pipe(file);
@@ -155,6 +226,11 @@ function downloadFont() {
         file.on('finish', () => {
           file.close();
           console.log('폰트 다운로드 완료');
+          resolve();
+        });
+
+        file.on('error', (e) => {
+          console.log('폰트 파일 저장 실패:', e.message);
           resolve();
         });
       }).on('error', (e) => {
@@ -166,7 +242,6 @@ function downloadFont() {
     getUrl(url);
   });
 }
-
 
 // ================================
 //  초기 admin 계정 생성
@@ -190,7 +265,6 @@ async function initAdmin() {
     console.log('admin 계정 생성 완료');
   }
 }
-
 
 // ================================
 //  Multer + Cloudinary 업로드 설정
@@ -218,9 +292,9 @@ const upload = multer({
 
       const ext = path.extname(file.originalname).toLowerCase();
 
-if (!allowed.includes(ext)) {
-  return cb(new Error('허용되지 않는 파일 형식입니다.'));
-}
+      if (!allowed.includes(ext)) {
+        return cb(new Error('허용되지 않는 파일 형식입니다.'));
+      }
 
       cb(null, true);
     } catch (e) {
@@ -228,7 +302,6 @@ if (!allowed.includes(ext)) {
     }
   }
 });
-
 
 function uploadToCloudinary(file) {
   return new Promise((resolve, reject) => {
@@ -247,10 +320,10 @@ function uploadToCloudinary(file) {
       }
     );
 
+    stream.on('error', reject);
     stream.end(file.buffer);
   });
 }
-
 
 // ================================
 //  미들웨어
@@ -273,7 +346,6 @@ app.use(session({
   }
 }));
 
-
 // ================================
 //  인증 미들웨어
 // ================================
@@ -287,7 +359,6 @@ function requireLogin(req, res, next) {
   next();
 }
 
-
 function requireAdmin(req, res, next) {
   if (!req.session.user || req.session.user.role !== 'admin') {
     return res.status(403).json({
@@ -297,7 +368,6 @@ function requireAdmin(req, res, next) {
 
   next();
 }
-
 
 // ================================
 //  AUTH
@@ -335,13 +405,13 @@ app.post('/api/login', async (req, res) => {
     });
   } catch (e) {
     console.error('로그인 오류:', e.message);
+
     res.json({
       success: false,
       message: '로그인 중 오류가 발생했습니다.'
     });
   }
 });
-
 
 app.post('/api/logout', (req, res) => {
   req.session.destroy(() => {
@@ -350,7 +420,6 @@ app.post('/api/logout', (req, res) => {
     });
   });
 });
-
 
 app.post('/api/register', async (req, res) => {
   try {
@@ -388,13 +457,13 @@ app.post('/api/register', async (req, res) => {
     });
   } catch (e) {
     console.error('회원가입 오류:', e.message);
+
     res.json({
       success: false,
       message: '회원가입 중 오류가 발생했습니다.'
     });
   }
 });
-
 
 app.get('/api/me', (req, res) => {
   if (!req.session.user) {
@@ -408,7 +477,6 @@ app.get('/api/me', (req, res) => {
     user: req.session.user
   });
 });
-
 
 // ================================
 //  FILES
@@ -434,7 +502,6 @@ app.get('/api/files', requireLogin, async (req, res) => {
     res.json([]);
   }
 });
-
 
 app.post('/api/upload', requireLogin, (req, res) => {
   upload.single('file')(req, res, async (err) => {
@@ -497,6 +564,7 @@ app.post('/api/upload', requireLogin, (req, res) => {
     }
   });
 });
+
 app.delete('/api/files/:id', requireLogin, async (req, res) => {
   try {
     const file = await File.findOne({
@@ -538,6 +606,7 @@ app.delete('/api/files/:id', requireLogin, async (req, res) => {
     });
   } catch (e) {
     console.error('파일 삭제 오류:', e.message);
+
     res.json({
       success: false,
       message: '파일 삭제 중 오류가 발생했습니다.'
@@ -545,54 +614,53 @@ app.delete('/api/files/:id', requireLogin, async (req, res) => {
   }
 });
 
-
 // ================================
 //  DOWNLOAD + 워터마크
 // ================================
 app.get('/api/download/:id', requireLogin, async (req, res) => {
-  const file = await File.findOne({
-    id: Number(req.params.id)
-  });
+  try {
+    const file = await File.findOne({
+      id: Number(req.params.id)
+    });
 
-  if (!file) {
-    return res.status(404).send('파일 없음');
-  }
+    if (!file) {
+      return res.status(404).send('파일 없음');
+    }
 
-  const user = req.session.user;
+    if (!file.cloudinaryUrl) {
+      return res.status(404).send('파일 URL 없음');
+    }
 
-  const userName = user.name || '-';
-  const username = user.username || '-';
-  const userId = user.id || '-';
+    const user = req.session.user;
+    const userName = user.name || '-';
+    const username = user.username || '-';
+    const userId = user.id || '-';
 
-  const rawIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '-';
-  const ip = String(rawIp).split(',')[0].trim();
+    const rawIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '-';
+    const ip = String(rawIp).split(',')[0].trim();
 
-  function formatKST(date = new Date()) {
-  const kst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
-  const yyyy = kst.getUTCFullYear();
-  const mm = String(kst.getUTCMonth() + 1).padStart(2, '0');
-  const dd = String(kst.getUTCDate()).padStart(2, '0');
-  const hh = String(kst.getUTCHours()).padStart(2, '0');
-  const mi = String(kst.getUTCMinutes()).padStart(2, '0');
-  const ss = String(kst.getUTCSeconds()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
-}
+    const downloadedAt = formatKST();
 
-const downloadedAt = formatKST();
+    // PDF가 아니면 원본으로 이동
+    if (file.ext !== '.pdf') {
+      return res.redirect(file.cloudinaryUrl);
+    }
 
-  if (file.ext === '.pdf') {
     try {
-      const response = await new Promise((resolve, reject) => {
-        https.get(file.cloudinaryUrl, resolve).on('error', reject);
-      });
+      const pdfBytes = await downloadFileBuffer(file.cloudinaryUrl);
 
-      const chunks = [];
-
-      for await (const chunk of response) {
-        chunks.push(chunk);
+      if (!pdfBytes || pdfBytes.length < 10) {
+        console.error('PDF 데이터가 비어있습니다.');
+        return res.redirect(file.cloudinaryUrl);
       }
 
-      const pdfBytes = Buffer.concat(chunks);
+      const header = pdfBytes.slice(0, 20).toString('utf8');
+
+      if (!header.includes('%PDF')) {
+        console.error('PDF 아님. 받은 데이터 앞부분:', header);
+        console.error('Cloudinary URL:', file.cloudinaryUrl);
+        return res.redirect(file.cloudinaryUrl);
+      }
 
       const pdfDoc = await PDFDocument.load(pdfBytes, {
         ignoreEncryption: true
@@ -605,7 +673,6 @@ const downloadedAt = formatKST();
       if (fs.existsSync(FONT_PATH)) {
         font = await pdfDoc.embedFont(fs.readFileSync(FONT_PATH));
       } else {
-        const { StandardFonts } = require('pdf-lib');
         font = await pdfDoc.embedFont(StandardFonts.Helvetica);
       }
 
@@ -615,7 +682,6 @@ const downloadedAt = formatKST();
       pdfDoc.setCreator('StudyShare');
       pdfDoc.setProducer('StudyShare Watermark System');
       pdfDoc.setModificationDate(new Date());
-      pdfDoc.setCreationDate(new Date());
 
       const pages = pdfDoc.getPages();
 
@@ -623,89 +689,88 @@ const downloadedAt = formatKST();
         const { width, height } = page.getSize();
 
         const mainWatermark = `${userName} | StudyShare`;
+        const detailLine1 = `사용자: ${userName} (${username} / UID:${userId})`;
+        const detailLine2 = `다운로드: ${downloadedAt}`;
+        const detailLine3 = `IP: ${ip}`;
+        const footerLine = 'StudyShare';
 
-const detailLine1 = `사용자: ${userName} (${username} / UID:${userId})`;
-const detailLine2 = `다운로드: ${downloadedAt}`;
-const detailLine3 = `IP: ${ip}`;
-const footerLine = `StudyShare`;
+        const marginX = 36;
+        const bottomY = 36;
 
-const marginX = 36;
-const bottomY = 36;
+        [
+          { x: width * 0.18, y: height * 0.22 },
+          { x: width * 0.18, y: height * 0.50 },
+          { x: width * 0.18, y: height * 0.78 }
+        ].forEach(pos => {
+          page.drawText(mainWatermark, {
+            x: pos.x,
+            y: pos.y,
+            size: 18,
+            font,
+            color: rgb(0.6, 0.6, 0.6),
+            opacity: 0.16,
+            rotate: degrees(45)
+          });
+        });
 
-[
-  { x: width * 0.18, y: height * 0.22 },
-  { x: width * 0.18, y: height * 0.50 },
-  { x: width * 0.18, y: height * 0.78 }
-].forEach(pos => {
-  page.drawText(mainWatermark, {
-    x: pos.x,
-    y: pos.y,
-    size: 18,
-    font,
-    color: rgb(0.6, 0.6, 0.6),
-    opacity: 0.16,
-    rotate: degrees(45)
-  });
-});
+        page.drawText(detailLine1, {
+          x: marginX,
+          y: bottomY + 32,
+          size: 7,
+          font,
+          color: rgb(0.28, 0.28, 0.28),
+          opacity: 0.85
+        });
 
-page.drawText(detailLine1, {
-  x: marginX,
-  y: bottomY + 32,
-  size: 7,
-  font,
-  color: rgb(0.28, 0.28, 0.28),
-  opacity: 0.85
-});
+        page.drawText(detailLine2, {
+          x: marginX,
+          y: bottomY + 20,
+          size: 7,
+          font,
+          color: rgb(0.28, 0.28, 0.28),
+          opacity: 0.85
+        });
 
-page.drawText(detailLine2, {
-  x: marginX,
-  y: bottomY + 20,
-  size: 7,
-  font,
-  color: rgb(0.28, 0.28, 0.28),
-  opacity: 0.85
-});
+        page.drawText(detailLine3, {
+          x: marginX,
+          y: bottomY + 8,
+          size: 7,
+          font,
+          color: rgb(0.28, 0.28, 0.28),
+          opacity: 0.85
+        });
 
-page.drawText(detailLine3, {
-  x: marginX,
-  y: bottomY + 8,
-  size: 7,
-  font,
-  color: rgb(0.28, 0.28, 0.28),
-  opacity: 0.85
-});
+        page.drawText(footerLine, {
+          x: marginX,
+          y: bottomY - 4,
+          size: 7,
+          font,
+          color: rgb(0.35, 0.35, 0.35),
+          opacity: 0.75
+        });
 
-page.drawText(footerLine, {
-  x: marginX,
-  y: bottomY - 4,
-  size: 7,
-  font,
-  color: rgb(0.35, 0.35, 0.35),
-  opacity: 0.75
-});
-
-page.drawText(`Page ${index + 1} / ${pages.length}`, {
-  x: Math.max(width - 90, marginX),
-  y: bottomY - 4,
-  size: 7,
-  font,
-  color: rgb(0.35, 0.35, 0.35),
-  opacity: 0.75
-});
-
-});
+        page.drawText(`Page ${index + 1} / ${pages.length}`, {
+          x: Math.max(width - 90, marginX),
+          y: bottomY - 4,
+          size: 7,
+          font,
+          color: rgb(0.35, 0.35, 0.35),
+          opacity: 0.75
+        });
+      });
 
       const out = await pdfDoc.save({
         useObjectStreams: false
       });
 
       const outputBuffer = Buffer.from(out);
+      const filename = safeFileName(file.title, 'StudyShare');
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Length', outputBuffer.length);
       res.setHeader(
         'Content-Disposition',
-        `attachment; filename*=UTF-8''${encodeURIComponent(file.title)}.pdf`
+        `attachment; filename*=UTF-8''${encodeURIComponent(filename)}.pdf`
       );
 
       return res.send(outputBuffer);
@@ -713,11 +778,11 @@ page.drawText(`Page ${index + 1} / ${pages.length}`, {
       console.error('PDF 워터마크 오류:', e.message);
       return res.redirect(file.cloudinaryUrl);
     }
+  } catch (e) {
+    console.error('다운로드 전체 오류:', e.message);
+    return res.status(500).send('다운로드 오류');
   }
-
-  res.redirect(file.cloudinaryUrl);
 });
-
 
 // ================================
 //  POSTS
@@ -743,7 +808,6 @@ app.get('/api/posts', requireLogin, async (req, res) => {
   }
 });
 
-
 app.get('/api/posts/:id', requireLogin, async (req, res) => {
   const post = await Post.findOne({
     id: Number(req.params.id)
@@ -761,7 +825,6 @@ app.get('/api/posts/:id', requireLogin, async (req, res) => {
     liked: post.likes?.includes(req.session.user.id) || false
   });
 });
-
 
 app.post('/api/posts', requireLogin, async (req, res) => {
   const { title, content } = req.body;
@@ -791,7 +854,6 @@ app.post('/api/posts', requireLogin, async (req, res) => {
     post
   });
 });
-
 
 app.put('/api/posts/:id', requireLogin, async (req, res) => {
   const post = await Post.findOne({
@@ -833,7 +895,6 @@ app.put('/api/posts/:id', requireLogin, async (req, res) => {
   });
 });
 
-
 app.delete('/api/posts/:id', requireLogin, async (req, res) => {
   const post = await Post.findOne({
     id: Number(req.params.id)
@@ -861,7 +922,6 @@ app.delete('/api/posts/:id', requireLogin, async (req, res) => {
     success: true
   });
 });
-
 
 app.post('/api/posts/:id/like', requireLogin, async (req, res) => {
   const post = await Post.findOne({
@@ -896,7 +956,6 @@ app.post('/api/posts/:id/like', requireLogin, async (req, res) => {
     likes: post.likes.length
   });
 });
-
 
 app.post('/api/posts/:id/comments', requireLogin, async (req, res) => {
   const { content } = req.body;
@@ -940,7 +999,6 @@ app.post('/api/posts/:id/comments', requireLogin, async (req, res) => {
   });
 });
 
-
 app.delete('/api/posts/:postId/comments/:commentId', requireLogin, async (req, res) => {
   const post = await Post.findOne({
     id: Number(req.params.postId)
@@ -953,7 +1011,6 @@ app.delete('/api/posts/:postId/comments/:commentId', requireLogin, async (req, r
   }
 
   const user = req.session.user;
-
   const cidx = post.comments?.findIndex(c => c.id === Number(req.params.commentId));
 
   if (cidx === -1 || cidx === undefined) {
@@ -977,7 +1034,6 @@ app.delete('/api/posts/:postId/comments/:commentId', requireLogin, async (req, r
   });
 });
 
-
 app.post('/api/posts/:id/pin', requireAdmin, async (req, res) => {
   const post = await Post.findOne({
     id: Number(req.params.id)
@@ -999,7 +1055,6 @@ app.post('/api/posts/:id/pin', requireAdmin, async (req, res) => {
   });
 });
 
-
 // ================================
 //  ADMIN
 // ================================
@@ -1011,7 +1066,6 @@ app.get('/api/admin/users', requireAdmin, async (req, res) => {
     password: undefined
   })));
 });
-
 
 app.post('/api/admin/users/:id/approve', requireAdmin, async (req, res) => {
   const user = await User.findOne({
@@ -1033,7 +1087,6 @@ app.post('/api/admin/users/:id/approve', requireAdmin, async (req, res) => {
   });
 });
 
-
 app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
   await User.deleteOne({
     id: Number(req.params.id)
@@ -1043,7 +1096,6 @@ app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
     success: true
   });
 });
-
 
 app.post('/api/admin/users/:id/role', requireAdmin, async (req, res) => {
   const user = await User.findOne({
@@ -1065,16 +1117,13 @@ app.post('/api/admin/users/:id/role', requireAdmin, async (req, res) => {
   });
 });
 
-
 app.get('/api/admin/files', requireAdmin, async (req, res) => {
   res.json(await File.find().sort({ id: -1 }));
 });
 
-
 app.get('/api/admin/posts', requireAdmin, async (req, res) => {
   res.json(await Post.find().sort({ id: -1 }));
 });
-
 
 // ================================
 //  USERINFO
@@ -1095,7 +1144,7 @@ app.post('/api/collect', requireLogin, async (req, res) => {
       data,
       {
         upsert: true,
-        new: true
+        returnDocument: 'after'
       }
     );
 
@@ -1111,7 +1160,6 @@ app.post('/api/collect', requireLogin, async (req, res) => {
   }
 });
 
-
 app.get('/api/admin/userinfo', requireAdmin, async (req, res) => {
   try {
     res.json(await UserInfo.find().sort({ collectedAt: -1 }));
@@ -1120,7 +1168,6 @@ app.get('/api/admin/userinfo', requireAdmin, async (req, res) => {
     res.json([]);
   }
 });
-
 
 app.post('/api/admin/userinfo', requireAdmin, async (req, res) => {
   try {
@@ -1142,7 +1189,6 @@ app.post('/api/admin/userinfo', requireAdmin, async (req, res) => {
     });
   }
 });
-
 
 // ================================
 //  서버 시작
