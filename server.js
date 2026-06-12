@@ -12,13 +12,12 @@ const path = require('path');
 const fs = require('fs');
 const https = require('https');
 const http = require('http');
-
 const cloudinaryModule = require('cloudinary');
+
 const cloudinary = cloudinaryModule.v2;
-
 const app = express();
-const PORT = process.env.PORT || 3000;
 
+const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const FONTS_DIR = path.join(__dirname, 'fonts');
 const FONT_PATH = path.join(FONTS_DIR, 'NotoSansKR.ttf');
@@ -144,10 +143,19 @@ function formatKST(date = new Date()) {
 }
 
 function safeFileName(name, fallback = 'download') {
-  return String(name || fallback)
+  const cleaned = String(name || fallback)
     .replace(/[\\/:*?"<>|]/g, '_')
+    .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 120) || fallback;
+    .slice(0, 160);
+
+  return cleaned || fallback;
+}
+
+function encodeDownloadName(filename) {
+  return encodeURIComponent(filename || 'download')
+    .replace(/['()]/g, escape)
+    .replace(/\*/g, '%2A');
 }
 
 function getDownloadContentType(ext) {
@@ -167,13 +175,23 @@ function getDownloadContentType(ext) {
   return map[String(ext || '').toLowerCase()] || 'application/octet-stream';
 }
 
+function getClientIp(req) {
+  const raw =
+    req.headers['x-forwarded-for'] ||
+    req.headers['x-real-ip'] ||
+    req.socket.remoteAddress ||
+    '-';
+
+  return String(raw).split(',')[0].trim();
+}
+
 function downloadFileBuffer(url, redirectCount = 0) {
   return new Promise((resolve, reject) => {
     if (!url) {
       return reject(new Error('다운로드 URL이 없습니다.'));
     }
 
-    if (redirectCount > 5) {
+    if (redirectCount > 8) {
       return reject(new Error('리다이렉트가 너무 많습니다.'));
     }
 
@@ -187,8 +205,13 @@ function downloadFileBuffer(url, redirectCount = 0) {
 
     const client = parsedUrl.protocol === 'http:' ? http : https;
 
-    const request = client.get(parsedUrl, (response) => {
-      const statusCode = response.statusCode;
+    const request = client.get(parsedUrl, {
+      headers: {
+        'User-Agent': 'StudyShare-Server-Downloader/1.0',
+        'Accept': '*/*'
+      }
+    }, (response) => {
+      const statusCode = response.statusCode || 0;
 
       if (
         statusCode >= 300 &&
@@ -200,6 +223,7 @@ function downloadFileBuffer(url, redirectCount = 0) {
           : new URL(response.headers.location, url).toString();
 
         response.resume();
+
         return resolve(downloadFileBuffer(nextUrl, redirectCount + 1));
       }
 
@@ -220,6 +244,7 @@ function downloadFileBuffer(url, redirectCount = 0) {
     });
 
     request.on('error', reject);
+
     request.setTimeout(1000 * 60, () => {
       request.destroy(new Error('파일 다운로드 시간이 초과되었습니다.'));
     });
@@ -231,21 +256,28 @@ function downloadFileBuffer(url, redirectCount = 0) {
 // ================================
 function downloadFont() {
   return new Promise((resolve) => {
-    if (fs.existsSync(FONT_PATH)) return resolve();
+    if (fs.existsSync(FONT_PATH)) {
+      return resolve();
+    }
 
     console.log('폰트 다운로드 중...');
 
     const url = 'https://github.com/google/fonts/raw/main/ofl/notosanskr/NotoSansKR%5Bwght%5D.ttf';
     const file = fs.createWriteStream(FONT_PATH);
 
-    function getUrl(u) {
+    function getUrl(u, redirectCount = 0) {
+      if (redirectCount > 5) {
+        console.log('폰트 다운로드 실패: 리다이렉트 초과');
+        return resolve();
+      }
+
       https.get(u, res => {
         if (
           (res.statusCode === 301 || res.statusCode === 302) &&
           res.headers.location
         ) {
           res.resume();
-          return getUrl(res.headers.location);
+          return getUrl(res.headers.location, redirectCount + 1);
         }
 
         if (res.statusCode < 200 || res.statusCode >= 300) {
@@ -349,7 +381,10 @@ function uploadToCloudinary(file) {
         public_id: publicId
       },
       (error, result) => {
-        if (error) return reject(error);
+        if (error) {
+          return reject(error);
+        }
+
         resolve(result);
       }
     );
@@ -362,11 +397,11 @@ function uploadToCloudinary(file) {
 // ================================
 //  미들웨어
 // ================================
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(PUBLIC_DIR));
-
 app.set('trust proxy', 1);
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.static(PUBLIC_DIR));
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'studyshare-secret-2025',
@@ -376,7 +411,9 @@ app.use(session({
     mongoUrl: process.env.MONGODB_URI
   }),
   cookie: {
-    maxAge: 1000 * 60 * 60 * 24
+    maxAge: 1000 * 60 * 60 * 24,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production'
   }
 }));
 
@@ -386,6 +423,7 @@ app.use(session({
 function requireLogin(req, res, next) {
   if (!req.session.user) {
     return res.status(401).json({
+      success: false,
       error: '로그인이 필요합니다'
     });
   }
@@ -396,6 +434,7 @@ function requireLogin(req, res, next) {
 function requireAdmin(req, res, next) {
   if (!req.session.user || req.session.user.role !== 'admin') {
     return res.status(403).json({
+      success: false,
       error: '관리자 권한이 필요합니다'
     });
   }
@@ -449,6 +488,8 @@ app.post('/api/login', async (req, res) => {
 
 app.post('/api/logout', (req, res) => {
   req.session.destroy(() => {
+    res.clearCookie('connect.sid');
+
     res.json({
       success: true
     });
@@ -555,7 +596,8 @@ app.post('/api/upload', requireLogin, (req, res) => {
       });
     }
 
-    const { subject, type, title, desc } = req.body;
+    const { subject, type, title } = req.body;
+    const desc = req.body.desc || req.body.description || '';
 
     if (!subject || !type || !title) {
       return res.json({
@@ -650,8 +692,10 @@ app.delete('/api/files/:id', requireLogin, async (req, res) => {
 
 // ================================
 //  DOWNLOAD + 워터마크
+//  중요: Cloudinary로 redirect하지 않음.
+//  서버가 Cloudinary 파일을 직접 받아서 사용자에게 내려줌.
 // ================================
-app.get('/api/download/:id', requireLogin, async (req, res) => {
+async function downloadHandler(req, res) {
   try {
     const file = await File.findOne({
       id: Number(req.params.id)
@@ -665,67 +709,76 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
       return res.status(404).send('파일 URL 없음');
     }
 
-    const ext = String(file.ext || '').toLowerCase();
+    const ext = String(file.ext || path.extname(file.originalName || '') || '').toLowerCase();
 
-    // PDF가 아닌 파일은 워터마크 없이 서버가 받아서 attachment로 다운로드
-    if (ext !== '.pdf') {
-      try {
-        const fileBuffer = await downloadFileBuffer(file.cloudinaryUrl);
+    let downloadName = safeFileName(
+      file.originalName || file.title || 'download',
+      'download'
+    );
 
-        const filename = safeFileName(
-          file.originalName || `${file.title || 'download'}${ext || ''}`,
-          'download'
-        );
-
-        res.setHeader('Content-Type', getDownloadContentType(ext));
-        res.setHeader('Content-Length', fileBuffer.length);
-        res.setHeader(
-          'Content-Disposition',
-          `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`
-        );
-
-        return res.send(fileBuffer);
-      } catch (e) {
-        console.error('일반 파일 다운로드 오류:', e.message);
-
-        if (e.message.includes('HTTP 401')) {
-          return res.status(502).send(
-            'Cloudinary에서 파일 접근이 차단되었습니다. Cloudinary 보안 설정을 확인해주세요.'
-          );
-        }
-
-        return res.status(500).send('파일 다운로드 중 오류가 발생했습니다.');
-      }
+    if (ext && !downloadName.toLowerCase().endsWith(ext)) {
+      downloadName += ext;
     }
 
-    // PDF는 워터마크 적용
+    let originalBuffer;
+
     try {
-      const user = req.session.user;
+      originalBuffer = await downloadFileBuffer(file.cloudinaryUrl);
+    } catch (e) {
+      console.error('Cloudinary 원본 파일 다운로드 오류:', e.message);
+
+      if (e.message.includes('HTTP 401')) {
+        return res.status(502).send(
+          'Cloudinary에서 파일 접근이 차단되었습니다. Cloudinary 보안 설정을 확인해주세요.'
+        );
+      }
+
+      return res.status(500).send('파일 원본을 가져오지 못했습니다: ' + e.message);
+    }
+
+    if (!originalBuffer || originalBuffer.length === 0) {
+      return res.status(500).send('파일 데이터가 비어있습니다.');
+    }
+
+    // PDF가 아니면 서버가 받은 원본 파일 그대로 다운로드
+    if (ext !== '.pdf') {
+      res.setHeader('Content-Type', getDownloadContentType(ext));
+      res.setHeader('Content-Length', originalBuffer.length);
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename*=UTF-8''${encodeDownloadName(downloadName)}`
+      );
+      res.setHeader('Cache-Control', 'no-store');
+
+      return res.send(originalBuffer);
+    }
+
+    // PDF면 워터마크 적용 시도
+    try {
+      const header = originalBuffer.slice(0, 20).toString('utf8');
+
+      if (!header.includes('%PDF')) {
+        console.error('PDF 확장자이지만 실제 PDF가 아닙니다. 받은 데이터 앞부분:', header);
+
+        res.setHeader('Content-Type', 'application/octet-stream');
+        res.setHeader('Content-Length', originalBuffer.length);
+        res.setHeader(
+          'Content-Disposition',
+          `attachment; filename*=UTF-8''${encodeDownloadName(downloadName)}`
+        );
+        res.setHeader('Cache-Control', 'no-store');
+
+        return res.send(originalBuffer);
+      }
+
+      const user = req.session.user || {};
       const userName = user.name || '-';
       const username = user.username || '-';
       const userId = user.id || '-';
-
-      const rawIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '-';
-      const ip = String(rawIp).split(',')[0].trim();
-
+      const ip = getClientIp(req);
       const downloadedAt = formatKST();
 
-      const pdfBytes = await downloadFileBuffer(file.cloudinaryUrl);
-
-      if (!pdfBytes || pdfBytes.length < 10) {
-        console.error('PDF 데이터가 비어있습니다.');
-        return res.redirect(file.cloudinaryUrl);
-      }
-
-      const header = pdfBytes.slice(0, 20).toString('utf8');
-
-      if (!header.includes('%PDF')) {
-        console.error('PDF 아님. 받은 데이터 앞부분:', header);
-        console.error('Cloudinary URL:', file.cloudinaryUrl);
-        return res.redirect(file.cloudinaryUrl);
-      }
-
-      const pdfDoc = await PDFDocument.load(pdfBytes, {
+      const pdfDoc = await PDFDocument.load(originalBuffer, {
         ignoreEncryption: true
       });
 
@@ -733,9 +786,14 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
 
       let koreanFont;
 
-      if (fs.existsSync(FONT_PATH)) {
-        koreanFont = await pdfDoc.embedFont(fs.readFileSync(FONT_PATH));
-      } else {
+      try {
+        if (fs.existsSync(FONT_PATH)) {
+          koreanFont = await pdfDoc.embedFont(fs.readFileSync(FONT_PATH));
+        } else {
+          koreanFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+        }
+      } catch (e) {
+        console.error('한글 폰트 임베드 실패. Helvetica 사용:', e.message);
         koreanFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
       }
 
@@ -755,7 +813,7 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
 
         const mainWatermark = `${userName} | StudyShare`;
         const marginX = 18;
-        const bottomY = 18;
+        const bottomY = 22;
         const fontSize = 6.5;
 
         [
@@ -774,7 +832,6 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
           });
         });
 
-        // 사용자 이름
         page.drawText('사용자: ', {
           x: marginX,
           y: bottomY + 36,
@@ -784,9 +841,13 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
           opacity: 0.85
         });
 
-        const userLabelWidth = koreanFont.widthOfTextAtSize('사용자: ', fontSize);
+        let userLabelWidth = 34;
 
-        page.drawText(userName, {
+        try {
+          userLabelWidth = koreanFont.widthOfTextAtSize('사용자: ', fontSize);
+        } catch (e) {}
+
+        page.drawText(String(userName), {
           x: marginX + userLabelWidth,
           y: bottomY + 36,
           size: fontSize,
@@ -795,7 +856,6 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
           opacity: 0.85
         });
 
-        // ID / UID
         page.drawText(`ID: ${username} / UID: ${userId}`, {
           x: marginX,
           y: bottomY + 24,
@@ -805,7 +865,6 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
           opacity: 0.85
         });
 
-        // 다운로드 시간: 한글 라벨은 한글 폰트, 숫자는 라틴 폰트
         page.drawText('다운로드: ', {
           x: marginX,
           y: bottomY + 12,
@@ -815,7 +874,11 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
           opacity: 0.85
         });
 
-        const downloadLabelWidth = koreanFont.widthOfTextAtSize('다운로드: ', fontSize);
+        let downloadLabelWidth = 44;
+
+        try {
+          downloadLabelWidth = koreanFont.widthOfTextAtSize('다운로드: ', fontSize);
+        } catch (e) {}
 
         page.drawText(downloadedAt, {
           x: marginX + downloadLabelWidth,
@@ -826,7 +889,6 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
           opacity: 0.85
         });
 
-        // IP: 라틴 폰트로 처리해서 글자 간격 깨짐 방지
         page.drawText(`IP: ${ip}`, {
           x: marginX,
           y: bottomY,
@@ -836,7 +898,6 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
           opacity: 0.85
         });
 
-        // StudyShare
         page.drawText('StudyShare', {
           x: marginX,
           y: bottomY - 12,
@@ -846,7 +907,6 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
           opacity: 0.75
         });
 
-        // 페이지 번호
         page.drawText(`Page ${index + 1} / ${pages.length}`, {
           x: Math.max(width - 90, marginX),
           y: bottomY - 12,
@@ -862,32 +922,48 @@ app.get('/api/download/:id', requireLogin, async (req, res) => {
       });
 
       const outputBuffer = Buffer.from(out);
-      const filename = safeFileName(file.title, 'StudyShare');
+
+      let pdfName = safeFileName(
+        file.title || file.originalName || 'StudyShare',
+        'StudyShare'
+      );
+
+      if (!pdfName.toLowerCase().endsWith('.pdf')) {
+        pdfName += '.pdf';
+      }
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Length', outputBuffer.length);
       res.setHeader(
         'Content-Disposition',
-        `attachment; filename*=UTF-8''${encodeURIComponent(filename)}.pdf`
+        `attachment; filename*=UTF-8''${encodeDownloadName(pdfName)}`
       );
+      res.setHeader('Cache-Control', 'no-store');
 
       return res.send(outputBuffer);
     } catch (e) {
-      console.error('PDF 워터마크 오류:', e.message);
+      console.error('PDF 워터마크 오류. 원본 PDF 다운로드로 대체:', e.message);
 
-      if (e.message.includes('HTTP 401')) {
-        return res.status(502).send(
-          'Cloudinary에서 PDF 파일 접근이 차단되었습니다. 관리자에게 문의해주세요.'
-        );
-      }
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Length', originalBuffer.length);
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename*=UTF-8''${encodeDownloadName(downloadName)}`
+      );
+      res.setHeader('Cache-Control', 'no-store');
 
-      return res.redirect(file.cloudinaryUrl);
+      return res.send(originalBuffer);
     }
   } catch (e) {
     console.error('다운로드 전체 오류:', e.message);
-    return res.status(500).send('다운로드 오류');
+    return res.status(500).send('다운로드 오류: ' + e.message);
   }
-});
+}
+
+app.get('/api/download/:id', requireLogin, downloadHandler);
+
+// 예전 프론트 코드 호환용
+app.get('/api/files/:id/download', requireLogin, downloadHandler);
 
 // ================================
 //  POSTS
@@ -914,320 +990,430 @@ app.get('/api/posts', requireLogin, async (req, res) => {
 });
 
 app.get('/api/posts/:id', requireLogin, async (req, res) => {
-  const post = await Post.findOne({
-    id: Number(req.params.id)
-  });
+  try {
+    const post = await Post.findOne({
+      id: Number(req.params.id)
+    });
 
-  if (!post) {
-    return res.status(404).json({
-      error: '없는 글입니다'
+    if (!post) {
+      return res.status(404).json({
+        error: '없는 글입니다'
+      });
+    }
+
+    res.json({
+      ...post.toObject(),
+      likesCount: post.likes?.length || 0,
+      liked: post.likes?.includes(req.session.user.id) || false
+    });
+  } catch (e) {
+    console.error('게시글 상세 오류:', e.message);
+
+    res.status(500).json({
+      error: '게시글 조회 오류'
     });
   }
-
-  res.json({
-    ...post.toObject(),
-    likesCount: post.likes?.length || 0,
-    liked: post.likes?.includes(req.session.user.id) || false
-  });
 });
 
 app.post('/api/posts', requireLogin, async (req, res) => {
-  const { title, content } = req.body;
+  try {
+    const { title, content } = req.body;
 
-  if (!title?.trim() || !content?.trim()) {
-    return res.json({
+    if (!title?.trim() || !content?.trim()) {
+      return res.json({
+        success: false,
+        message: '제목과 내용을 입력해주세요'
+      });
+    }
+
+    const post = await Post.create({
+      id: Date.now(),
+      title: title.trim(),
+      content: content.trim(),
+      authorId: req.session.user.id,
+      authorName: req.session.user.name,
+      createdAt: new Date().toISOString(),
+      updatedAt: null,
+      likes: [],
+      comments: [],
+      pinned: false
+    });
+
+    res.json({
+      success: true,
+      post
+    });
+  } catch (e) {
+    console.error('게시글 작성 오류:', e.message);
+
+    res.json({
       success: false,
-      message: '제목과 내용을 입력해주세요'
+      message: '게시글 작성 오류'
     });
   }
-
-  const post = await Post.create({
-    id: Date.now(),
-    title: title.trim(),
-    content: content.trim(),
-    authorId: req.session.user.id,
-    authorName: req.session.user.name,
-    createdAt: new Date().toISOString(),
-    updatedAt: null,
-    likes: [],
-    comments: [],
-    pinned: false
-  });
-
-  res.json({
-    success: true,
-    post
-  });
 });
 
 app.put('/api/posts/:id', requireLogin, async (req, res) => {
-  const post = await Post.findOne({
-    id: Number(req.params.id)
-  });
-
-  if (!post) {
-    return res.status(404).json({
-      error: '없는 글입니다'
+  try {
+    const post = await Post.findOne({
+      id: Number(req.params.id)
     });
-  }
 
-  const user = req.session.user;
+    if (!post) {
+      return res.status(404).json({
+        error: '없는 글입니다'
+      });
+    }
 
-  if (user.role !== 'admin' && post.authorId !== user.id) {
-    return res.status(403).json({
-      error: '권한 없음'
+    const user = req.session.user;
+
+    if (user.role !== 'admin' && post.authorId !== user.id) {
+      return res.status(403).json({
+        error: '권한 없음'
+      });
+    }
+
+    const { title, content } = req.body;
+
+    if (!title?.trim() || !content?.trim()) {
+      return res.json({
+        success: false,
+        message: '제목과 내용을 입력해주세요'
+      });
+    }
+
+    post.title = title.trim();
+    post.content = content.trim();
+    post.updatedAt = new Date().toISOString();
+
+    await post.save();
+
+    res.json({
+      success: true,
+      post
     });
-  }
+  } catch (e) {
+    console.error('게시글 수정 오류:', e.message);
 
-  const { title, content } = req.body;
-
-  if (!title?.trim() || !content?.trim()) {
-    return res.json({
+    res.json({
       success: false,
-      message: '제목과 내용을 입력해주세요'
+      message: '게시글 수정 오류'
     });
   }
-
-  post.title = title.trim();
-  post.content = content.trim();
-  post.updatedAt = new Date().toISOString();
-
-  await post.save();
-
-  res.json({
-    success: true,
-    post
-  });
 });
 
 app.delete('/api/posts/:id', requireLogin, async (req, res) => {
-  const post = await Post.findOne({
-    id: Number(req.params.id)
-  });
+  try {
+    const post = await Post.findOne({
+      id: Number(req.params.id)
+    });
 
-  if (!post) {
-    return res.status(404).json({
-      error: '없는 글입니다'
+    if (!post) {
+      return res.status(404).json({
+        error: '없는 글입니다'
+      });
+    }
+
+    const user = req.session.user;
+
+    if (user.role !== 'admin' && post.authorId !== user.id) {
+      return res.status(403).json({
+        error: '권한 없음'
+      });
+    }
+
+    await Post.deleteOne({
+      id: Number(req.params.id)
+    });
+
+    res.json({
+      success: true
+    });
+  } catch (e) {
+    console.error('게시글 삭제 오류:', e.message);
+
+    res.json({
+      success: false,
+      message: '게시글 삭제 오류'
     });
   }
-
-  const user = req.session.user;
-
-  if (user.role !== 'admin' && post.authorId !== user.id) {
-    return res.status(403).json({
-      error: '권한 없음'
-    });
-  }
-
-  await Post.deleteOne({
-    id: Number(req.params.id)
-  });
-
-  res.json({
-    success: true
-  });
 });
 
 app.post('/api/posts/:id/like', requireLogin, async (req, res) => {
-  const post = await Post.findOne({
-    id: Number(req.params.id)
-  });
+  try {
+    const post = await Post.findOne({
+      id: Number(req.params.id)
+    });
 
-  if (!post) {
-    return res.status(404).json({
-      error: '없는 글입니다'
+    if (!post) {
+      return res.status(404).json({
+        error: '없는 글입니다'
+      });
+    }
+
+    const uid = req.session.user.id;
+
+    if (!post.likes) {
+      post.likes = [];
+    }
+
+    const idx = post.likes.indexOf(uid);
+
+    if (idx === -1) {
+      post.likes.push(uid);
+    } else {
+      post.likes.splice(idx, 1);
+    }
+
+    await post.save();
+
+    res.json({
+      success: true,
+      liked: idx === -1,
+      likes: post.likes.length
+    });
+  } catch (e) {
+    console.error('좋아요 오류:', e.message);
+
+    res.json({
+      success: false,
+      message: '좋아요 오류'
     });
   }
-
-  const uid = req.session.user.id;
-
-  if (!post.likes) {
-    post.likes = [];
-  }
-
-  const idx = post.likes.indexOf(uid);
-
-  if (idx === -1) {
-    post.likes.push(uid);
-  } else {
-    post.likes.splice(idx, 1);
-  }
-
-  await post.save();
-
-  res.json({
-    success: true,
-    liked: idx === -1,
-    likes: post.likes.length
-  });
 });
 
 app.post('/api/posts/:id/comments', requireLogin, async (req, res) => {
-  const { content } = req.body;
+  try {
+    const { content } = req.body;
 
-  if (!content?.trim()) {
-    return res.json({
+    if (!content?.trim()) {
+      return res.json({
+        success: false,
+        message: '내용을 입력해주세요'
+      });
+    }
+
+    const post = await Post.findOne({
+      id: Number(req.params.id)
+    });
+
+    if (!post) {
+      return res.status(404).json({
+        error: '없는 글입니다'
+      });
+    }
+
+    const comment = {
+      id: Date.now(),
+      content: content.trim(),
+      authorId: req.session.user.id,
+      authorName: req.session.user.name,
+      createdAt: new Date().toISOString()
+    };
+
+    if (!post.comments) {
+      post.comments = [];
+    }
+
+    post.comments.push(comment);
+
+    await post.save();
+
+    res.json({
+      success: true,
+      comment
+    });
+  } catch (e) {
+    console.error('댓글 작성 오류:', e.message);
+
+    res.json({
       success: false,
-      message: '내용을 입력해주세요'
+      message: '댓글 작성 오류'
     });
   }
-
-  const post = await Post.findOne({
-    id: Number(req.params.id)
-  });
-
-  if (!post) {
-    return res.status(404).json({
-      error: '없는 글입니다'
-    });
-  }
-
-  const comment = {
-    id: Date.now(),
-    content: content.trim(),
-    authorId: req.session.user.id,
-    authorName: req.session.user.name,
-    createdAt: new Date().toISOString()
-  };
-
-  if (!post.comments) {
-    post.comments = [];
-  }
-
-  post.comments.push(comment);
-
-  await post.save();
-
-  res.json({
-    success: true,
-    comment
-  });
 });
 
 app.delete('/api/posts/:postId/comments/:commentId', requireLogin, async (req, res) => {
-  const post = await Post.findOne({
-    id: Number(req.params.postId)
-  });
+  try {
+    const post = await Post.findOne({
+      id: Number(req.params.postId)
+    });
 
-  if (!post) {
-    return res.status(404).json({
-      error: '없는 글입니다'
+    if (!post) {
+      return res.status(404).json({
+        error: '없는 글입니다'
+      });
+    }
+
+    const user = req.session.user;
+    const cidx = post.comments?.findIndex(c => c.id === Number(req.params.commentId));
+
+    if (cidx === -1 || cidx === undefined) {
+      return res.status(404).json({
+        error: '없는 댓글입니다'
+      });
+    }
+
+    if (user.role !== 'admin' && post.comments[cidx].authorId !== user.id) {
+      return res.status(403).json({
+        error: '권한 없음'
+      });
+    }
+
+    post.comments.splice(cidx, 1);
+
+    await post.save();
+
+    res.json({
+      success: true
+    });
+  } catch (e) {
+    console.error('댓글 삭제 오류:', e.message);
+
+    res.json({
+      success: false,
+      message: '댓글 삭제 오류'
     });
   }
-
-  const user = req.session.user;
-  const cidx = post.comments?.findIndex(c => c.id === Number(req.params.commentId));
-
-  if (cidx === -1 || cidx === undefined) {
-    return res.status(404).json({
-      error: '없는 댓글입니다'
-    });
-  }
-
-  if (user.role !== 'admin' && post.comments[cidx].authorId !== user.id) {
-    return res.status(403).json({
-      error: '권한 없음'
-    });
-  }
-
-  post.comments.splice(cidx, 1);
-
-  await post.save();
-
-  res.json({
-    success: true
-  });
 });
 
 app.post('/api/posts/:id/pin', requireAdmin, async (req, res) => {
-  const post = await Post.findOne({
-    id: Number(req.params.id)
-  });
+  try {
+    const post = await Post.findOne({
+      id: Number(req.params.id)
+    });
 
-  if (!post) {
-    return res.status(404).json({
-      error: '없는 글입니다'
+    if (!post) {
+      return res.status(404).json({
+        error: '없는 글입니다'
+      });
+    }
+
+    post.pinned = !post.pinned;
+
+    await post.save();
+
+    res.json({
+      success: true,
+      pinned: post.pinned
+    });
+  } catch (e) {
+    console.error('고정 오류:', e.message);
+
+    res.json({
+      success: false,
+      message: '고정 오류'
     });
   }
-
-  post.pinned = !post.pinned;
-
-  await post.save();
-
-  res.json({
-    success: true,
-    pinned: post.pinned
-  });
 });
 
 // ================================
 //  ADMIN
 // ================================
 app.get('/api/admin/users', requireAdmin, async (req, res) => {
-  const users = await User.find();
+  try {
+    const users = await User.find();
 
-  res.json(users.map(u => ({
-    ...u.toObject(),
-    password: undefined
-  })));
+    res.json(users.map(u => ({
+      ...u.toObject(),
+      password: undefined
+    })));
+  } catch (e) {
+    console.error('관리자 사용자 조회 오류:', e.message);
+    res.json([]);
+  }
 });
 
 app.post('/api/admin/users/:id/approve', requireAdmin, async (req, res) => {
-  const user = await User.findOne({
-    id: Number(req.params.id)
-  });
+  try {
+    const user = await User.findOne({
+      id: Number(req.params.id)
+    });
 
-  if (!user) {
-    return res.json({
+    if (!user) {
+      return res.json({
+        success: false
+      });
+    }
+
+    user.approved = true;
+
+    await user.save();
+
+    res.json({
+      success: true
+    });
+  } catch (e) {
+    console.error('사용자 승인 오류:', e.message);
+
+    res.json({
       success: false
     });
   }
-
-  user.approved = true;
-
-  await user.save();
-
-  res.json({
-    success: true
-  });
 });
 
 app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
-  await User.deleteOne({
-    id: Number(req.params.id)
-  });
+  try {
+    await User.deleteOne({
+      id: Number(req.params.id)
+    });
 
-  res.json({
-    success: true
-  });
-});
+    res.json({
+      success: true
+    });
+  } catch (e) {
+    console.error('사용자 삭제 오류:', e.message);
 
-app.post('/api/admin/users/:id/role', requireAdmin, async (req, res) => {
-  const user = await User.findOne({
-    id: Number(req.params.id)
-  });
-
-  if (!user) {
-    return res.json({
+    res.json({
       success: false
     });
   }
+});
 
-  user.role = req.body.role;
+app.post('/api/admin/users/:id/role', requireAdmin, async (req, res) => {
+  try {
+    const user = await User.findOne({
+      id: Number(req.params.id)
+    });
 
-  await user.save();
+    if (!user) {
+      return res.json({
+        success: false
+      });
+    }
 
-  res.json({
-    success: true
-  });
+    user.role = req.body.role;
+
+    await user.save();
+
+    res.json({
+      success: true
+    });
+  } catch (e) {
+    console.error('권한 변경 오류:', e.message);
+
+    res.json({
+      success: false
+    });
+  }
 });
 
 app.get('/api/admin/files', requireAdmin, async (req, res) => {
-  res.json(await File.find().sort({ id: -1 }));
+  try {
+    res.json(await File.find().sort({ id: -1 }));
+  } catch (e) {
+    console.error('관리자 파일 조회 오류:', e.message);
+    res.json([]);
+  }
 });
 
 app.get('/api/admin/posts', requireAdmin, async (req, res) => {
-  res.json(await Post.find().sort({ id: -1 }));
+  try {
+    res.json(await Post.find().sort({ id: -1 }));
+  } catch (e) {
+    console.error('관리자 게시글 조회 오류:', e.message);
+    res.json([]);
+  }
 });
 
 // ================================
@@ -1241,7 +1427,7 @@ app.post('/api/collect', requireLogin, async (req, res) => {
       userName: req.session.user.name,
       username: req.session.user.username,
       collectedAt: new Date().toISOString(),
-      ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress
+      ip: getClientIp(req)
     };
 
     await UserInfo.findOneAndUpdate(
@@ -1249,7 +1435,7 @@ app.post('/api/collect', requireLogin, async (req, res) => {
       data,
       {
         upsert: true,
-        returnDocument: 'after'
+        new: true
       }
     );
 
@@ -1260,16 +1446,20 @@ app.post('/api/collect', requireLogin, async (req, res) => {
     console.error('collect 오류:', e.message);
 
     res.json({
-      success: false
+      success: false,
+      message: e.message
     });
   }
 });
 
 app.get('/api/admin/userinfo', requireAdmin, async (req, res) => {
   try {
-    res.json(await UserInfo.find().sort({ collectedAt: -1 }));
+    const list = await UserInfo.find().sort({ collectedAt: -1 });
+
+    res.json(list);
   } catch (e) {
     console.error('userinfo 조회 오류:', e.message);
+
     res.json([]);
   }
 });
@@ -1279,7 +1469,7 @@ app.post('/api/admin/userinfo', requireAdmin, async (req, res) => {
     await UserInfo.create({
       ...req.body,
       userId: String(req.body.userId || '-'),
-      ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+      ip: getClientIp(req),
       collectedAt: new Date().toISOString()
     });
 
@@ -1290,9 +1480,21 @@ app.post('/api/admin/userinfo', requireAdmin, async (req, res) => {
     console.error('UserInfo 저장 실패:', e.message);
 
     res.json({
-      ok: false
+      ok: false,
+      message: e.message
     });
   }
+});
+
+// ================================
+//  헬스체크
+// ================================
+app.get('/api/health', (req, res) => {
+  res.json({
+    ok: true,
+    service: 'StudyShare',
+    time: new Date().toISOString()
+  });
 });
 
 // ================================
