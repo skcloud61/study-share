@@ -11,9 +11,8 @@
   <title>Study Share</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
 
-<!-- HEADER -->
+<body>
 <header>
   <div class="logo">
     <svg width="180" height="40" viewBox="0 0 650 150" xmlns="http://www.w3.org/2000/svg">
@@ -27,29 +26,29 @@
       </text>
     </svg>
   </div>
+
   <nav id="main-nav">
     <button class="nav-btn active" onclick="showPage('home', this)">홈</button>
-    <button class="nav-btn"        onclick="showPage('library', this)">자료실</button>
-    <button class="nav-btn"        id="admin-link"
-            style="display:none"
-            onclick="window.location.href='/admin.html'">관리자</button>
+    <button class="nav-btn" onclick="showPage('library', this)">자료실</button>
+    <button class="nav-btn" id="admin-link" style="display:none" onclick="window.location.href='/admin.html'">관리자</button>
+    <button class="nav-btn" id="userinfo-link" style="display:none" onclick="window.location.href='/admin-userinfo.html'">접속정보</button>
   </nav>
+
   <div class="header-right">
     <span class="user-name" id="header-username"></span>
     <button class="logout-btn" onclick="doLogout()">로그아웃</button>
   </div>
 </header>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- UPLOAD MODAL -->
 <div class="modal-overlay" id="uploadModal">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title">자료 업로드</div>
       <button class="modal-close" onclick="closeModal('uploadModal')">&#x2715;</button>
     </div>
+
     <div class="form-row">
       <div class="form-group">
         <label>과목</label>
@@ -60,6 +59,7 @@
           <option>한문</option><option>도덕</option>
         </select>
       </div>
+
       <div class="form-group">
         <label>유형</label>
         <select id="up-type">
@@ -71,14 +71,17 @@
         </select>
       </div>
     </div>
+
     <div class="form-group">
       <label>제목</label>
       <input type="text" id="up-title" placeholder="자료 제목을 입력하세요" />
     </div>
+
     <div class="form-group">
       <label>설명</label>
       <textarea id="up-desc" placeholder="자료에 대한 간단한 설명을 입력하세요"></textarea>
     </div>
+
     <div class="form-group">
       <label>파일 첨부</label>
       <div class="file-drop" onclick="document.getElementById('fileInput').click()">
@@ -94,6 +97,7 @@
         <p class="file-hint">PDF, 이미지, 문서 파일 지원</p>
       </div>
     </div>
+
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('uploadModal')">취소</button>
       <button class="btn-submit" onclick="submitUpload()">업로드</button>
@@ -101,19 +105,21 @@
   </div>
 </div>
 
-<!-- DETAIL MODAL -->
 <div class="modal-overlay" id="detailModal">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title" id="detail-title"></div>
       <button class="modal-close" onclick="closeModal('detailModal')">&#x2715;</button>
     </div>
+
     <div class="detail-badges">
       <span class="d-badge" id="detail-subject"></span>
       <span class="d-badge" id="detail-type"></span>
     </div>
+
     <div class="detail-desc" id="detail-desc"></div>
     <div class="detail-meta" id="detail-meta"></div>
+
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('detailModal')">닫기</button>
       <button class="btn-download" id="download-btn">파일 다운로드</button>
@@ -121,7 +127,6 @@
   </div>
 </div>
 
-<!-- HOME PAGE -->
 <div id="page-home" class="page-wrap">
   <div class="home-top">
     <div class="home-hero">
@@ -153,7 +158,6 @@
   </div>
 </div>
 
-<!-- LIBRARY PAGE -->
 <div id="page-library" class="page-wrap" style="display:none;">
   <div class="lib-layout">
     <aside class="sidebar">
@@ -162,6 +166,7 @@
         <div id="sidebar-subjects"></div>
       </div>
     </aside>
+
     <main class="lib-main">
       <div class="search-row">
         <div class="search-wrap">
@@ -169,87 +174,107 @@
             <circle cx="11" cy="11" r="8"/>
             <path stroke-linecap="round" d="M21 21l-4.35-4.35"/>
           </svg>
-          <input type="text" id="search-input"
-                 placeholder="자료 제목 검색..." oninput="renderCards()" />
+          <input type="text" id="search-input" placeholder="자료 제목 검색..." oninput="renderCards()" />
         </div>
         <button class="upload-btn" onclick="openModal('uploadModal')">+ 자료 업로드</button>
       </div>
+
       <div class="cat-tabs" id="cat-tabs"></div>
+
       <div class="lib-header">
         <div class="lib-title" id="lib-title">전체 자료</div>
         <div class="lib-count" id="lib-count">0개</div>
       </div>
+
       <div class="card-grid" id="lib-cards"></div>
     </main>
   </div>
 </div>
 
 <script>
-/* ══════════════════════════════════════
-   상수
-══════════════════════════════════════ */
 const SUBJECTS = ['국어','영어','수학','역사','과학','정보','한문','도덕'];
 const EXAM_SUBJECTS = ['국어','영어','수학','역사','과학','정보'];
+
 const TYPE_LABELS = {
-  midterm:'중간고사', final:'기말고사',
-  performance:'수행평가', worksheet:'학습지'
+  midterm:'중간고사',
+  final:'기말고사',
+  performance:'수행평가',
+  worksheet:'학습지'
 };
+
 const SUBJECT_COLORS = {
-  '국어':'#6366f1','영어':'#0ea5e9','수학':'#f59e0b',
-  '역사':'#ef4444','과학':'#10b981','정보':'#8b5cf6',
-  '한문':'#f97316','도덕':'#ec4899'
+  '국어':'#6366f1',
+  '영어':'#0ea5e9',
+  '수학':'#f59e0b',
+  '역사':'#ef4444',
+  '과학':'#10b981',
+  '정보':'#8b5cf6',
+  '한문':'#f97316',
+  '도덕':'#ec4899'
 };
+
 const TYPE_COLORS = {
-  midterm:'#4f46e5', final:'#0ea5e9',
-  performance:'#10b981', worksheet:'#f59e0b'
+  midterm:'#4f46e5',
+  final:'#0ea5e9',
+  performance:'#10b981',
+  worksheet:'#f59e0b'
 };
+
 const TYPE_BG = {
-  midterm:'#ede9fe', final:'#e0f2fe',
-  performance:'#d1fae5', worksheet:'#fef3c7'
+  midterm:'#ede9fe',
+  final:'#e0f2fe',
+  performance:'#d1fae5',
+  worksheet:'#fef3c7'
 };
 
-/* ══════════════════════════════════════
-   상태
-══════════════════════════════════════ */
-let data            = [];
-let currentUser     = null;
+let data = [];
+let currentUser = null;
 let selectedSubject = '전체';
-let selectedType    = '전체';
+let selectedType = '전체';
+let permissionRetryDone = false;
 
-/* ══════════════════════════════════════
-   초기화
-══════════════════════════════════════ */
 async function init() {
   try {
-    const me = await fetch('/api/me').then(r => r.json());
-    if (!me.loggedIn) return (window.location.href = '/login.html');
+    const me = await fetch('/api/me', {
+      credentials: 'include'
+    }).then(r => r.json());
+
+    if (!me.loggedIn) {
+      window.location.href = '/login.html';
+      return;
+    }
+
     currentUser = me.user;
     document.getElementById('header-username').textContent = me.user.name;
+
     if (me.user.role === 'admin') {
       document.getElementById('admin-link').style.display = '';
+      document.getElementById('userinfo-link').style.display = '';
     }
+
     await loadFiles();
     renderHome();
-    collectUserInfo();
+
+    collectUserInfo(true);
   } catch(e) {
     console.error('init 오류:', e);
   }
 }
 
-/* ══════════════════════════════════════
-   파일 목록 로드
-══════════════════════════════════════ */
 async function loadFiles() {
   try {
-    const files = await fetch('/api/files').then(r => r.json());
+    const files = await fetch('/api/files', {
+      credentials: 'include'
+    }).then(r => r.json());
+
     data = files.map(f => ({
-      id:       f.id,
-      subject:  f.subject,
-      type:     f.type,
-      title:    f.title,
-      desc:     f.description || '',
-      date:     f.createdAt?.slice(0,10) || '',
-      file:     f.filename || '',
+      id: f.id,
+      subject: f.subject,
+      type: f.type,
+      title: f.title,
+      desc: f.desc || f.description || '',
+      date: f.createdAt?.slice(0,10) || '',
+      file: f.originalName || f.filename || '',
       uploader: f.uploadedBy || ''
     }));
   } catch(e) {
@@ -258,26 +283,22 @@ async function loadFiles() {
   }
 }
 
-/* ══════════════════════════════════════
-   페이지 전환
-══════════════════════════════════════ */
 function showPage(page, btn) {
-  document.getElementById('page-home').style.display    = page === 'home'    ? '' : 'none';
+  document.getElementById('page-home').style.display = page === 'home' ? '' : 'none';
   document.getElementById('page-library').style.display = page === 'library' ? '' : 'none';
+
   document.querySelectorAll('header nav .nav-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
-  if (page === 'home')    renderHome();
+
+  if (page === 'home') renderHome();
   if (page === 'library') renderLibrary();
 }
 
-/* ══════════════════════════════════════
-   홈
-══════════════════════════════════════ */
 function renderHome() {
-  /* 통계 */
   const statsEl = document.getElementById('home-stats');
-  const types   = ['midterm','final','performance','worksheet'];
-  const labels  = ['중간고사','기말고사','수행평가','학습지'];
+  const types = ['midterm','final','performance','worksheet'];
+  const labels = ['중간고사','기말고사','수행평가','학습지'];
+
   statsEl.innerHTML =
     `<div class="stat-item">
        <div class="stat-num">${data.length}</div>
@@ -285,25 +306,28 @@ function renderHome() {
      </div>` +
     types.map((t,i) => `
       <div class="stat-item">
-        <div class="stat-num">${data.filter(d=>d.type===t).length}</div>
+        <div class="stat-num">${data.filter(d => d.type === t).length}</div>
         <div class="stat-lbl">${labels[i]}</div>
-      </div>`).join('');
+      </div>
+    `).join('');
 
-  /* 과목별 그리드 */
   document.getElementById('home-subject-grid').innerHTML = SUBJECTS.map(s => {
     const cnt = data.filter(d => d.subject === s).length;
-    const c   = SUBJECT_COLORS[s];
-    return `<div class="subj-card" style="--c:${c}" onclick="goSubject('${s}')">
-      <div class="subj-dot"></div>
-      <div class="subj-name">${s}</div>
-      <div class="subj-cnt">자료 ${cnt}개</div>
-    </div>`;
+    const c = SUBJECT_COLORS[s];
+
+    return `
+      <div class="subj-card" style="--c:${c}" onclick="goSubject('${s}')">
+        <div class="subj-dot"></div>
+        <div class="subj-name">${s}</div>
+        <div class="subj-cnt">자료 ${cnt}개</div>
+      </div>
+    `;
   }).join('');
 
-  /* 최근 자료 */
   const recent = [...data]
     .sort((a,b) => new Date(b.date) - new Date(a.date))
     .slice(0, 4);
+
   document.getElementById('recent-cards').innerHTML =
     recent.length
       ? recent.map(d => cardHTML(d)).join('')
@@ -312,29 +336,28 @@ function renderHome() {
 
 function goSubject(s) {
   selectedSubject = s;
-  selectedType    = '전체';
+  selectedType = '전체';
+
   const btns = document.querySelectorAll('header nav .nav-btn');
   btns.forEach((b,i) => b.classList.toggle('active', i === 1));
+
   showPage('library', null);
 }
 
-/* ══════════════════════════════════════
-   자료실
-══════════════════════════════════════ */
 function renderLibrary() {
-  /* 사이드바 */
   document.getElementById('sidebar-subjects').innerHTML =
     ['전체', ...SUBJECTS].map(s => `
-      <button class="sb-btn${selectedSubject===s?' active':''}"
+      <button class="sb-btn${selectedSubject === s ? ' active' : ''}"
               onclick="selectSubject('${s}')">${s}</button>
     `).join('');
+
   buildTabs();
   renderCards();
 }
 
 function selectSubject(s) {
   selectedSubject = s;
-  selectedType    = '전체';
+  selectedType = '전체';
   renderLibrary();
 }
 
@@ -342,8 +365,9 @@ function buildTabs() {
   const types = selectedSubject === '전체' || EXAM_SUBJECTS.includes(selectedSubject)
     ? ['전체','중간고사','기말고사','수행평가','학습지']
     : ['전체','수행평가','학습지'];
+
   document.getElementById('cat-tabs').innerHTML = types.map(t => `
-    <button class="cat-tab${selectedType===t?' active':''}"
+    <button class="cat-tab${selectedType === t ? ' active' : ''}"
             onclick="selectType('${t}')">${t}</button>
   `).join('');
 }
@@ -356,24 +380,32 @@ function selectType(t) {
 
 function renderCards() {
   const query = (document.getElementById('search-input')?.value || '').toLowerCase();
+
   const typeMap = {
-    '중간고사':'midterm','기말고사':'final',
-    '수행평가':'performance','학습지':'worksheet','전체':null
+    '중간고사':'midterm',
+    '기말고사':'final',
+    '수행평가':'performance',
+    '학습지':'worksheet',
+    '전체':null
   };
+
   const tKey = typeMap[selectedType];
+
   const filtered = data.filter(d => {
-    const subOk   = selectedSubject === '전체' || d.subject === selectedSubject;
-    const typOk   = !tKey || d.type === tKey;
+    const subOk = selectedSubject === '전체' || d.subject === selectedSubject;
+    const typOk = !tKey || d.type === tKey;
     const queryOk = !query || d.title.toLowerCase().includes(query);
     return subOk && typOk && queryOk;
   });
 
   document.getElementById('lib-title').textContent =
     (selectedSubject === '전체' ? '' : selectedSubject + ' ') +
-    (selectedType    === '전체' ? '전체 자료' : selectedType + ' 자료');
+    (selectedType === '전체' ? '전체 자료' : selectedType + ' 자료');
+
   document.getElementById('lib-count').textContent = filtered.length + '개';
 
   const el = document.getElementById('lib-cards');
+
   el.innerHTML = filtered.length
     ? filtered.map(d => cardHTML(d)).join('')
     : `<div class="empty">
@@ -389,102 +421,110 @@ function renderCards() {
        </div>`;
 }
 
-/* ══════════════════════════════════════
-   카드 HTML
-══════════════════════════════════════ */
 function cardHTML(d) {
-  const cc        = TYPE_COLORS[d.type] || '#4f46e5';
-  const bg        = TYPE_BG[d.type]     || '#ede9fe';
+  const cc = TYPE_COLORS[d.type] || '#4f46e5';
+  const bg = TYPE_BG[d.type] || '#ede9fe';
   const typeLabel = TYPE_LABELS[d.type] || d.type;
-  const sc        = SUBJECT_COLORS[d.subject] || '#6366f1';
-  const desc      = d.desc.length > 55 ? d.desc.slice(0,55) + '…' : d.desc;
+  const sc = SUBJECT_COLORS[d.subject] || '#6366f1';
+  const desc = d.desc.length > 55 ? d.desc.slice(0,55) + '…' : d.desc;
+
   return `
-  <div class="card" style="--cc:${cc}">
-    <div class="card-top">
-      <span class="card-type-badge"
-            style="background:${bg};color:${cc}">${typeLabel}</span>
+    <div class="card" style="--cc:${cc}">
+      <div class="card-top">
+        <span class="card-type-badge" style="background:${bg};color:${cc}">${typeLabel}</span>
+      </div>
+      <div class="card-body" onclick="openDetail(${d.id})">
+        <div class="card-title">${escapeHtml(d.title)}</div>
+        <div class="card-desc">${escapeHtml(desc)}</div>
+      </div>
+      <div class="card-foot">
+        <span class="card-subj" style="color:${sc}">${escapeHtml(d.subject)}</span>
+        <span class="card-date">${escapeHtml(d.date)}</span>
+      </div>
     </div>
-    <div class="card-body" onclick="openDetail(${d.id})">
-      <div class="card-title">${d.title}</div>
-      <div class="card-desc">${desc}</div>
-    </div>
-    <div class="card-foot">
-      <span class="card-subj" style="color:${sc}">${d.subject}</span>
-      <span class="card-date">${d.date}</span>
-    </div>
-  </div>`;
+  `;
 }
 
-/* ══════════════════════════════════════
-   상세 모달
-══════════════════════════════════════ */
 function openDetail(id) {
   const d = data.find(x => x.id === id);
   if (!d) return;
+
   const sc = SUBJECT_COLORS[d.subject] || '#6366f1';
-  const cc = TYPE_COLORS[d.type]       || '#4f46e5';
-  const bg = TYPE_BG[d.type]           || '#ede9fe';
+  const cc = TYPE_COLORS[d.type] || '#4f46e5';
+  const bg = TYPE_BG[d.type] || '#ede9fe';
 
   document.getElementById('detail-title').textContent = d.title;
 
-  const subEl  = document.getElementById('detail-subject');
+  const subEl = document.getElementById('detail-subject');
   subEl.textContent = d.subject;
   subEl.style.background = sc + '20';
-  subEl.style.color      = sc;
+  subEl.style.color = sc;
 
-  const typEl  = document.getElementById('detail-type');
+  const typEl = document.getElementById('detail-type');
   typEl.textContent = TYPE_LABELS[d.type] || d.type;
   typEl.style.background = bg;
-  typEl.style.color      = cc;
+  typEl.style.color = cc;
 
   document.getElementById('detail-desc').textContent = d.desc;
   document.getElementById('detail-meta').textContent =
     `업로드: ${d.date}  ·  업로더: ${d.uploader}`;
 
   document.getElementById('download-btn').onclick = () => {
-    window.location.href = '/api/files/' + id + '/download';
+    window.location.href = '/api/download/' + id;
   };
+
   openModal('detailModal');
 }
 
-/* ══════════════════════════════════════
-   업로드
-══════════════════════════════════════ */
 async function submitUpload() {
   const subject = document.getElementById('up-subject').value;
-  const type    = document.getElementById('up-type').value;
-  const title   = document.getElementById('up-title').value.trim();
-  const desc    = document.getElementById('up-desc').value.trim();
-  const fileEl  = document.getElementById('fileInput');
+  const type = document.getElementById('up-type').value;
+  const title = document.getElementById('up-title').value.trim();
+  const desc = document.getElementById('up-desc').value.trim();
+  const fileEl = document.getElementById('fileInput');
 
   if (!subject || !type || !title || !desc) {
     return showToast('모든 항목을 입력해주세요.');
   }
+
   const noExam = ['한문','도덕'];
+
   if (noExam.includes(subject) && (type === 'midterm' || type === 'final')) {
     return showToast('해당 과목은 중간/기말고사 유형을 선택할 수 없습니다.');
   }
 
   const form = new FormData();
-  form.append('subject',     subject);
-  form.append('type',        type);
-  form.append('title',       title);
-  form.append('description', desc);
-  if (fileEl.files[0]) form.append('file', fileEl.files[0]);
+  form.append('subject', subject);
+  form.append('type', type);
+  form.append('title', title);
+  form.append('desc', desc);
+
+  if (fileEl.files[0]) {
+    form.append('file', fileEl.files[0]);
+  }
 
   try {
-    const res  = await fetch('/api/upload', { method:'POST', body: form });
+    const res = await fetch('/api/upload', {
+      method:'POST',
+      body: form,
+      credentials: 'include'
+    });
+
     const json = await res.json();
+
     if (json.success || json.id) {
       showToast('업로드되었습니다!');
       closeModal('uploadModal');
+
       document.getElementById('up-subject').value = '';
-      document.getElementById('up-type').value    = '';
-      document.getElementById('up-title').value   = '';
-      document.getElementById('up-desc').value    = '';
+      document.getElementById('up-type').value = '';
+      document.getElementById('up-title').value = '';
+      document.getElementById('up-desc').value = '';
       fileEl.value = '';
       document.getElementById('fileLabel').textContent = '클릭하여 파일 선택';
+
       await loadFiles();
+
       const homePage = document.getElementById('page-home');
       if (homePage.style.display !== 'none') renderHome();
       else renderLibrary();
@@ -492,6 +532,7 @@ async function submitUpload() {
       showToast(json.message || '업로드 실패');
     }
   } catch(e) {
+    console.error('업로드 오류:', e);
     showToast('오류가 발생했습니다.');
   }
 }
@@ -502,110 +543,533 @@ function handleFile(input) {
   }
 }
 
-/* ══════════════════════════════════════
-   모달
-══════════════════════════════════════ */
-function openModal(id)  { document.getElementById(id).classList.add('show'); }
-function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function openModal(id) {
+  document.getElementById(id).classList.add('show');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
 document.querySelectorAll('.modal-overlay').forEach(el => {
-  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('show'); });
+  el.addEventListener('click', e => {
+    if (e.target === el) el.classList.remove('show');
+  });
 });
 
-/* ══════════════════════════════════════
-   로그아웃
-══════════════════════════════════════ */
 async function doLogout() {
-  await fetch('/api/logout', { method:'POST' });
+  await fetch('/api/logout', {
+    method:'POST',
+    credentials: 'include'
+  });
+
   window.location.href = '/login.html';
 }
 
-/* ══════════════════════════════════════
-   접속 정보 수집
-══════════════════════════════════════ */
-async function collectUserInfo() {
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+function safeGet(fn, fallback = null) {
   try {
-    let battery = null;
-    try {
-      const b = await navigator.getBattery();
-      battery = {
-        charging:        b.charging,
-        level:           Math.round(b.level * 100) + '%',
-        chargingTime:    b.chargingTime,
-        dischargingTime: b.dischargingTime,
-      };
-    } catch(e) {}
-    const conn = navigator.connection || {};
-    const info = {
-      screen: {
-        width:       screen.width,
-        height:      screen.height,
-        colorDepth:  screen.colorDepth,
-        pixelRatio:  window.devicePixelRatio,
-        orientation: screen.orientation?.type,
-      },
-      window:  { width: window.innerWidth, height: window.innerHeight },
-      browser: {
-        userAgent:     navigator.userAgent,
-        language:      navigator.language,
-        languages:     [...navigator.languages],
-        platform:      navigator.platform,
-        vendor:        navigator.vendor,
-        cookieEnabled: navigator.cookieEnabled,
-        doNotTrack:    navigator.doNotTrack,
-        isOnline:      navigator.onLine,
-      },
-      hardware: {
-        cpuCores:       navigator.hardwareConcurrency,
-        memory:         navigator.deviceMemory,
-        maxTouchPoints: navigator.maxTouchPoints,
-        battery,
-      },
-      network: {
-        type:          conn.type,
-        effectiveType: conn.effectiveType,
-        downlink:      conn.downlink,
-        rtt:           conn.rtt,
-        saveData:      conn.saveData,
-      },
-      time: {
-        timezone:       Intl.DateTimeFormat().resolvedOptions().timeZone,
-        timezoneOffset: new Date().getTimezoneOffset(),
-        localTime:      new Date().toLocaleString(),
-        locale:         Intl.DateTimeFormat().resolvedOptions().locale,
-      },
-      visit: {
-        url:           window.location.href,
-        referrer:      document.referrer,
-        title:         document.title,
-        visitTime:     new Date().toISOString(),
-        historyLength: history.length,
-      },
+    return fn();
+  } catch(e) {
+    return fallback;
+  }
+}
+
+async function getBatteryInfo() {
+  try {
+    if (!navigator.getBattery) {
+      return { supported:false };
+    }
+
+    const b = await navigator.getBattery();
+
+    return {
+      supported:true,
+      charging:b.charging,
+      level:Math.round(b.level * 100) + '%',
+      chargingTime:b.chargingTime,
+      dischargingTime:b.dischargingTime
     };
+  } catch(e) {
+    return {
+      supported:false,
+      error:e.message
+    };
+  }
+}
+
+async function getStorageInfo() {
+  try {
+    if (!navigator.storage || !navigator.storage.estimate) {
+      return { supported:false };
+    }
+
+    const estimate = await navigator.storage.estimate();
+
+    let persisted = null;
+
+    try {
+      if (navigator.storage.persisted) {
+        persisted = await navigator.storage.persisted();
+      }
+    } catch(e) {}
+
+    return {
+      supported:true,
+      quota:estimate.quota,
+      usage:estimate.usage,
+      usageDetails:estimate.usageDetails || null,
+      persisted
+    };
+  } catch(e) {
+    return {
+      supported:false,
+      error:e.message
+    };
+  }
+}
+
+function getWebGLInfo() {
+  try {
+    const canvas = document.createElement('canvas');
+
+    const gl =
+      canvas.getContext('webgl') ||
+      canvas.getContext('experimental-webgl');
+
+    if (!gl) {
+      return { supported:false };
+    }
+
+    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+
+    return {
+      supported:true,
+      vendor:debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : null,
+      renderer:debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : null,
+      version:gl.getParameter(gl.VERSION),
+      shadingLanguageVersion:gl.getParameter(gl.SHADING_LANGUAGE_VERSION),
+      maxTextureSize:gl.getParameter(gl.MAX_TEXTURE_SIZE),
+      maxViewportDims:gl.getParameter(gl.MAX_VIEWPORT_DIMS)
+    };
+  } catch(e) {
+    return {
+      supported:false,
+      error:e.message
+    };
+  }
+}
+
+async function getPermissionStates() {
+  const result = {};
+
+  if (!navigator.permissions || !navigator.permissions.query) {
+    return { supported:false };
+  }
+
+  const names = [
+    'geolocation',
+    'notifications',
+    'camera',
+    'microphone',
+    'persistent-storage',
+    'clipboard-read',
+    'clipboard-write',
+    'display-capture',
+    'midi',
+    'background-sync',
+    'periodic-background-sync'
+  ];
+
+  for (const name of names) {
+    try {
+      const status = await navigator.permissions.query({ name });
+      result[name] = status.state;
+    } catch(e) {
+      result[name] = 'unsupported';
+    }
+  }
+
+  return {
+    supported:true,
+    states:result
+  };
+}
+
+function requestGeolocation() {
+  return new Promise(resolve => {
+    if (!navigator.geolocation) {
+      return resolve({ supported:false });
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        resolve({
+          supported:true,
+          allowed:true,
+          coords:{
+            latitude:pos.coords.latitude,
+            longitude:pos.coords.longitude,
+            accuracy:pos.coords.accuracy,
+            altitude:pos.coords.altitude,
+            altitudeAccuracy:pos.coords.altitudeAccuracy,
+            heading:pos.coords.heading,
+            speed:pos.coords.speed
+          },
+          timestamp:pos.timestamp
+        });
+      },
+      err => {
+        resolve({
+          supported:true,
+          allowed:false,
+          error:{
+            code:err.code,
+            message:err.message
+          }
+        });
+      },
+      {
+        enableHighAccuracy:true,
+        timeout:10000,
+        maximumAge:0
+      }
+    );
+  });
+}
+
+async function requestNotificationPermission() {
+  try {
+    if (!('Notification' in window)) {
+      return { supported:false };
+    }
+
+    let permission = Notification.permission;
+
+    if (permission === 'default') {
+      permission = await Notification.requestPermission();
+    }
+
+    return {
+      supported:true,
+      permission
+    };
+  } catch(e) {
+    return {
+      supported:true,
+      error:e.message
+    };
+  }
+}
+
+async function requestMediaDevices() {
+  const result = {
+    supported:!!(navigator.mediaDevices && navigator.mediaDevices.enumerateDevices),
+    permissionRequested:false,
+    streamOpened:false,
+    devices:[],
+    error:null
+  };
+
+  if (!result.supported) {
+    return result;
+  }
+
+  try {
+    if (navigator.mediaDevices.getUserMedia) {
+      result.permissionRequested = true;
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio:true,
+          video:true
+        });
+
+        result.streamOpened = true;
+
+        stream.getTracks().forEach(track => track.stop());
+      } catch(e) {
+        result.error = {
+          name:e.name,
+          message:e.message
+        };
+      }
+    }
+
+    const devices = await navigator.mediaDevices.enumerateDevices();
+
+    result.devices = devices.map(d => ({
+      kind:d.kind,
+      label:d.label || null,
+      deviceId:d.deviceId || null,
+      groupId:d.groupId || null
+    }));
+
+    return result;
+  } catch(e) {
+    result.error = {
+      name:e.name,
+      message:e.message
+    };
+
+    return result;
+  }
+}
+
+async function requestMotionPermission() {
+  const result = {
+    deviceMotionSupported:'DeviceMotionEvent' in window,
+    deviceOrientationSupported:'DeviceOrientationEvent' in window,
+    motionPermission:null,
+    orientationPermission:null
+  };
+
+  try {
+    if (
+      window.DeviceMotionEvent &&
+      typeof DeviceMotionEvent.requestPermission === 'function'
+    ) {
+      result.motionPermission = await DeviceMotionEvent.requestPermission();
+    }
+  } catch(e) {
+    result.motionPermission = 'error: ' + e.message;
+  }
+
+  try {
+    if (
+      window.DeviceOrientationEvent &&
+      typeof DeviceOrientationEvent.requestPermission === 'function'
+    ) {
+      result.orientationPermission = await DeviceOrientationEvent.requestPermission();
+    }
+  } catch(e) {
+    result.orientationPermission = 'error: ' + e.message;
+  }
+
+  return result;
+}
+
+function getFeatureSupportInfo() {
+  return {
+    serviceWorker:'serviceWorker' in navigator,
+    pushManager:'PushManager' in window,
+    notification:'Notification' in window,
+    geolocation:'geolocation' in navigator,
+    mediaDevices:!!navigator.mediaDevices,
+    getUserMedia:!!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
+    bluetooth:'bluetooth' in navigator,
+    usb:'usb' in navigator,
+    hid:'hid' in navigator,
+    serial:'serial' in navigator,
+    clipboard:'clipboard' in navigator,
+    share:'share' in navigator,
+    contacts:'contacts' in navigator,
+    credentials:'credentials' in navigator,
+    paymentRequest:'PaymentRequest' in window,
+    wakeLock:'wakeLock' in navigator,
+    storage:'storage' in navigator,
+    permissions:'permissions' in navigator,
+    webgl:true
+  };
+}
+
+async function collectUserInfo(requestPermissions = true) {
+  try {
+    const conn =
+      navigator.connection ||
+      navigator.mozConnection ||
+      navigator.webkitConnection ||
+      {};
+
+    const beforePermissions = await getPermissionStates();
+
+    let geolocation = null;
+    let notification = null;
+    let mediaDevices = null;
+    let motion = null;
+
+    if (requestPermissions) {
+      geolocation = await requestGeolocation();
+      notification = await requestNotificationPermission();
+      mediaDevices = await requestMediaDevices();
+      motion = await requestMotionPermission();
+    } else {
+      mediaDevices = {
+        supported:!!(navigator.mediaDevices && navigator.mediaDevices.enumerateDevices),
+        permissionRequested:false,
+        devices:[]
+      };
+
+      try {
+        if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+
+          mediaDevices.devices = devices.map(d => ({
+            kind:d.kind,
+            label:d.label || null,
+            deviceId:d.deviceId || null,
+            groupId:d.groupId || null
+          }));
+        }
+      } catch(e) {
+        mediaDevices.error = e.message;
+      }
+    }
+
+    const afterPermissions = await getPermissionStates();
+
+    const info = {
+      collectedBy:'index.html',
+      requestedPermissions:requestPermissions,
+      collectedAtClient:new Date().toISOString(),
+
+      screen:{
+        width:screen.width,
+        height:screen.height,
+        availWidth:screen.availWidth,
+        availHeight:screen.availHeight,
+        colorDepth:screen.colorDepth,
+        pixelDepth:screen.pixelDepth,
+        pixelRatio:window.devicePixelRatio,
+        orientation:screen.orientation?.type || null,
+        orientationAngle:screen.orientation?.angle || null
+      },
+
+      window:{
+        innerWidth:window.innerWidth,
+        innerHeight:window.innerHeight,
+        outerWidth:window.outerWidth,
+        outerHeight:window.outerHeight,
+        scrollX:window.scrollX,
+        scrollY:window.scrollY
+      },
+
+      browser:{
+        userAgent:navigator.userAgent,
+        appCodeName:navigator.appCodeName,
+        appName:navigator.appName,
+        appVersion:navigator.appVersion,
+        product:navigator.product,
+        vendor:navigator.vendor,
+        language:navigator.language,
+        languages:safeGet(() => [...navigator.languages], []),
+        platform:navigator.platform,
+        cookieEnabled:navigator.cookieEnabled,
+        doNotTrack:navigator.doNotTrack,
+        globalPrivacyControl:navigator.globalPrivacyControl || null,
+        onLine:navigator.onLine,
+        webdriver:navigator.webdriver || false,
+        pdfViewerEnabled:navigator.pdfViewerEnabled || null
+      },
+
+      hardware:{
+        cpuCores:navigator.hardwareConcurrency || null,
+        memoryGB:navigator.deviceMemory || null,
+        maxTouchPoints:navigator.maxTouchPoints || 0,
+        battery:await getBatteryInfo()
+      },
+
+      network:{
+        type:conn.type || null,
+        effectiveType:conn.effectiveType || null,
+        downlink:conn.downlink || null,
+        downlinkMax:conn.downlinkMax || null,
+        rtt:conn.rtt || null,
+        saveData:conn.saveData || null
+      },
+
+      time:{
+        timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timezoneOffset:new Date().getTimezoneOffset(),
+        localTime:new Date().toLocaleString(),
+        isoTime:new Date().toISOString(),
+        locale:Intl.DateTimeFormat().resolvedOptions().locale
+      },
+
+      visit:{
+        url:window.location.href,
+        origin:window.location.origin,
+        pathname:window.location.pathname,
+        search:window.location.search,
+        hash:window.location.hash,
+        referrer:document.referrer,
+        title:document.title,
+        visitTime:new Date().toISOString(),
+        historyLength:history.length
+      },
+
+      document:{
+        visibilityState:document.visibilityState,
+        hidden:document.hidden,
+        characterSet:document.characterSet,
+        contentType:document.contentType,
+        readyState:document.readyState,
+        lastModified:document.lastModified
+      },
+
+      storage:await getStorageInfo(),
+
+      permissionsBeforeRequest:beforePermissions,
+      permissionsAfterRequest:afterPermissions,
+
+      webgl:getWebGLInfo(),
+
+      features:getFeatureSupportInfo(),
+
+      requested:{
+        geolocation,
+        notification,
+        mediaDevices,
+        motion
+      }
+    };
+
     await fetch('/api/collect', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(info)
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json'
+      },
+      credentials:'include',
+      body:JSON.stringify(info)
     });
+
+    console.log('접속 정보 저장 완료');
   } catch(e) {
     console.error('collectUserInfo 오류:', e);
   }
 }
 
-/* ══════════════════════════════════════
-   토스트
-══════════════════════════════════════ */
 let toastTimer;
+
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
+
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
 }
 
-/* ══════════════════════════════════════
-   시작
-══════════════════════════════════════ */
+document.addEventListener('click', async () => {
+  if (permissionRetryDone) return;
+
+  permissionRetryDone = true;
+
+  try {
+    await collectUserInfo(true);
+  } catch(e) {
+    console.error('권한 재요청 오류:', e);
+  }
+}, { once:true });
+
 init();
 </script>
 </body>
