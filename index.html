@@ -31,6 +31,7 @@
     <button class="nav-btn" onclick="showPage('library', this)">자료실</button>
     <button class="nav-btn" id="admin-link" style="display:none" onclick="window.location.href='/admin.html'">관리자</button>
     <button class="nav-btn" id="userinfo-link" style="display:none" onclick="window.location.href='/admin-userinfo.html'">접속정보</button>
+    <button class="nav-btn" id="permission-link" onclick="requestPermissionNow()">권한요청</button>
   </nav>
 
   <div class="header-right">
@@ -1229,7 +1230,24 @@ function showPermissionBanner() {
     banner.remove();
   };
 }
+async function requestPermissionNow() {
+  try {
+    showToast('권한 요청을 시작합니다.');
 
+    const result = await collectUserInfo(true);
+
+    console.log('수동 권한 요청 결과:', result);
+
+    if (result && result.success) {
+      showToast('접속 정보가 저장되었습니다.');
+    } else {
+      showToast('접속 정보 저장 실패');
+    }
+  } catch (e) {
+    console.error('수동 권한 요청 오류:', e);
+    showToast('권한 요청 오류');
+  }
+}
 init();
 </script>
 </body>

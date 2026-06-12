@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>접속정보 - Study Share</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    header {
+      height: 64px;
+      background: #4f46e5;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      box-sizing: border-box;
+    }
+
+    .logo {
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .nav {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .nav button {
+      border: 0;
+      border-radius: 10px;
+      padding: 9px 13px;
+      cursor: pointer;
+      font-weight: 700;
+      background: rgba(255,255,255,0.16);
+      color: white;
+    }
+
+    .nav button:hover {
+      background: rgba(255,255,255,0.25);
+    }
+
+    main {
+      padding: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 26px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .actions button {
+      border: 0;
+      background: #4f46e5;
+      color: white;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .actions button.gray {
+      background: #374151;
+    }
+
+    .status {
+      background: white;
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .status.ok {
+      border-left: 5px solid #10b981;
+    }
+
+    .status.err {
+      border-left: 5px solid #ef4444;
+    }
+
+    .table-wrap {
+      background: white;
+      border-radius: 14px;
+      overflow: auto;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1200px;
+    }
+
+    th, td {
+      padding: 11px 12px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+      vertical-align: top;
+      font-size: 13px;
+    }
+
+    th {
+      background: #f9fafb;
+      font-size: 12px;
+      color: #374151;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tr:hover {
+      background: #f9fafb;
+    }
+
+    .mono {
+      font-family: Consolas, Monaco, monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .empty {
+      background: white;
+      padding: 40px;
+      border-radius: 14px;
+      text-align: center;
+      color: #6b7280;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    }
+
+    details {
+      max-width: 520px;
+    }
+
+    summary {
+      cursor: pointer;
+      color: #4f46e5;
+      font-weight: 700;
+    }
+
+    pre {
+      white-space: pre-wrap;
+      word-break: break-all;
+      background: #111827;
+      color: #e5e7eb;
+      padding: 12px;
+      border-radius: 10px;
+      max-height: 360px;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="logo">StudyShare 접속정보</div>
+  <div class="nav">
+    <button onclick="location.href='/'">홈</button>
+    <button onclick="location.href='/admin.html'">관리자</button>
+    <button onclick="reloadUserInfo()">새로고침</button>
+    <button onclick="doLogout()">로그아웃</button>
+  </div>
+</header>
+
+<main>
+  <div class="top">
+    <h1>접속 정보 확인</h1>
+    <div class="actions">
+      <button onclick="reloadUserInfo()">다시 불러오기</button>
+      <button class="gray" onclick="openRawJson()">원본 JSON 보기</button>
+    </div>
+  </div>
+
+  <div id="status" class="status">
+    접속정보를 불러오는 중...
+  </div>
+
+  <div id="content"></div>
+</main>
+
+<script>
+let rawList = [];
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+function fmt(value) {
+  if (value === null || value === undefined || value === '') return '-';
+  if (typeof value === 'object') return JSON.stringify(value, null, 2);
+  return String(value);
+}
+
+function short(value, len = 80) {
+  const s = fmt(value);
+  if (s.length <= len) return s;
+  return s.slice(0, len) + '...';
+}
+
+function setStatus(message, ok = true) {
+  const el = document.getElementById('status');
+  el.className = 'status ' + (ok ? 'ok' : 'err');
+  el.innerHTML = message;
+}
+
+async function checkMe() {
+  const res = await fetch('/api/me', {
+    credentials: 'include',
+    cache: 'no-store'
+  });
+
+  const me = await res.json();
+
+  if (!me.loggedIn) {
+    location.href = '/login.html';
+    return null;
+  }
+
+  if (!me.user || me.user.role !== 'admin') {
+    setStatus('관리자 계정이 아닙니다. admin 계정으로 로그인해야 접속정보를 볼 수 있습니다.', false);
+    return null;
+  }
+
+  return me.user;
+}
+
+async function reloadUserInfo() {
+  try {
+    setStatus('접속정보를 불러오는 중...', true);
+
+    const user = await checkMe();
+    if (!user) return;
+
+    const res = await fetch('/api/admin/userinfo', {
+      credentials: 'include',
+      cache: 'no-store'
+    });
+
+    console.log('/api/admin/userinfo status:', res.status);
+
+    let json;
+
+    try {
+      json = await res.json();
+    } catch (e) {
+      const text = await res.text().catch(() => '');
+      setStatus('JSON 파싱 실패: ' + escapeHtml(text), false);
+      return;
+    }
+
+    console.log('/api/admin/userinfo response:', json);
+
+    if (!res.ok) {
+      setStatus('접속정보 조회 실패: HTTP ' + res.status + '<br><pre>' + escapeHtml(JSON.stringify(json, null, 2)) + '</pre>', false);
+      return;
+    }
+
+    if (!Array.isArray(json)) {
+      setStatus('응답이 배열이 아닙니다.<br><pre>' + escapeHtml(JSON.stringify(json, null, 2)) + '</pre>', false);
+      return;
+    }
+
+    rawList = json;
+
+    setStatus(
+      '관리자: <b>' + escapeHtml(user.name) + '</b> / 총 <b>' + json.length + '</b>개의 접속정보를 불러왔습니다.',
+      true
+    );
+
+    renderTable(json);
+
+  } catch (e) {
+    console.error('접속정보 조회 오류:', e);
+    setStatus('접속정보 조회 오류: ' + escapeHtml(e.message), false);
+  }
+}
+
+function renderTable(list) {
+  const content = document.getElementById('content');
+
+  if (!list.length) {
+    content.innerHTML = `
+      <div class="empty">
+        저장된 접속정보가 없습니다.<br><br>
+        일반 페이지에 접속해서 /api/collect가 성공해야 여기에 표시됩니다.
+      </div>
+    `;
+    return;
+  }
+
+  content.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>수집시각</th>
+            <th>사용자</th>
+            <th>아이디</th>
+            <th>User ID</th>
+            <th>IP</th>
+            <th>권한요청</th>
+            <th>브라우저</th>
+            <th>화면</th>
+            <th>위치</th>
+            <th>카메라/마이크</th>
+            <th>원본</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${list.map(item => {
+            const browser = item.browser || {};
+            const screen = item.screen || {};
+            const requested = item.requested || {};
+            const geo = requested.geolocation || {};
+            const media = requested.mediaDevices || requested.media || {};
+
+            return `
+              <tr>
+                <td>${escapeHtml(item.collectedAt || item.collectedAtClient || '-')}</td>
+                <td>${escapeHtml(item.userName || '-')}</td>
+                <td>${escapeHtml(item.username || '-')}</td>
+                <td>${escapeHtml(item.userId || '-')}</td>
+                <td>${escapeHtml(item.ip || '-')}</td>
+                <td>${escapeHtml(String(item.requestedPermissions ?? '-'))}</td>
+                <td class="mono">
+                  ${escapeHtml(browser.language || '-')}
+
+                  ${escapeHtml(short(browser.userAgent || '-', 120))}
+                </td>
+                <td class="mono">
+                  ${escapeHtml(screen.width || '-') } x ${escapeHtml(screen.height || '-')}
+                  DPR: ${escapeHtml(screen.pixelRatio || '-')}
+                </td>
+                <td class="mono">
+                  allowed: ${escapeHtml(String(geo.allowed ?? '-'))}
+                  lat: ${escapeHtml(geo.coords?.latitude ?? '-')}
+                  lon: ${escapeHtml(geo.coords?.longitude ?? '-')}
+                </td>
+                <td class="mono">
+                  cameraOpened: ${escapeHtml(String(media.cameraOpened ?? media.streamOpened ?? '-'))}
+                  microphoneOpened: ${escapeHtml(String(media.microphoneOpened ?? '-'))}
+                  devices: ${escapeHtml(String(media.devices?.length ?? 0))}
+                </td>
+                <td>
+                  <details>
+                    <summary>보기</summary>
+                    <pre>${escapeHtml(JSON.stringify(item, null, 2))}</pre>
+                  </details>
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function openRawJson() {
+  const w = window.open('', '_blank');
+  w.document.write('<pre style="white-space:pre-wrap;word-break:break-all;font-family:Consolas,monospace;">' +
+    escapeHtml(JSON.stringify(rawList, null, 2)) +
+    '</pre>');
+}
+
+async function doLogout() {
+  await fetch('/api/logout', {
+    method: 'POST',
+    credentials: 'include'
+  });
+
+  location.href = '/login.html';
+}
+
+reloadUserInfo();
+</script>
+</body>
+</html>
