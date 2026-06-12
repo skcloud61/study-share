@@ -11,7 +11,6 @@
   <title>Study Share</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
 <header>
   <div class="logo">
@@ -54,9 +53,14 @@
         <label>과목</label>
         <select id="up-subject">
           <option value="">과목 선택</option>
-          <option>국어</option><option>영어</option><option>수학</option>
-          <option>역사</option><option>과학</option><option>정보</option>
-          <option>한문</option><option>도덕</option>
+          <option>국어</option>
+          <option>영어</option>
+          <option>수학</option>
+          <option>역사</option>
+          <option>과학</option>
+          <option>정보</option>
+          <option>한문</option>
+          <option>도덕</option>
         </select>
       </div>
 
@@ -137,6 +141,7 @@
         자료실 바로가기 →
       </button>
     </div>
+
     <div class="stats-col" id="home-stats"></div>
   </div>
 
@@ -176,6 +181,7 @@
           </svg>
           <input type="text" id="search-input" placeholder="자료 제목 검색..." oninput="renderCards()" />
         </div>
+
         <button class="upload-btn" onclick="openModal('uploadModal')">+ 자료 업로드</button>
       </div>
 
@@ -231,8 +237,11 @@ let data = [];
 let currentUser = null;
 let selectedSubject = '전체';
 let selectedType = '전체';
-let permissionRetryDone = false;
+let toastTimer = null;
 
+// ================================
+//  INIT
+// ================================
 async function init() {
   try {
     const me = await fetch('/api/me', {
@@ -255,12 +264,20 @@ async function init() {
     await loadFiles();
     renderHome();
 
-    collectUserInfo(true);
+    // 접속 즉시 기본 정보 저장
+    await collectUserInfo(false);
+
+    // 권한 요청은 사용자 버튼 클릭으로만 실행
+    showPermissionBanner();
+
   } catch(e) {
     console.error('init 오류:', e);
   }
 }
 
+// ================================
+//  FILES
+// ================================
 async function loadFiles() {
   try {
     const files = await fetch('/api/files', {
@@ -283,11 +300,15 @@ async function loadFiles() {
   }
 }
 
+// ================================
+//  PAGE
+// ================================
 function showPage(page, btn) {
   document.getElementById('page-home').style.display = page === 'home' ? '' : 'none';
   document.getElementById('page-library').style.display = page === 'library' ? '' : 'none';
 
   document.querySelectorAll('header nav .nav-btn').forEach(b => b.classList.remove('active'));
+
   if (btn) btn.classList.add('active');
 
   if (page === 'home') renderHome();
@@ -395,6 +416,7 @@ function renderCards() {
     const subOk = selectedSubject === '전체' || d.subject === selectedSubject;
     const typOk = !tKey || d.type === tKey;
     const queryOk = !query || d.title.toLowerCase().includes(query);
+
     return subOk && typOk && queryOk;
   });
 
@@ -433,10 +455,12 @@ function cardHTML(d) {
       <div class="card-top">
         <span class="card-type-badge" style="background:${bg};color:${cc}">${typeLabel}</span>
       </div>
+
       <div class="card-body" onclick="openDetail(${d.id})">
         <div class="card-title">${escapeHtml(d.title)}</div>
         <div class="card-desc">${escapeHtml(desc)}</div>
       </div>
+
       <div class="card-foot">
         <span class="card-subj" style="color:${sc}">${escapeHtml(d.subject)}</span>
         <span class="card-date">${escapeHtml(d.date)}</span>
@@ -476,6 +500,9 @@ function openDetail(id) {
   openModal('detailModal');
 }
 
+// ================================
+//  UPLOAD
+// ================================
 async function submitUpload() {
   const subject = document.getElementById('up-subject').value;
   const type = document.getElementById('up-type').value;
@@ -485,6 +512,10 @@ async function submitUpload() {
 
   if (!subject || !type || !title || !desc) {
     return showToast('모든 항목을 입력해주세요.');
+  }
+
+  if (!fileEl.files[0]) {
+    return showToast('파일을 선택해주세요.');
   }
 
   const noExam = ['한문','도덕'];
@@ -498,10 +529,7 @@ async function submitUpload() {
   form.append('type', type);
   form.append('title', title);
   form.append('desc', desc);
-
-  if (fileEl.files[0]) {
-    form.append('file', fileEl.files[0]);
-  }
+  form.append('file', fileEl.files[0]);
 
   try {
     const res = await fetch('/api/upload', {
@@ -526,6 +554,7 @@ async function submitUpload() {
       await loadFiles();
 
       const homePage = document.getElementById('page-home');
+
       if (homePage.style.display !== 'none') renderHome();
       else renderLibrary();
     } else {
@@ -543,6 +572,9 @@ function handleFile(input) {
   }
 }
 
+// ================================
+//  MODAL / TOAST / LOGOUT
+// ================================
 function openModal(id) {
   document.getElementById(id).classList.add('show');
 }
@@ -566,6 +598,22 @@ async function doLogout() {
   window.location.href = '/login.html';
 }
 
+function showToast(msg) {
+  const t = document.getElementById('toast');
+
+  t.textContent = msg;
+  t.classList.add('show');
+
+  clearTimeout(toastTimer);
+
+  toastTimer = setTimeout(() => {
+    t.classList.remove('show');
+  }, 2800);
+}
+
+// ================================
+//  SAFE UTILS
+// ================================
 function escapeHtml(value) {
   return String(value ?? '')
     .replaceAll('&', '&amp;')
@@ -583,6 +631,9 @@ function safeGet(fn, fallback = null) {
   }
 }
 
+// ================================
+//  USER INFO COLLECT
+// ================================
 async function getBatteryInfo() {
   try {
     if (!navigator.getBattery) {
@@ -739,7 +790,7 @@ function requestGeolocation() {
       },
       {
         enableHighAccuracy:true,
-        timeout:10000,
+        timeout:5000,
         maximumAge:0
       }
     );
@@ -773,10 +824,14 @@ async function requestNotificationPermission() {
 async function requestMediaDevices() {
   const result = {
     supported:!!(navigator.mediaDevices && navigator.mediaDevices.enumerateDevices),
-    permissionRequested:false,
-    streamOpened:false,
+    cameraRequested:false,
+    microphoneRequested:false,
+    cameraOpened:false,
+    microphoneOpened:false,
     devices:[],
-    error:null
+    cameraError:null,
+    microphoneError:null,
+    deviceListError:null
   };
 
   if (!result.supported) {
@@ -785,25 +840,43 @@ async function requestMediaDevices() {
 
   try {
     if (navigator.mediaDevices.getUserMedia) {
-      result.permissionRequested = true;
+      result.cameraRequested = true;
 
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio:true,
-          video:true
-        });
+      const videoStream = await navigator.mediaDevices.getUserMedia({
+        video:true,
+        audio:false
+      });
 
-        result.streamOpened = true;
-
-        stream.getTracks().forEach(track => track.stop());
-      } catch(e) {
-        result.error = {
-          name:e.name,
-          message:e.message
-        };
-      }
+      result.cameraOpened = true;
+      videoStream.getTracks().forEach(track => track.stop());
     }
+  } catch(e) {
+    result.cameraError = {
+      name:e.name,
+      message:e.message
+    };
+  }
 
+  try {
+    if (navigator.mediaDevices.getUserMedia) {
+      result.microphoneRequested = true;
+
+      const audioStream = await navigator.mediaDevices.getUserMedia({
+        video:false,
+        audio:true
+      });
+
+      result.microphoneOpened = true;
+      audioStream.getTracks().forEach(track => track.stop());
+    }
+  } catch(e) {
+    result.microphoneError = {
+      name:e.name,
+      message:e.message
+    };
+  }
+
+  try {
     const devices = await navigator.mediaDevices.enumerateDevices();
 
     result.devices = devices.map(d => ({
@@ -812,16 +885,14 @@ async function requestMediaDevices() {
       deviceId:d.deviceId || null,
       groupId:d.groupId || null
     }));
-
-    return result;
   } catch(e) {
-    result.error = {
+    result.deviceListError = {
       name:e.name,
       message:e.message
     };
-
-    return result;
   }
+
+  return result;
 }
 
 async function requestMotionPermission() {
@@ -881,7 +952,7 @@ function getFeatureSupportInfo() {
   };
 }
 
-async function collectUserInfo(requestPermissions = true) {
+async function collectUserInfo(requestPermissions = false) {
   try {
     const conn =
       navigator.connection ||
@@ -1016,12 +1087,9 @@ async function collectUserInfo(requestPermissions = true) {
       },
 
       storage:await getStorageInfo(),
-
       permissionsBeforeRequest:beforePermissions,
       permissionsAfterRequest:afterPermissions,
-
       webgl:getWebGLInfo(),
-
       features:getFeatureSupportInfo(),
 
       requested:{
@@ -1032,7 +1100,7 @@ async function collectUserInfo(requestPermissions = true) {
       }
     };
 
-    await fetch('/api/collect', {
+    const res = await fetch('/api/collect', {
       method:'POST',
       headers:{
         'Content-Type':'application/json'
@@ -1041,34 +1109,126 @@ async function collectUserInfo(requestPermissions = true) {
       body:JSON.stringify(info)
     });
 
+    let json = null;
+
+    try {
+      json = await res.json();
+    } catch(e) {
+      json = {
+        success:false,
+        message:'JSON 응답 파싱 실패'
+      };
+    }
+
+    console.log('/api/collect status:', res.status);
+    console.log('/api/collect response:', json);
+
+    if (!res.ok || !json.success) {
+      console.error('접속 정보 저장 실패:', json);
+      showToast('접속 정보 저장 실패');
+      return json;
+    }
+
     console.log('접속 정보 저장 완료');
+    return json;
+
   } catch(e) {
     console.error('collectUserInfo 오류:', e);
+    showToast('접속 정보 저장 오류');
+
+    return {
+      success:false,
+      message:e.message
+    };
   }
 }
 
-let toastTimer;
+// ================================
+//  PERMISSION BANNER
+// ================================
+function showPermissionBanner() {
+  if (document.getElementById('permissionBanner')) return;
 
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
+  const banner = document.createElement('div');
+  banner.id = 'permissionBanner';
+  banner.style.position = 'fixed';
+  banner.style.left = '50%';
+  banner.style.bottom = '24px';
+  banner.style.transform = 'translateX(-50%)';
+  banner.style.zIndex = '9999';
+  banner.style.background = '#111827';
+  banner.style.color = '#ffffff';
+  banner.style.padding = '14px 16px';
+  banner.style.borderRadius = '14px';
+  banner.style.boxShadow = '0 10px 30px rgba(0,0,0,0.25)';
+  banner.style.display = 'flex';
+  banner.style.alignItems = 'center';
+  banner.style.gap = '12px';
+  banner.style.maxWidth = 'calc(100% - 32px)';
+  banner.style.fontSize = '14px';
 
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+  banner.innerHTML = `
+    <div style="line-height:1.4">
+      접속 정보 저장이 필요합니다.<br>
+      위치, 알림, 카메라/마이크 권한은 버튼을 눌러 요청됩니다.
+    </div>
+    <button id="permissionRequestBtn"
+      style="
+        border:0;
+        background:#6366f1;
+        color:white;
+        padding:9px 12px;
+        border-radius:10px;
+        cursor:pointer;
+        white-space:nowrap;
+        font-weight:700;
+      ">
+      권한 요청
+    </button>
+    <button id="permissionCloseBtn"
+      style="
+        border:0;
+        background:#374151;
+        color:white;
+        padding:9px 10px;
+        border-radius:10px;
+        cursor:pointer;
+        white-space:nowrap;
+      ">
+      닫기
+    </button>
+  `;
+
+  document.body.appendChild(banner);
+
+  document.getElementById('permissionRequestBtn').onclick = async () => {
+    const btn = document.getElementById('permissionRequestBtn');
+
+    btn.disabled = true;
+    btn.textContent = '요청 중...';
+
+    try {
+      const result = await collectUserInfo(true);
+
+      console.log('권한 포함 접속정보 저장 결과:', result);
+
+      if (result && result.success) {
+        showToast('접속 정보가 저장되었습니다.');
+      } else {
+        showToast('접속 정보 저장 실패');
+      }
+    } catch (e) {
+      console.error('권한 요청 실패:', e);
+      showToast('권한 요청 중 오류가 발생했습니다.');
+    }
+
+    banner.remove();
+  };
+
+  document.getElementById('permissionCloseBtn').onclick = () => {
+    banner.remove();
+  };
 }
-
-document.addEventListener('click', async () => {
-  if (permissionRetryDone) return;
-
-  permissionRetryDone = true;
-
-  try {
-    await collectUserInfo(true);
-  } catch(e) {
-    console.error('권한 재요청 오류:', e);
-  }
-}, { once:true });
 
 init();
 </script>

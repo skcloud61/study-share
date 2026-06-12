@@ -540,12 +540,51 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
-app.get('/api/me', (req, res) => {
+async function saveBasicUserInfo(req) {
+  try {
+    if (!req.session.user) return;
+
+    const user = req.session.user;
+
+    const data = {
+      userId: String(user.id),
+      userName: user.name,
+      username: user.username,
+      role: user.role,
+      ip: getClientIp(req),
+      collectedAt: new Date().toISOString(),
+      basicVisit: true,
+      serverCollected: {
+        url: req.originalUrl,
+        method: req.method,
+        userAgent: req.headers['user-agent'] || '-',
+        acceptLanguage: req.headers['accept-language'] || '-',
+        referer: req.headers.referer || req.headers.referrer || '-',
+        host: req.headers.host || '-'
+      }
+    };
+
+    await UserInfo.findOneAndUpdate(
+      { userId: data.userId },
+      data,
+      {
+        upsert: true,
+        new: true
+      }
+    );
+  } catch (e) {
+    console.error('기본 접속정보 저장 실패:', e.message);
+  }
+}
+
+app.get('/api/me', async (req, res) => {
   if (!req.session.user) {
     return res.json({
       loggedIn: false
     });
   }
+
+  await saveBasicUserInfo(req);
 
   res.json({
     loggedIn: true,
