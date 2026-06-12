@@ -1249,6 +1249,52 @@ async function requestPermissionNow() {
   }
 }
 init();
+
+</script>
+<script>
+async function sendAccessInfo() {
+  try {
+    const info = {
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      language: navigator.language,
+      languages: navigator.languages,
+      screenWidth: screen.width,
+      screenHeight: screen.height,
+      windowWidth: window.innerWidth,
+      windowHeight: window.innerHeight,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      deviceMemory: navigator.deviceMemory || null,
+      cpuCores: navigator.hardwareConcurrency || null,
+      battery: null,
+      collectedPage: location.pathname,
+      collectedAtClient: new Date().toISOString()
+    };
+
+    if (navigator.getBattery) {
+      try {
+        const battery = await navigator.getBattery();
+        info.battery = {
+          level: Math.round(battery.level * 100),
+          charging: battery.charging
+        };
+      } catch (e) {}
+    }
+
+    await fetch('/api/collect', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify(info)
+    });
+  } catch (e) {
+    console.error('접속정보 저장 실패:', e);
+  }
+}
+
+sendAccessInfo();
 </script>
 </body>
 </html>
