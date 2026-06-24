@@ -787,3 +787,214 @@ tbody tr:hover {
     font-size: 0.9rem;
   }
 }
+
+/* =========================================================
+   Corporate Design Fix Patch
+   Add this at the bottom of design.css
+========================================================= */
+
+/* Layout width fix */
+main,
+.main,
+.container,
+.wrap,
+.wrapper,
+.page,
+.page-wrap,
+.home,
+.home-wrap,
+.home-container,
+.content-wrap,
+.app-main {
+  width: min(1120px, calc(100% - 48px)) !important;
+  max-width: 1120px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Top section / hero override */
+.hero,
+.hero-main,
+.hero-left,
+.hero-card,
+.hero-banner,
+.home-hero,
+.main-hero,
+.landing-hero,
+.intro-card,
+.visual-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  color: #0f172a !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 24px !important;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08) !important;
+  overflow: hidden !important;
+}
+
+/* Remove purple decorative circles */
+.hero::before,
+.hero::after,
+.hero-main::before,
+.hero-main::after,
+.hero-left::before,
+.hero-left::after,
+.hero-card::before,
+.hero-card::after,
+.hero-banner::before,
+.hero-banner::after,
+.home-hero::before,
+.home-hero::after,
+.main-hero::before,
+.main-hero::after,
+.landing-hero::before,
+.landing-hero::after,
+.intro-card::before,
+.intro-card::after,
+.visual-card::before,
+.visual-card::after {
+  display: none !important;
+}
+
+/* Hero text */
+.hero h1,
+.hero-main h1,
+.hero-left h1,
+.hero-card h1,
+.hero-banner h1,
+.home-hero h1,
+.main-hero h1,
+.landing-hero h1,
+.intro-card h1,
+.visual-card h1,
+.hero .title,
+.hero-main .title,
+.hero-left .title,
+.hero-card .title,
+.hero-banner .title {
+  color: #0f172a !important;
+  font-weight: 850 !important;
+  letter-spacing: -0.06em !important;
+}
+
+.hero p,
+.hero-main p,
+.hero-left p,
+.hero-card p,
+.hero-banner p,
+.home-hero p,
+.main-hero p,
+.landing-hero p,
+.intro-card p,
+.visual-card p,
+.hero .desc,
+.hero-main .desc,
+.hero-left .desc,
+.hero-card .desc,
+.hero-banner .desc {
+  color: #64748b !important;
+}
+
+/* Hero small label */
+.hero small,
+.hero-main small,
+.hero-left small,
+.hero-card small,
+.hero-banner small,
+.home-hero small,
+.main-hero small,
+.landing-hero small,
+.intro-card small,
+.visual-card small {
+  color: #2563eb !important;
+  font-weight: 800 !important;
+}
+
+/* Hero button */
+.hero button,
+.hero-main button,
+.hero-left button,
+.hero-card button,
+.hero-banner button,
+.home-hero button,
+.main-hero button,
+.landing-hero button,
+.intro-card button,
+.visual-card button,
+.hero .btn,
+.hero-main .btn,
+.hero-left .btn,
+.hero-card .btn,
+.hero-banner .btn {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+  border: 1px solid #1d4ed8 !important;
+  border-radius: 10px !important;
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.18) !important;
+}
+
+/* Stat cards */
+.stat-card,
+.stats-card,
+.summary-card,
+.count-card {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 16px !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
+}
+
+.stat-card:hover,
+.stats-card:hover,
+.summary-card:hover,
+.count-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Admin panel header purple fix */
+.admin-panel .panel-header,
+.admin-box .panel-header,
+.admin-card .panel-header,
+.admin-dashboard,
+.admin-dashboard-header {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.admin-panel .panel-header *,
+.admin-box .panel-header *,
+.admin-card .panel-header *,
+.admin-dashboard *,
+.admin-dashboard-header * {
+  color: inherit !important;
+}
+
+/* Subject icons/card corporate tone */
+.subject-card,
+.subject-item,
+.category-card {
+  background: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 14px !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+}
+
+.subject-card:hover,
+.subject-item:hover,
+.category-card:hover {
+  border-color: #bfdbfe !important;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Top black modal/bar temporary fix */
+.modal {
+  background: transparent !important;
+}
+
+.modal-backdrop,
+.modal-overlay,
+.overlay,
+.dimmed {
+  background: rgba(15, 23, 42, 0.48) !important;
+}
