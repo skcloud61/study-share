@@ -896,7 +896,22 @@
         width: auto;
       }
     }
-  </style>
+        /* ════════════════════════════════
+       헤더 관리자 버튼 가독성 보정
+    ════════════════════════════════ */
+    #admin-link {
+      color: #1e293b !important;
+      background: #f1f5f9 !important;
+      border: 1px solid #e2e8f0 !important;
+    }
+
+    #admin-link:hover {
+      color: #4f46e5 !important;
+      background: #eef2ff !important;
+      border-color: #c7d2fe !important;
+    }
+    </style>
+  <link rel="stylesheet" href="design.css?v=1"/>
 </head>
 <body>
 
@@ -999,7 +1014,7 @@
           </svg>
         </div>
         <p id="fileLabel">파일을 드래그하거나 클릭하여 선택</p>
-        <p class="file-hint">PDF, 이미지, 문서 파일 · 최대 50MB</p>
+        <p class="file-hint">PDF, 이미지, 문서 파일 · 최대 100MB</p>
       </div>
     </div>
     <div class="modal-actions">
@@ -1424,8 +1439,13 @@ async function downloadFileWithProgress(fileId, fileTitle = 'download', fileExt 
       PDF는 서버에서 워터마크 적용 후 .pdf로 내려오고,
       그 외 파일은 원래 확장자를 최대한 유지합니다.
     */
-    const finalExt = contentType.includes('pdf') ? '.pdf' : ext;
-    a.download = `${title}${finalExt}`;
+        const finalExt = contentType.includes('pdf') ? '.pdf' : ext;
+
+    const normalizedTitle = title.toLowerCase().endsWith(finalExt.toLowerCase())
+      ? title
+      : `${title}${finalExt}`;
+
+    a.download = normalizedTitle;
 
     document.body.appendChild(a);
     a.click();
@@ -1592,7 +1612,7 @@ function renderCards() {
   const filtered = allFiles.filter(f =>
     (selectedSubject === '전체' || f.subject === selectedSubject) &&
     (!tKey || f.type === tKey) &&
-    (!q || f.title.toLowerCase().includes(q))
+    (!q || String(f.title || '').toLowerCase().includes(q))
   );
   document.getElementById('lib-title').textContent =
     (selectedSubject === '전체' ? '' : selectedSubject + ' ') +
@@ -1604,21 +1624,41 @@ function renderCards() {
 
 /* ── CARD ── */
 function cardHTML(f) {
-  const c   = TYPE_COLORS[f.type]    || '#6366f1';
-  const sc  = SUBJ_COLORS[f.subject] || '#6366f1';
-  const canDel = currentUser && (currentUser.role === 'admin' || currentUser.id === f.uploadedById);
+  const c = TYPE_COLORS[f.type] || '#6366f1';
+  const sc = SUBJ_COLORS[f.subject] || '#6366f1';
+
+  const fileId = Number(f.id);
+  const title = escapeHTML(f.title || '제목 없음');
+
+  const descRaw = String(f.desc || '');
+  const descText = descRaw.length > 55 ? descRaw.slice(0, 55) + '…' : descRaw || '—';
+  const desc = escapeHTML(descText);
+
+  const subject = escapeHTML(f.subject || '-');
+  const typeLabel = escapeHTML(TYPE_LABELS[f.type] || f.type || '-');
+  const createdAt = escapeHTML(f.createdAt || '-');
+
+  const canDel = currentUser && (
+    currentUser.role === 'admin' ||
+    currentUser.id === f.uploadedById
+  );
+
   return `<div class="card" style="--cc:${c}">
     <div class="card-top">
-      <span class="card-type-badge" style="background:${c}20;color:${c}">${TYPE_LABELS[f.type]}</span>
-      ${canDel ? `<button class="card-del" onclick="event.stopPropagation();deleteFile(${f.id})">삭제</button>` : ''}
+      <span class="card-type-badge" style="background:${c}20;color:${c}">
+        ${typeLabel}
+      </span>
+      ${canDel ? `<button class="card-del" onclick="event.stopPropagation();deleteFile(${fileId})">삭제</button>` : ''}
     </div>
-    <div class="card-body" onclick="openDetail(${f.id})">
-      <div class="card-title">${f.title}</div>
-      <div class="card-desc">${f.desc.length > 55 ? f.desc.slice(0,55)+'…' : f.desc || '—'}</div>
+
+    <div class="card-body" onclick="openDetail(${fileId})">
+      <div class="card-title">${title}</div>
+      <div class="card-desc">${desc}</div>
     </div>
+
     <div class="card-foot">
-      <span class="card-subj" style="color:${sc}">${f.subject}</span>
-      <span class="card-date">${f.createdAt}</span>
+      <span class="card-subj" style="color:${sc}">${subject}</span>
+      <span class="card-date">${createdAt}</span>
     </div>
   </div>`;
 }
@@ -1628,14 +1668,29 @@ function emptyHTML() { return `<div class="empty"><p>자료가 없습니다.</p>
 function openDetail(id) {
   const f = allFiles.find(x => x.id === id);
   if (!f) return;
-  document.getElementById('detail-title').textContent = f.title;
-  document.getElementById('detail-badges').innerHTML  =
-    `<span class="d-badge" style="background:${SUBJ_COLORS[f.subject]}20;color:${SUBJ_COLORS[f.subject]}">${f.subject}</span>
-     <span class="d-badge" style="background:${TYPE_COLORS[f.type]}20;color:${TYPE_COLORS[f.type]}">${TYPE_LABELS[f.type]}</span>`;
+
+  const subjectColor = SUBJ_COLORS[f.subject] || '#6366f1';
+  const typeColor = TYPE_COLORS[f.type] || '#6366f1';
+
+  document.getElementById('detail-title').textContent = f.title || '제목 없음';
+
+  document.getElementById('detail-badges').innerHTML =
+    `<span class="d-badge" style="background:${subjectColor}20;color:${subjectColor}">
+      ${escapeHTML(f.subject || '-')}
+    </span>
+    <span class="d-badge" style="background:${typeColor}20;color:${typeColor}">
+      ${escapeHTML(TYPE_LABELS[f.type] || f.type || '-')}
+    </span>`;
+
   document.getElementById('detail-desc').textContent = f.desc || '설명 없음';
+
   document.getElementById('detail-meta').textContent =
-    `업로드: ${f.uploadedBy}  ·  ${f.createdAt}  ·  ${f.originalName}`;
- document.getElementById('detail-dl-btn').onclick = () => downloadFile(f.id, f.title, f.ext);
+    `업로드: ${f.uploadedBy || '-'}  ·  ${f.createdAt || '-'}  ·  ${f.originalName || '-'}`;
+
+  document.getElementById('detail-dl-btn').onclick = () => {
+    downloadFile(f.id, f.title, f.ext);
+  };
+
   openModal('detailModal');
 }
 function downloadFile(id, title, ext) {

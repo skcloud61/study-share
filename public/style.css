@@ -1078,3 +1078,18 @@ header nav {
     font-size: 11px !important;
   }
 }
+
+/* ================================
+   HEADER ADMIN BUTTON FIX
+================================ */
+#admin-link {
+  color: #1e293b !important;
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+#admin-link:hover {
+  color: #4f46e5 !important;
+  background: #eef2ff !important;
+  border-color: #c7d2fe !important;
+}
