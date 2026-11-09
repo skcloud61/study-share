@@ -1,108 +1,119 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>StudyShare - 스마트 학습 자료 공유 커뮤니티</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Study Share</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=3"/>
+  <link rel="stylesheet" href="design.css?v=3"/>
 </head>
 <body>
+
+<!-- ══════════ HEADER ══════════ -->
 <header>
-  <div class="logo">
-    <svg width="180" height="40" viewBox="0 0 650 150" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="45" cy="75" r="12" fill="#ffffff" />
-      <circle cx="90" cy="45" r="12" fill="#a5b4fc" />
-      <circle cx="90" cy="105" r="12" fill="#a5b4fc" />
-      <line x1="55" y1="68" x2="80" y2="52" stroke="#ffffff" stroke-width="7" stroke-linecap="round"/>
-      <line x1="55" y1="82" x2="80" y2="98" stroke="#ffffff" stroke-width="7" stroke-linecap="round"/>
-      <text x="125" y="100" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="75" letter-spacing="-2">
-        <tspan fill="#ffffff">Study</tspan><tspan fill="#a5b4fc">Share</tspan>
-      </text>
-    </svg>
-  </div>
-
+  <div class="logo" onclick="showPage('home', document.querySelectorAll('.nav-btn')[0])">
+  <svg width="170" height="36" viewBox="0 0 170 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="logoGrad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#4f46e5"/>
+        <stop offset="1" stop-color="#818cf8"/>
+      </linearGradient>
+    </defs>
+    <circle cx="10" cy="18" r="5" fill="url(#logoGrad)"/>
+    <circle cx="28" cy="8" r="4.5" fill="#6366f1"/>
+    <circle cx="28" cy="28" r="4.5" fill="#38bdf8"/>
+    <line x1="14" y1="15" x2="24" y2="10" stroke="#4f46e5" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="14" y1="21" x2="24" y2="26" stroke="#4f46e5" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="38" y="25" font-family="'Pretendard', sans-serif" font-size="21" font-weight="900" fill="#0f172a" letter-spacing="-0.04em">Study<tspan fill="#4f46e5">Share</tspan></text>
+  </svg>
+</div>
   <nav id="main-nav">
-    <button class="nav-btn active" onclick="showPage('home', this)">홈</button>
-    <button class="nav-btn" onclick="showPage('library', this)">자료실</button>
-    <button class="nav-btn" id="admin-link" style="display:none" onclick="window.location.href='/admin.html'">관리자</button>
-    <button class="nav-btn" id="userinfo-link" style="display:none" onclick="window.location.href='/admin-userinfo.html'">접속정보</button>
-    <button class="nav-btn" id="permission-link" onclick="requestPermissionNow()">권한요청</button>
+    <button class="nav-btn active" onclick="showPage('home',this)">홈</button>
+    <button class="nav-btn"        onclick="showPage('library',this)">자료실</button>
+    <button class="nav-btn"        onclick="showPage('board',this)">게시판</button>
   </nav>
-
   <div class="header-right">
     <span class="user-name" id="header-username"></span>
+    <button class="admin-link-btn" id="admin-link"
+            onclick="window.location.href='/admin.html'"
+            style="display:none">관리자</button>
     <button class="logout-btn" onclick="doLogout()">로그아웃</button>
   </div>
 </header>
 
+<!-- ══════════ TOAST ══════════ -->
 <div class="toast" id="toast"></div>
+<!-- ══════════ DOWNLOAD PROGRESS ══════════ -->
+<div class="download-progress-box" id="downloadProgressBox">
+  <div class="download-progress-top">
+    <div class="download-progress-title">파일 다운로드</div>
+    <div class="download-progress-percent" id="downloadProgressPercent">0%</div>
+  </div>
+  <div class="download-progress-text" id="downloadProgressText">
+    다운로드 준비 중...
+  </div>
+  <div class="download-progress-track">
+    <div class="download-progress-bar" id="downloadProgressBar"></div>
+  </div>
+  <div class="download-progress-sub" id="downloadProgressSub">
+    파일을 준비하고 있습니다.
+  </div>
+</div>
 
+<!-- ══════════ UPLOAD MODAL ══════════ -->
 <div class="modal-overlay" id="uploadModal">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title">자료 업로드</div>
       <button class="modal-close" onclick="closeModal('uploadModal')">&#x2715;</button>
     </div>
-
     <div class="form-row">
       <div class="form-group">
         <label>과목</label>
-        <select id="up-subject">
-          <option value="">과목 선택</option>
-          <option>국어</option>
-          <option>영어</option>
-          <option>수학</option>
-          <option>역사</option>
-          <option>과학</option>
-          <option>정보</option>
-          <option>한문</option>
-          <option>도덕</option>
+        <select id="up-subject" onchange="updateTypeOptions()">
+          <option value="">선택</option>
+          <option>국어</option><option>영어</option><option>수학</option>
+          <option>역사</option><option>과학</option><option>정보</option>
+          <option>한문</option><option>도덕</option>
         </select>
       </div>
-
       <div class="form-group">
         <label>유형</label>
-        <select id="up-type">
-          <option value="">유형 선택</option>
-          <option value="midterm">중간고사</option>
-          <option value="final">기말고사</option>
-          <option value="performance">수행평가</option>
-          <option value="worksheet">학습지</option>
-        </select>
+        <select id="up-type"></select>
       </div>
     </div>
-
     <div class="form-group">
       <label>제목</label>
-      <input type="text" id="up-title" placeholder="자료 제목을 입력하세요" />
+      <input type="text" id="up-title" placeholder="자료 제목"/>
     </div>
-
     <div class="form-group">
       <label>설명</label>
-      <textarea id="up-desc" placeholder="자료에 대한 간단한 설명을 입력하세요"></textarea>
+      <textarea id="up-desc" placeholder="자료에 대한 설명을 입력하세요"></textarea>
     </div>
-
     <div class="form-group">
-      <label>파일 첨부</label>
-      <div class="file-drop" onclick="document.getElementById('fileInput').click()">
-        <input type="file" id="fileInput" style="display:none" onchange="handleFile(this)" />
+      <label>파일</label>
+      <div class="file-drop" id="file-drop"
+           onclick="document.getElementById('fileInput').click()"
+           ondragover="event.preventDefault();this.classList.add('drag')"
+           ondragleave="this.classList.remove('drag')"
+           ondrop="handleDrop(event)">
+        <input type="file" id="fileInput" style="display:none" onchange="handleFile(this)"/>
         <div class="file-drop-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path stroke-linecap="round" stroke-linejoin="round"
-              d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0
-                 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+              d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5
+                 m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
           </svg>
         </div>
-        <p id="fileLabel">클릭하여 파일 선택</p>
-        <p class="file-hint">PDF, 이미지, 문서 파일 지원</p>
+        <p id="fileLabel">파일을 드래그하거나 클릭하여 선택</p>
+        <p class="file-hint">PDF, 이미지, 문서 파일 · 최대 100MB</p>
       </div>
     </div>
-
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal('uploadModal')">취소</button>
       <button class="btn-submit" onclick="submitUpload()">업로드</button>
@@ -110,61 +121,114 @@
   </div>
 </div>
 
+<!-- ══════════ DETAIL MODAL ══════════ -->
 <div class="modal-overlay" id="detailModal">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title" id="detail-title"></div>
       <button class="modal-close" onclick="closeModal('detailModal')">&#x2715;</button>
     </div>
-
-    <div class="detail-badges">
-      <span class="d-badge" id="detail-subject"></span>
-      <span class="d-badge" id="detail-type"></span>
-    </div>
-
-    <div class="detail-desc" id="detail-desc"></div>
-    <div class="detail-meta" id="detail-meta"></div>
-
+    <div class="detail-badges" id="detail-badges"></div>
+    <div class="detail-desc"   id="detail-desc"></div>
+    <div class="detail-meta"   id="detail-meta"></div>
     <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeModal('detailModal')">닫기</button>
-      <button class="btn-download" id="download-btn">파일 다운로드</button>
+      <button class="btn-cancel"   onclick="closeModal('detailModal')">닫기</button>
+      <button class="btn-download" id="detail-dl-btn">다운로드</button>
     </div>
   </div>
 </div>
 
+<!-- ══════════ HOME PAGE ══════════ -->
 <div id="page-home" class="page-wrap">
   <div class="home-top">
     <div class="home-hero">
-      <div class="hero-label">STUDY SHARE</div>
-      <h1>학습 자료를<br>함께 공유해요</h1>
-      <p>국어, 영어, 수학, 역사, 과학, 정보, 한문, 도덕<br>학습 자료를 친구들과 쉽게 공유하세요.</p>
-      <button class="hero-btn" onclick="showPage('library', document.querySelectorAll('.nav-btn')[1])">
-        자료실 바로가기 →
-      </button>
+      <div class="hero-text">
+        <div class="hero-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7-6.3-4.6-6.3 4.6 2.3-7-6-4.6h7.6z"/>
+          </svg>
+          스마트 학습 자료 공유 커뮤니티
+        </div>
+        <h1>StudyShare에서<br><span style="background:linear-gradient(135deg,#4f46e5 0%,#6366f1 50%,#0ea5e9 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">함께 나누고 성장하세요</span></h1>
+        <p>중간·기말고사 기출부터 수행평가, 과목별 핵심 요약본까지 필요한 모든 학습 자료를 안전하고 편리하게 관리하고 공유하세요.</p>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+        <button class="hero-btn" onclick="openUploadModal()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+          자료 업로드
+        </button>
+        <button class="text-btn" style="padding:12px 20px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--border);color:var(--text);font-weight:750;box-shadow:var(--shadow-xs);" onclick="showPage('library', document.querySelectorAll('.nav-btn')[1])">
+          자료실 둘러보기 &rarr;
+        </button>
+      </div>
     </div>
-
     <div class="stats-col" id="home-stats"></div>
   </div>
-
+  <!-- 관리자 패널 -->
+  <div class="section-block" id="admin-panel-section" style="display:none">
+    <div class="section-hd">
+      <div class="section-title">관리자 패널</div>
+    </div>
+    <div class="admin-panel">
+      <div class="admin-panel-header">
+        <div>
+          <div class="admin-panel-title">관리자 대시보드</div>
+          <div class="admin-panel-sub">회원 승인, 권한 관리를 여기서 바로 처리할 수 있습니다.</div>
+        </div>
+        <button class="admin-panel-goto" onclick="window.location.href='/admin.html'">
+          전체 관리 페이지
+        </button>
+      </div>
+      <div class="admin-panel-tabs">
+        <button class="admin-panel-tab active" onclick="switchAdminTab('pending', this)">
+          승인 대기 <span id="ap-pending-badge"></span>
+        </button>
+        <button class="admin-panel-tab" onclick="switchAdminTab('all', this)">
+          전체 회원
+        </button>
+      </div>
+      <div class="admin-panel-body">
+        <div id="ap-tab-pending">
+          <table class="ap-table">
+            <thead>
+              <tr><th>이름</th><th>아이디</th><th>가입일</th><th>관리</th></tr>
+            </thead>
+            <tbody id="ap-pending-tbody"></tbody>
+          </table>
+        </div>
+        <div id="ap-tab-all" style="display:none">
+          <table class="ap-table">
+            <thead>
+              <tr><th>이름</th><th>아이디</th><th>권한</th><th>상태</th><th>가입일</th><th>관리</th></tr>
+            </thead>
+            <tbody id="ap-all-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="section-block">
     <div class="section-hd">
-      <div class="section-title">과목별 자료</div>
+      <div class="section-title">과목</div>
     </div>
     <div class="subject-grid" id="home-subject-grid"></div>
   </div>
-
   <div class="section-block">
     <div class="section-hd">
-      <div class="section-title">최근 업로드 자료</div>
-      <button class="text-btn" onclick="showPage('library', document.querySelectorAll('.nav-btn')[1])">
-        전체 보기 →
+      <div class="section-title">최근 업로드</div>
+      <button class="text-btn"
+              onclick="showPage('library', document.querySelectorAll('.nav-btn')[1])">
+        전체 보기
       </button>
     </div>
     <div class="card-grid" id="recent-cards"></div>
   </div>
 </div>
 
-<div id="page-library" class="page-wrap" style="display:none;">
+<!-- ══════════ LIBRARY PAGE ══════════ -->
+<div id="page-library" class="page-wrap" style="display:none">
   <div class="lib-layout">
     <aside class="sidebar">
       <div class="sidebar-block">
@@ -172,1129 +236,966 @@
         <div id="sidebar-subjects"></div>
       </div>
     </aside>
-
     <main class="lib-main">
       <div class="search-row">
         <div class="search-wrap">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/>
-            <path stroke-linecap="round" d="M21 21l-4.35-4.35"/>
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
           </svg>
-          <input type="text" id="search-input" placeholder="자료 제목 검색..." oninput="renderCards()" />
+          <input type="text" id="search-input" placeholder="자료 검색..." oninput="renderCards()"/>
         </div>
-
-        <button class="upload-btn" onclick="openModal('uploadModal')">+ 자료 업로드</button>
+        <button class="upload-btn" onclick="openUploadModal()">업로드</button>
       </div>
-
       <div class="cat-tabs" id="cat-tabs"></div>
-
       <div class="lib-header">
         <div class="lib-title" id="lib-title">전체 자료</div>
-        <div class="lib-count" id="lib-count">0개</div>
+        <div class="lib-count" id="lib-count"></div>
       </div>
-
       <div class="card-grid" id="lib-cards"></div>
     </main>
   </div>
 </div>
 
+<!-- ══════════ BOARD LIST PAGE ══════════ -->
+<div id="page-board" class="page-wrap" style="display:none">
+  <div class="board-page-wrap">
+    <div class="board-header">
+      <div class="board-header-left">
+        <div class="board-header-title">게시판</div>
+        <div class="board-header-sub">스터디 팁, 질문, 자유로운 이야기를 나눠보세요.</div>
+        <div class="board-stats-row" id="board-stats-row"></div>
+      </div>
+      <button class="write-btn" onclick="showWrite()">글 작성</button>
+    </div>
+    <div class="board-search-row">
+      <div class="board-search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" class="board-search-input"
+               id="board-search"
+               placeholder="게시글 검색..."
+               oninput="renderPostList()"/>
+      </div>
+    </div>
+    <div class="post-table-wrap">
+      <div class="post-table-head">
+        <span>번호</span>
+        <span>제목</span>
+        <span>작성자</span>
+        <span>날짜</span>
+        <span>좋아요</span>
+        <span>댓글</span>
+      </div>
+      <div id="post-list-body"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ POST DETAIL PAGE ══════════ -->
+<div id="page-post-detail" class="page-wrap" style="display:none">
+  <div class="post-detail-page">
+    <button class="detail-back-btn"
+            onclick="showPage('board', document.querySelectorAll('.nav-btn')[2])">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+      </svg>
+      목록으로
+    </button>
+    <div class="detail-hero" id="detail-hero">
+      <div id="detail-pin-badge-wrap"></div>
+      <div class="detail-hero-title" id="pd-title"></div>
+      <div class="detail-hero-meta"  id="pd-meta"></div>
+    </div>
+    <div class="detail-layout">
+      <div class="detail-body-card" id="pd-body"></div>
+      <div class="detail-side"      id="pd-side"></div>
+    </div>
+    <div class="comment-section">
+      <div class="comment-section-header">
+        <div class="comment-section-title">댓글</div>
+        <span class="comment-cnt-badge" id="comment-cnt-badge">0</span>
+      </div>
+      <div class="comment-list" id="pd-comment-list"></div>
+      <div class="comment-input-wrap">
+        <textarea id="comment-input" placeholder="댓글을 입력하세요..."></textarea>
+        <div class="comment-input-footer">
+          <button class="comment-post-btn" onclick="submitComment()">등록</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ POST WRITE/EDIT PAGE ══════════ -->
+<div id="page-write" class="page-wrap" style="display:none">
+  <div class="write-page-wrap">
+    <div class="write-page-header">
+      <div class="write-page-title" id="write-page-title">새 글 작성</div>
+      <button class="detail-back-btn"
+              onclick="showPage('board', document.querySelectorAll('.nav-btn')[2])">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
+        취소
+      </button>
+    </div>
+    <div class="write-card">
+      <div class="write-label">제목</div>
+      <input type="text" class="write-title-input"
+             id="write-title-input" placeholder="제목을 입력하세요"/>
+      <div class="write-label">내용</div>
+      <textarea class="write-content-textarea"
+                id="write-content-input"
+                placeholder="내용을 입력하세요..."></textarea>
+      <div class="write-divider"></div>
+      <div class="write-footer">
+        <button class="write-cancel-btn"
+                onclick="showPage('board', document.querySelectorAll('.nav-btn')[2])">
+          취소
+        </button>
+        <button class="write-submit-btn" id="write-submit-btn" onclick="submitPost()">
+          등록하기
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SCRIPT ══════════ -->
 <script>
-const SUBJECTS = ['국어','영어','수학','역사','과학','정보','한문','도덕'];
+const SUBJECTS      = ['국어','영어','수학','역사','과학','정보','한문','도덕'];
 const EXAM_SUBJECTS = ['국어','영어','수학','역사','과학','정보'];
-
-const TYPE_LABELS = {
-  midterm:'중간고사',
-  final:'기말고사',
-  performance:'수행평가',
-  worksheet:'학습지'
+const TYPE_LABELS   = { midterm:'중간고사', final:'기말고사', performance:'수행평가', worksheet:'학습지' };
+const TYPE_COLORS   = { midterm:'#6366f1', final:'#0ea5e9', performance:'#10b981', worksheet:'#f59e0b' };
+const SUBJ_COLORS   = {
+  '국어':'#6366f1','영어':'#0ea5e9','수학':'#f59e0b',
+  '역사':'#ef4444','과학':'#10b981','정보':'#8b5cf6',
+  '한문':'#f97316','도덕':'#ec4899'
 };
-
-const SUBJECT_COLORS = {
-  '국어':'#6366f1',
-  '영어':'#0ea5e9',
-  '수학':'#f59e0b',
-  '역사':'#ef4444',
-  '과학':'#10b981',
-  '정보':'#8b5cf6',
-  '한문':'#f97316',
-  '도덕':'#ec4899'
-};
-
-const TYPE_COLORS = {
-  midterm:'#4f46e5',
-  final:'#0ea5e9',
-  performance:'#10b981',
-  worksheet:'#f59e0b'
-};
-
-const TYPE_BG = {
-  midterm:'#ede9fe',
-  final:'#e0f2fe',
-  performance:'#d1fae5',
-  worksheet:'#fef3c7'
-};
-
-let data = [];
-let currentUser = null;
+const ALL_PAGES = ['home','library','board','post-detail','write'];
+let allFiles        = [];
+let allPosts        = [];
 let selectedSubject = '전체';
-let selectedType = '전체';
-let toastTimer = null;
+let selectedType    = '전체';
+let currentUser     = null;
+let currentPostId   = null;
+let editPostId      = null;
 
-// ================================
-//  INIT
-// ================================
 async function init() {
   try {
-    const me = await fetch('/api/me', {
-      credentials: 'include'
-    }).then(r => r.json());
+    const me = await fetch('/api/me').then(r => r.json());
+    if (!me.loggedIn) return (window.location.href = '/login.html');
+    currentUser = me.user;
+    document.getElementById('header-username').textContent = me.user.name;
+    if (me.user.role === 'admin') {
+      document.getElementById('admin-link').style.display = '';
+      document.getElementById('admin-panel-section').style.display = '';
+      loadAdminPanel();
+    }
+    await loadFiles();
+    renderHome();
+  } catch(e) {
+    console.error('초기화 실패:', e);
+  }
+}
+  
+async function loadFiles() {
+  try {
+    const res = await fetch('/api/files');
+    const data = await res.json();
+    allFiles = Array.isArray(data) ? data : [];
+  } catch(e) {
+    console.error('파일 로드 실패:', e);
+    allFiles = [];
+  }
+}
+async function doLogout() {
+  await fetch('/api/logout', { method: 'POST' });
+  window.location.href = '/login.html';
+}
+function showPage(page, btn) {
+  ALL_PAGES.forEach(p => {
+    const el = document.getElementById('page-' + p);
+    if (el) el.style.display = p === page ? '' : 'none';
+  });
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (page === 'home')    renderHome();
+  if (page === 'library') renderLibrary();
+  if (page === 'board')   renderBoardPage();
+}
+function safeFileName(name) {
+  return String(name || 'download')
+    .replace(/[\\/:*?"<>|]/g, '_')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 80) || 'download';
+}
 
-    if (!me.loggedIn) {
-      window.location.href = '/login.html';
+function getFileExtById(fileId) {
+  const f = allFiles.find(x => x.id === fileId);
+  return f?.ext || '.pdf';
+}
+
+function getFileTitleById(fileId) {
+  const f = allFiles.find(x => x.id === fileId);
+  return f?.title || 'download';
+}
+
+function showDownloadProgressBox() {
+  const box = document.getElementById('downloadProgressBox');
+  if (box) box.classList.add('show');
+}
+
+function hideDownloadProgressBox(delay = 1200) {
+  setTimeout(() => {
+    const box = document.getElementById('downloadProgressBox');
+    if (box) box.classList.remove('show');
+  }, delay);
+}
+
+function updateDownloadProgress(percent, text, subText) {
+  const bar = document.getElementById('downloadProgressBar');
+  const pct = document.getElementById('downloadProgressPercent');
+  const txt = document.getElementById('downloadProgressText');
+  const sub = document.getElementById('downloadProgressSub');
+
+  const safePercent = Math.max(0, Math.min(100, Number(percent) || 0));
+
+  if (bar) bar.style.width = safePercent + '%';
+  if (pct) pct.textContent = safePercent + '%';
+  if (txt && text) txt.textContent = text;
+  if (sub && subText) sub.textContent = subText;
+}
+
+async function downloadFileWithProgress(fileId, fileTitle = 'download', fileExt = '.pdf') {
+  const title = safeFileName(fileTitle || getFileTitleById(fileId));
+  const ext = fileExt || getFileExtById(fileId) || '.pdf';
+
+  showDownloadProgressBox();
+  updateDownloadProgress(
+    0,
+    '다운로드 준비 중...',
+    '파일을 준비하고 있습니다.'
+  );
+
+  try {
+    const response = await fetch(`/api/download/${fileId}`, {
+      method: 'GET',
+      credentials: 'include',
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      throw new Error('다운로드 실패');
+    }
+
+    if (!response.body) {
+      updateDownloadProgress(0, '브라우저가 진행률 표시를 지원하지 않습니다.', '일반 다운로드로 전환합니다.');
+      window.location.href = `/api/download/${fileId}`;
+      hideDownloadProgressBox(1500);
       return;
     }
 
-    currentUser = me.user;
-    document.getElementById('header-username').textContent = me.user.name;
+    const total = Number(response.headers.get('content-length')) || 0;
+    const contentType = response.headers.get('content-type') || 'application/octet-stream';
 
-    if (me.user.role === 'admin') {
-      document.getElementById('admin-link').style.display = '';
-      document.getElementById('userinfo-link').style.display = '';
+    const reader = response.body.getReader();
+    const chunks = [];
+    let received = 0;
+
+    updateDownloadProgress(
+      3,
+      '서버에서 파일을 준비하는 중...',
+      total > 0 ? `전체 크기: ${(total / 1024 / 1024).toFixed(2)}MB` : '파일 크기 확인 중...'
+    );
+
+    while (true) {
+      const { done, value } = await reader.read();
+
+      if (done) break;
+
+      chunks.push(value);
+      received += value.length;
+
+      if (total > 0) {
+        const percent = Math.round((received / total) * 100);
+        updateDownloadProgress(
+          percent,
+          `다운로드 중... ${percent}%`,
+          `${(received / 1024 / 1024).toFixed(2)}MB / ${(total / 1024 / 1024).toFixed(2)}MB`
+        );
+      } else {
+        const mb = (received / 1024 / 1024).toFixed(2);
+        updateDownloadProgress(
+          35,
+          `다운로드 중... ${mb}MB`,
+          '전체 파일 크기를 확인할 수 없어 용량 기준으로 표시합니다.'
+        );
+      }
     }
 
-    await loadFiles();
-    renderHome();
+    updateDownloadProgress(98, '파일 저장 중...', '브라우저 다운로드를 시작합니다.');
 
-    // 접속 즉시 기본 정보 저장
-    await collectUserInfo(false);
+    const blob = new Blob(chunks, {
+      type: contentType
+    });
 
-    // 권한 요청은 사용자 버튼 클릭으로만 실행
-    showPermissionBanner();
+    const url = URL.createObjectURL(blob);
 
-  } catch(e) {
-    console.error('init 오류:', e);
+    const a = document.createElement('a');
+    a.href = url;
+
+    /*
+      PDF는 서버에서 워터마크 적용 후 .pdf로 내려오고,
+      그 외 파일은 원래 확장자를 최대한 유지합니다.
+    */
+        const finalExt = contentType.includes('pdf') ? '.pdf' : ext;
+
+    const normalizedTitle = title.toLowerCase().endsWith(finalExt.toLowerCase())
+      ? title
+      : `${title}${finalExt}`;
+
+    a.download = normalizedTitle;
+
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    URL.revokeObjectURL(url);
+
+    updateDownloadProgress(100, '다운로드 완료', '파일이 저장되었습니다.');
+    hideDownloadProgressBox(1400);
+  } catch (err) {
+    console.error(err);
+
+    updateDownloadProgress(
+      0,
+      '다운로드 실패',
+      '문제가 계속되면 새로고침 후 다시 시도하세요.'
+    );
+
+    showToast('다운로드에 실패했습니다.');
+
+    hideDownloadProgressBox(2200);
   }
 }
-
-// ================================
-//  FILES
-// ================================
-async function loadFiles() {
-  try {
-    const files = await fetch('/api/files', {
-      credentials: 'include'
-    }).then(r => r.json());
-
-    data = files.map(f => ({
-      id: f.id,
-      subject: f.subject,
-      type: f.type,
-      title: f.title,
-      desc: f.desc || f.description || '',
-      date: f.createdAt?.slice(0,10) || '',
-      file: f.originalName || f.filename || '',
-      uploader: f.uploadedBy || ''
-    }));
-  } catch(e) {
-    console.error('파일 로드 오류:', e);
-    data = [];
-  }
-}
-
-// ================================
-//  PAGE
-// ================================
-function showPage(page, btn) {
-  document.getElementById('page-home').style.display = page === 'home' ? '' : 'none';
-  document.getElementById('page-library').style.display = page === 'library' ? '' : 'none';
-
-  document.querySelectorAll('header nav .nav-btn').forEach(b => b.classList.remove('active'));
-
-  if (btn) btn.classList.add('active');
-
-  if (page === 'home') renderHome();
-  if (page === 'library') renderLibrary();
-}
-
+/* ── HOME ── */
 function renderHome() {
-  const statsEl = document.getElementById('home-stats');
-  const types = ['midterm','final','performance','worksheet'];
+  const types  = ['midterm','final','performance','worksheet'];
   const labels = ['중간고사','기말고사','수행평가','학습지'];
-
-  statsEl.innerHTML =
+  document.getElementById('home-stats').innerHTML = [
     `<div class="stat-item">
-       <div class="stat-num">${data.length}</div>
+       <div class="stat-num">${allFiles.length}</div>
        <div class="stat-lbl">전체 자료</div>
-     </div>` +
-    types.map((t,i) => `
-      <div class="stat-item">
-        <div class="stat-num">${data.filter(d => d.type === t).length}</div>
-        <div class="stat-lbl">${labels[i]}</div>
-      </div>
-    `).join('');
-
+     </div>`,
+    ...types.map((t, i) =>
+      `<div class="stat-item">
+         <div class="stat-num">${allFiles.filter(f => f.type === t).length}</div>
+         <div class="stat-lbl">${labels[i]}</div>
+       </div>`)
+  ].join('');
   document.getElementById('home-subject-grid').innerHTML = SUBJECTS.map(s => {
-    const cnt = data.filter(d => d.subject === s).length;
-    const c = SUBJECT_COLORS[s];
-
-    return `
-      <div class="subj-card" style="--c:${c}" onclick="goSubject('${s}')">
-        <div class="subj-dot"></div>
-        <div class="subj-name">${s}</div>
-        <div class="subj-cnt">자료 ${cnt}개</div>
-      </div>
-    `;
+    const cnt = allFiles.filter(f => f.subject === s).length;
+    return `<div class="subj-card" onclick="goSubject('${s}')" style="--c:${SUBJ_COLORS[s]}">
+      <div class="subj-dot"></div>
+      <div class="subj-name">${s}</div>
+      <div class="subj-cnt">자료 ${cnt}개</div>
+    </div>`;
   }).join('');
-
-  const recent = [...data]
-    .sort((a,b) => new Date(b.date) - new Date(a.date))
-    .slice(0, 4);
-
+  const recent = [...allFiles].slice(0, 4);
   document.getElementById('recent-cards').innerHTML =
-    recent.length
-      ? recent.map(d => cardHTML(d)).join('')
-      : `<div class="empty"><p>아직 업로드된 자료가 없습니다.</p></div>`;
+    recent.length ? recent.map(f => cardHTML(f)).join('') : emptyHTML();
 }
-
 function goSubject(s) {
-  selectedSubject = s;
-  selectedType = '전체';
-
-  const btns = document.querySelectorAll('header nav .nav-btn');
-  btns.forEach((b,i) => b.classList.toggle('active', i === 1));
-
+  selectedSubject = s; selectedType = '전체';
+  document.querySelectorAll('.nav-btn').forEach((b, i) => b.classList.toggle('active', i === 1));
   showPage('library', null);
 }
 
+/* ── 관리자 패널 ── */
+let apAllUsers = [];
+async function loadAdminPanel() {
+  apAllUsers = await fetch('/api/admin/users').then(r => r.json());
+  renderApTab('pending');
+}
+function switchAdminTab(tab, btn) {
+  document.getElementById('ap-tab-pending').style.display = tab === 'pending' ? '' : 'none';
+  document.getElementById('ap-tab-all').style.display     = tab === 'all'     ? '' : 'none';
+  document.querySelectorAll('.admin-panel-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderApTab(tab);
+}
+function renderApTab(tab) {
+  if (tab === 'pending') renderApPending();
+  else                   renderApAll();
+}
+function renderApPending() {
+  const pending = apAllUsers.filter(u => !u.approved && u.role !== 'admin');
+  const badge   = document.getElementById('ap-pending-badge');
+  badge.textContent  = pending.length ? `(${pending.length})` : '';
+  badge.style.color  = '#ef4444';
+  badge.style.fontWeight = '800';
+  const tbody = document.getElementById('ap-pending-tbody');
+  if (!pending.length) {
+    tbody.innerHTML = `<tr><td colspan="4" class="ap-empty">승인 대기 중인 회원이 없습니다.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = pending.map(u => `
+    <tr>
+      <td style="font-weight:700">${u.name}</td>
+      <td style="color:var(--text-sub)">${u.username}</td>
+      <td style="color:var(--text-sub)">${u.createdAt?.slice(0,10) || '-'}</td>
+      <td>
+        <button class="ap-btn approve" onclick="apApprove(${u.id})">승인</button>
+        <button class="ap-btn delete"  onclick="apDelete(${u.id})">거절</button>
+      </td>
+    </tr>`).join('');
+}
+function renderApAll() {
+  const tbody = document.getElementById('ap-all-tbody');
+  if (!apAllUsers.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="ap-empty">회원이 없습니다.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = apAllUsers.map(u => `
+    <tr>
+      <td style="font-weight:700">${u.name}</td>
+      <td style="color:var(--text-sub)">${u.username}</td>
+      <td>
+        <span class="ap-role-badge ${u.role === 'admin' ? 'ap-role-admin' : 'ap-role-user'}">
+          ${u.role === 'admin' ? '관리자' : '일반'}
+        </span>
+      </td>
+      <td>
+        <span class="ap-status-badge ${u.approved ? 'ap-status-ok' : 'ap-status-pending'}">
+          ${u.approved ? '승인' : '대기'}
+        </span>
+      </td>
+      <td style="color:var(--text-sub)">${u.createdAt?.slice(0,10) || '-'}</td>
+      <td>
+        ${!u.approved ? `<button class="ap-btn approve" onclick="apApprove(${u.id})">승인</button>` : ''}
+        ${u.role !== 'admin' ? `<button class="ap-btn delete" onclick="apDelete(${u.id})">삭제</button>` : ''}
+      </td>
+    </tr>`).join('');
+}
+async function apApprove(id) {
+  await fetch('/api/admin/users/' + id + '/approve', { method: 'POST' });
+  showToast('승인되었습니다.');
+  apAllUsers = await fetch('/api/admin/users').then(r => r.json());
+  const activeTab = document.getElementById('ap-tab-pending').style.display !== 'none' ? 'pending' : 'all';
+  renderApTab(activeTab);
+}
+async function apDelete(id) {
+  if (!confirm('이 회원을 삭제하시겠습니까?')) return;
+  await fetch('/api/admin/users/' + id, { method: 'DELETE' });
+  showToast('삭제되었습니다.');
+  apAllUsers = await fetch('/api/admin/users').then(r => r.json());
+  const activeTab = document.getElementById('ap-tab-pending').style.display !== 'none' ? 'pending' : 'all';
+  renderApTab(activeTab);
+}
+
+/* ── LIBRARY ── */
 function renderLibrary() {
   document.getElementById('sidebar-subjects').innerHTML =
-    ['전체', ...SUBJECTS].map(s => `
-      <button class="sb-btn${selectedSubject === s ? ' active' : ''}"
-              onclick="selectSubject('${s}')">${s}</button>
-    `).join('');
-
+    ['전체', ...SUBJECTS].map(s =>
+      `<button class="sb-btn${selectedSubject === s ? ' active' : ''}"
+               onclick="selectSubject('${s}')">${s}</button>`
+    ).join('');
   buildTabs();
   renderCards();
 }
-
-function selectSubject(s) {
-  selectedSubject = s;
-  selectedType = '전체';
-  renderLibrary();
-}
-
+function selectSubject(s) { selectedSubject = s; selectedType = '전체'; renderLibrary(); }
 function buildTabs() {
-  const types = selectedSubject === '전체' || EXAM_SUBJECTS.includes(selectedSubject)
-    ? ['전체','중간고사','기말고사','수행평가','학습지']
-    : ['전체','수행평가','학습지'];
-
-  document.getElementById('cat-tabs').innerHTML = types.map(t => `
-    <button class="cat-tab${selectedType === t ? ' active' : ''}"
-            onclick="selectType('${t}')">${t}</button>
-  `).join('');
+  let types = ['전체','수행평가','학습지'];
+  if (selectedSubject === '전체' || EXAM_SUBJECTS.includes(selectedSubject))
+    types = ['전체','중간고사','기말고사','수행평가','학습지'];
+  document.getElementById('cat-tabs').innerHTML = types.map(t =>
+    `<button class="cat-tab${selectedType === t ? ' active' : ''}"
+             onclick="selectType('${t}')">${t}</button>`
+  ).join('');
 }
-
-function selectType(t) {
-  selectedType = t;
-  buildTabs();
-  renderCards();
-}
-
+function selectType(t) { selectedType = t; buildTabs(); renderCards(); }
 function renderCards() {
-  const query = (document.getElementById('search-input')?.value || '').toLowerCase();
-
-  const typeMap = {
-    '중간고사':'midterm',
-    '기말고사':'final',
-    '수행평가':'performance',
-    '학습지':'worksheet',
-    '전체':null
-  };
-
-  const tKey = typeMap[selectedType];
-
-  const filtered = data.filter(d => {
-    const subOk = selectedSubject === '전체' || d.subject === selectedSubject;
-    const typOk = !tKey || d.type === tKey;
-    const queryOk = !query || d.title.toLowerCase().includes(query);
-
-    return subOk && typOk && queryOk;
-  });
-
+  const q    = (document.getElementById('search-input')?.value || '').toLowerCase();
+  const tMap = { '중간고사':'midterm','기말고사':'final','수행평가':'performance','학습지':'worksheet','전체':null };
+  const tKey = tMap[selectedType];
+  const filtered = allFiles.filter(f =>
+    (selectedSubject === '전체' || f.subject === selectedSubject) &&
+    (!tKey || f.type === tKey) &&
+    (!q || String(f.title || '').toLowerCase().includes(q))
+  );
   document.getElementById('lib-title').textContent =
     (selectedSubject === '전체' ? '' : selectedSubject + ' ') +
     (selectedType === '전체' ? '전체 자료' : selectedType + ' 자료');
-
-  document.getElementById('lib-count').textContent = filtered.length + '개';
-
-  const el = document.getElementById('lib-cards');
-
-  el.innerHTML = filtered.length
-    ? filtered.map(d => cardHTML(d)).join('')
-    : `<div class="empty">
-         <div class="empty-icon">
-           <svg viewBox="0 0 24 24" stroke-width="1.5">
-             <path stroke-linecap="round" stroke-linejoin="round"
-               d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0
-                  012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0
-                  01.293.707V19a2 2 0 01-2 2z"/>
-           </svg>
-         </div>
-         <p>해당 조건의 자료가 없습니다.</p>
-       </div>`;
+  document.getElementById('lib-count').textContent = `${filtered.length}개`;
+  document.getElementById('lib-cards').innerHTML =
+    filtered.length ? filtered.map(f => cardHTML(f)).join('') : emptyHTML();
 }
 
-function cardHTML(d) {
-  const cc = TYPE_COLORS[d.type] || '#4f46e5';
-  const bg = TYPE_BG[d.type] || '#ede9fe';
-  const typeLabel = TYPE_LABELS[d.type] || d.type;
-  const sc = SUBJECT_COLORS[d.subject] || '#6366f1';
-  const desc = d.desc.length > 55 ? d.desc.slice(0,55) + '…' : d.desc;
+/* ── CARD ── */
+function cardHTML(f) {
+  const c = TYPE_COLORS[f.type] || '#6366f1';
+  const sc = SUBJ_COLORS[f.subject] || '#6366f1';
 
-  return `
-    <div class="card" style="--cc:${cc}">
-      <div class="card-top">
-        <span class="card-type-badge" style="background:${bg};color:${cc}">${typeLabel}</span>
-      </div>
+  const fileId = Number(f.id);
+  const title = escapeHTML(f.title || '제목 없음');
 
-      <div class="card-body" onclick="openDetail(${d.id})">
-        <div class="card-title">${escapeHtml(d.title)}</div>
-        <div class="card-desc">${escapeHtml(desc)}</div>
-      </div>
+  const descRaw = String(f.desc || '');
+  const descText = descRaw.length > 55 ? descRaw.slice(0, 55) + '…' : descRaw || '—';
+  const desc = escapeHTML(descText);
 
-      <div class="card-foot">
-        <span class="card-subj" style="color:${sc}">${escapeHtml(d.subject)}</span>
-        <span class="card-date">${escapeHtml(d.date)}</span>
-      </div>
+  const subject = escapeHTML(f.subject || '-');
+  const typeLabel = escapeHTML(TYPE_LABELS[f.type] || f.type || '-');
+  const createdAt = escapeHTML(f.createdAt || '-');
+
+  const canDel = currentUser && (
+    currentUser.role === 'admin' ||
+    currentUser.id === f.uploadedById
+  );
+
+  return `<div class="card" style="--cc:${c}">
+    <div class="card-top">
+      <span class="card-type-badge" style="background:${c}20;color:${c}">
+        ${typeLabel}
+      </span>
+      ${canDel ? `<button class="card-del" onclick="event.stopPropagation();deleteFile(${fileId})">삭제</button>` : ''}
     </div>
-  `;
+
+    <div class="card-body" onclick="openDetail(${fileId})">
+      <div class="card-title">${title}</div>
+      <div class="card-desc">${desc}</div>
+    </div>
+
+    <div class="card-foot">
+      <span class="card-subj" style="color:${sc}">${subject}</span>
+      <span class="card-date">${createdAt}</span>
+    </div>
+  </div>`;
 }
+function emptyHTML() { return `<div class="empty"><p>자료가 없습니다.</p></div>`; }
 
+/* ── DETAIL MODAL ── */
 function openDetail(id) {
-  const d = data.find(x => x.id === id);
-  if (!d) return;
+  const f = allFiles.find(x => x.id === id);
+  if (!f) return;
 
-  const sc = SUBJECT_COLORS[d.subject] || '#6366f1';
-  const cc = TYPE_COLORS[d.type] || '#4f46e5';
-  const bg = TYPE_BG[d.type] || '#ede9fe';
+  const subjectColor = SUBJ_COLORS[f.subject] || '#6366f1';
+  const typeColor = TYPE_COLORS[f.type] || '#6366f1';
 
-  document.getElementById('detail-title').textContent = d.title;
+  document.getElementById('detail-title').textContent = f.title || '제목 없음';
 
-  const subEl = document.getElementById('detail-subject');
-  subEl.textContent = d.subject;
-  subEl.style.background = sc + '20';
-  subEl.style.color = sc;
+  document.getElementById('detail-badges').innerHTML =
+    `<span class="d-badge" style="background:${subjectColor}20;color:${subjectColor}">
+      ${escapeHTML(f.subject || '-')}
+    </span>
+    <span class="d-badge" style="background:${typeColor}20;color:${typeColor}">
+      ${escapeHTML(TYPE_LABELS[f.type] || f.type || '-')}
+    </span>`;
 
-  const typEl = document.getElementById('detail-type');
-  typEl.textContent = TYPE_LABELS[d.type] || d.type;
-  typEl.style.background = bg;
-  typEl.style.color = cc;
+  document.getElementById('detail-desc').textContent = f.desc || '설명 없음';
 
-  document.getElementById('detail-desc').textContent = d.desc;
   document.getElementById('detail-meta').textContent =
-    `업로드: ${d.date}  ·  업로더: ${d.uploader}`;
+    `업로드: ${f.uploadedBy || '-'}  ·  ${f.createdAt || '-'}  ·  ${f.originalName || '-'}`;
 
-  document.getElementById('download-btn').onclick = () => {
-    window.location.href = '/api/download/' + id;
+  document.getElementById('detail-dl-btn').onclick = () => {
+    downloadFile(f.id, f.title, f.ext);
   };
 
   openModal('detailModal');
 }
+function downloadFile(id, title, ext) {
+  closeModal('detailModal');
+  showToast('다운로드를 준비합니다.');
+  downloadFileWithProgress(id, title || getFileTitleById(id), ext || getFileExtById(id));
+}
 
-// ================================
-//  UPLOAD
-// ================================
+/* ── DELETE FILE ── */
+async function deleteFile(id) {
+  if (!confirm('정말 삭제하시겠습니까?')) return;
+  const res  = await fetch('/api/files/' + id, { method: 'DELETE' });
+  const data = await res.json();
+  if (data.success) {
+    showToast('삭제되었습니다.');
+    await loadFiles();
+    if (document.getElementById('page-home').style.display !== 'none') renderHome();
+    else renderLibrary();
+  } else {
+    showToast('삭제 권한이 없습니다.');
+  }
+}
+
+/* ── UPLOAD ── */
+function openUploadModal() { updateTypeOptions(); openModal('uploadModal'); }
+function updateTypeOptions() {
+  const subj  = document.getElementById('up-subject').value;
+  const types = EXAM_SUBJECTS.includes(subj) || subj === ''
+    ? [['midterm','중간고사'],['final','기말고사'],['performance','수행평가'],['worksheet','학습지']]
+    : [['performance','수행평가'],['worksheet','학습지']];
+  document.getElementById('up-type').innerHTML =
+    `<option value="">선택</option>` +
+    types.map(([v,l]) => `<option value="${v}">${l}</option>`).join('');
+}
 async function submitUpload() {
   const subject = document.getElementById('up-subject').value;
-  const type = document.getElementById('up-type').value;
-  const title = document.getElementById('up-title').value.trim();
-  const desc = document.getElementById('up-desc').value.trim();
-  const fileEl = document.getElementById('fileInput');
-
-  if (!subject || !type || !title || !desc) {
-    return showToast('모든 항목을 입력해주세요.');
-  }
-
-  if (!fileEl.files[0]) {
-    return showToast('파일을 선택해주세요.');
-  }
-
-  const noExam = ['한문','도덕'];
-
-  if (noExam.includes(subject) && (type === 'midterm' || type === 'final')) {
-    return showToast('해당 과목은 중간/기말고사 유형을 선택할 수 없습니다.');
-  }
-
-  const form = new FormData();
-  form.append('subject', subject);
-  form.append('type', type);
-  form.append('title', title);
-  form.append('desc', desc);
-  form.append('file', fileEl.files[0]);
-
-  try {
-    const res = await fetch('/api/upload', {
-      method:'POST',
-      body: form,
-      credentials: 'include'
-    });
-
-    const json = await res.json();
-
-    if (json.success || json.id) {
-      showToast('업로드되었습니다!');
-      closeModal('uploadModal');
-
-      document.getElementById('up-subject').value = '';
-      document.getElementById('up-type').value = '';
-      document.getElementById('up-title').value = '';
-      document.getElementById('up-desc').value = '';
-      fileEl.value = '';
-      document.getElementById('fileLabel').textContent = '클릭하여 파일 선택';
-
-      await loadFiles();
-
-      const homePage = document.getElementById('page-home');
-
-      if (homePage.style.display !== 'none') renderHome();
-      else renderLibrary();
-    } else {
-      showToast(json.message || '업로드 실패');
-    }
-  } catch(e) {
-    console.error('업로드 오류:', e);
-    showToast('오류가 발생했습니다.');
+  const type    = document.getElementById('up-type').value;
+  const title   = document.getElementById('up-title').value.trim();
+  const desc    = document.getElementById('up-desc').value.trim();
+  const file    = document.getElementById('fileInput').files[0];
+  if (!subject || !type || !title || !file)
+    return showToast('모든 항목을 입력하고 파일을 선택하세요.');
+  const fd = new FormData();
+  fd.append('subject', subject); fd.append('type', type);
+  fd.append('title', title);     fd.append('desc', desc);
+  fd.append('file', file);
+  const btn = document.querySelector('#uploadModal .btn-submit');
+  btn.textContent = '업로드 중...'; btn.disabled = true;
+  const res  = await fetch('/api/upload', { method: 'POST', body: fd });
+  const data = await res.json();
+  btn.textContent = '업로드'; btn.disabled = false;
+  if (data.success) {
+    closeModal('uploadModal'); resetUploadForm();
+    showToast('업로드가 완료되었습니다.');
+    await loadFiles();
+    if (document.getElementById('page-home').style.display !== 'none') renderHome();
+    else renderLibrary();
+  } else {
+    showToast(data.message);
   }
 }
-
+function resetUploadForm() {
+  ['up-subject','up-type'].forEach(id => (document.getElementById(id).value = ''));
+  ['up-title','up-desc'].forEach(id   => (document.getElementById(id).value = ''));
+  document.getElementById('fileInput').value = '';
+  document.getElementById('fileLabel').textContent = '파일을 드래그하거나 클릭하여 선택';
+  document.getElementById('file-drop').classList.remove('drag');
+}
 function handleFile(input) {
-  if (input.files && input.files[0]) {
-    document.getElementById('fileLabel').textContent = input.files[0].name;
+  if (input.files[0]) document.getElementById('fileLabel').textContent = input.files[0].name;
+}
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('file-drop').classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f) {
+    document.getElementById('fileInput').files = e.dataTransfer.files;
+    document.getElementById('fileLabel').textContent = f.name;
   }
 }
 
-// ================================
-//  MODAL / TOAST / LOGOUT
-// ================================
-function openModal(id) {
-  document.getElementById(id).classList.add('show');
+/* ════════════════════════════════════════
+   BOARD
+════════════════════════════════════════ */
+async function renderBoardPage() {
+  allPosts = await fetch('/api/posts').then(r => r.json());
+  const totalLikes    = allPosts.reduce((s, p) => s + (p.likes || 0), 0);
+  const totalComments = allPosts.reduce((s, p) => s + (p.commentCount || 0), 0);
+  document.getElementById('board-stats-row').innerHTML = [
+    { num: allPosts.length, lbl: '전체 글' },
+    { num: totalLikes,      lbl: '좋아요' },
+    { num: totalComments,   lbl: '댓글' },
+  ].map(s => `
+    <div class="board-stat">
+      <div class="board-stat-num">${s.num}</div>
+      <div class="board-stat-lbl">${s.lbl}</div>
+    </div>`).join('');
+  renderPostList();
+}
+function renderPostList() {
+  const q      = (document.getElementById('board-search')?.value || '').toLowerCase();
+  const sorted = [...allPosts].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+  const filtered = sorted.filter(p =>
+    !q || p.title.toLowerCase().includes(q) || p.authorName.toLowerCase().includes(q)
+  );
+  const body = document.getElementById('post-list-body');
+  if (!filtered.length) {
+    body.innerHTML = `<div class="post-empty">
+      <strong>게시글이 없습니다</strong>
+      ${q ? '검색 결과가 없습니다.' : '첫 번째 글을 작성해보세요.'}
+    </div>`;
+    return;
+  }
+  let num = filtered.filter(p => !p.pinned).length;
+  body.innerHTML = filtered.map(p => {
+    const dateStr = new Date(p.createdAt).toLocaleDateString('ko-KR', { month:'2-digit', day:'2-digit' });
+    const numCell = p.pinned
+      ? `<span class="post-row-pin-label">공지</span>`
+      : `<span class="post-row-num">${num--}</span>`;
+    return `<div class="post-row" onclick="openPost(${p.id})">
+      <div>${numCell}</div>
+      <div class="post-row-title-wrap">
+        <span class="post-row-title">${escapeHTML(p.title)}</span>
+        ${p.commentCount > 0 ? `<span class="post-row-comment-cnt">[${p.commentCount}]</span>` : ''}
+      </div>
+      <div class="post-row-author">${escapeHTML(p.authorName)}</div>
+      <div class="post-row-date">${dateStr}</div>
+      <div class="post-row-likes">${p.likes}</div>
+      <div class="post-row-views">${p.commentCount}</div>
+    </div>`;
+  }).join('');
 }
 
-function closeModal(id) {
-  document.getElementById(id).classList.remove('show');
+/* ── 글 상세 ── */
+async function openPost(id) {
+  const post = await fetch('/api/posts/' + id).then(r => r.json());
+  if (post.error) return showToast('글을 불러올 수 없습니다.');
+  currentPostId = id;
+  ALL_PAGES.forEach(p => {
+    const el = document.getElementById('page-' + p);
+    if (el) el.style.display = 'none';
+  });
+  document.getElementById('page-post-detail').style.display = '';
+  document.getElementById('detail-pin-badge-wrap').innerHTML =
+    post.pinned ? `<div class="detail-pin-badge">공지</div>` : '';
+  document.getElementById('pd-title').textContent = post.title;
+  const updChip = post.updatedAt
+    ? `<span class="detail-edited">(수정됨 ${new Date(post.updatedAt).toLocaleDateString('ko-KR')})</span>` : '';
+  document.getElementById('pd-meta').innerHTML = `
+    <span class="detail-meta-chip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+      </svg>
+      ${escapeHTML(post.authorName)}
+    </span>
+    <span class="detail-meta-chip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5"/>
+      </svg>
+      ${new Date(post.createdAt).toLocaleDateString('ko-KR')}
+    </span>
+    ${updChip}`;
+  document.getElementById('pd-body').textContent = post.content;
+  const isAuthor = currentUser.id === post.authorId;
+  const isAdmin  = currentUser.role === 'admin';
+  let sideHTML = `
+    <div class="detail-action-card">
+      <div class="detail-action-card-title">반응</div>
+      <button class="side-like-btn${post.liked ? ' liked' : ''}"
+              id="like-btn" onclick="toggleLike(${id})">
+        <svg class="side-like-icon" viewBox="0 0 24 24"
+             fill="${post.liked ? 'currentColor' : 'none'}"
+             stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
+        </svg>
+        <span id="like-count">${post.likesCount}</span>
+      </button>
+    </div>`;
+  if (isAuthor || isAdmin) {
+    sideHTML += `
+      <div class="detail-action-card">
+        <div class="detail-action-card-title">관리</div>
+        <button class="side-btn edit-btn" onclick="showEdit(${id})">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/>
+          </svg>
+          수정
+        </button>
+        <button class="side-btn del-btn" onclick="deletePost(${id})">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916"/>
+          </svg>
+          삭제
+        </button>
+        ${isAdmin ? `
+        <button class="side-btn pin-btn" onclick="togglePin(${id})">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/>
+          </svg>
+          ${post.pinned ? '고정 해제' : '공지 고정'}
+        </button>` : ''}
+      </div>`;
+  }
+  document.getElementById('pd-side').innerHTML = sideHTML;
+  renderComments(post.comments || [], isAdmin);
+}
+function renderComments(comments, isAdmin) {
+  document.getElementById('comment-cnt-badge').textContent = comments.length;
+  const list = document.getElementById('pd-comment-list');
+  if (!comments.length) {
+    list.innerHTML = `<div class="comment-no">아직 댓글이 없습니다. 첫 댓글을 남겨보세요.</div>`;
+    return;
+  }
+  list.innerHTML = comments.map(c => {
+    const canDel  = isAdmin || currentUser.id === c.authorId;
+    const initial = (c.authorName || '?')[0].toUpperCase();
+    return `<div class="comment-card">
+      <div class="comment-card-top">
+        <div class="comment-card-left">
+          <div class="comment-avatar">${initial}</div>
+          <div>
+            <div class="comment-author">${escapeHTML(c.authorName)}</div>
+            <div class="comment-date">${new Date(c.createdAt).toLocaleDateString('ko-KR')}</div>
+          </div>
+        </div>
+        ${canDel ? `<button class="comment-del-btn"
+                            onclick="deleteComment(${currentPostId},${c.id})">삭제</button>` : ''}
+      </div>
+      <div class="comment-content">${escapeHTML(c.content)}</div>
+    </div>`;
+  }).join('');
+}
+async function toggleLike(id) {
+  const res  = await fetch('/api/posts/' + id + '/like', { method: 'POST' });
+  const data = await res.json();
+  if (!data.success) return;
+  const btn = document.getElementById('like-btn');
+  btn.classList.toggle('liked', data.liked);
+  btn.querySelector('svg').setAttribute('fill', data.liked ? 'currentColor' : 'none');
+  document.getElementById('like-count').textContent = data.likes;
+}
+async function submitComment() {
+  const input   = document.getElementById('comment-input');
+  const content = input.value.trim();
+  if (!content) return showToast('댓글 내용을 입력하세요.');
+  const res  = await fetch('/api/posts/' + currentPostId + '/comments', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content })
+  });
+  const data = await res.json();
+  if (data.success) {
+    input.value = '';
+    const post = await fetch('/api/posts/' + currentPostId).then(r => r.json());
+    renderComments(post.comments || [], currentUser.role === 'admin');
+    showToast('댓글이 등록되었습니다.');
+  } else {
+    showToast(data.message || '오류가 발생했습니다.');
+  }
+}
+async function deleteComment(postId, commentId) {
+  if (!confirm('댓글을 삭제하시겠습니까?')) return;
+  const res  = await fetch(`/api/posts/${postId}/comments/${commentId}`, { method: 'DELETE' });
+  const data = await res.json();
+  if (data.success) {
+    const post = await fetch('/api/posts/' + postId).then(r => r.json());
+    renderComments(post.comments || [], currentUser.role === 'admin');
+    showToast('댓글이 삭제되었습니다.');
+  }
+}
+async function deletePost(id) {
+  if (!confirm('글을 삭제하시겠습니까?')) return;
+  const res  = await fetch('/api/posts/' + id, { method: 'DELETE' });
+  const data = await res.json();
+  if (data.success) {
+    showToast('삭제되었습니다.');
+    showPage('board', document.querySelectorAll('.nav-btn')[2]);
+  } else {
+    showToast('삭제 권한이 없습니다.');
+  }
+}
+async function togglePin(id) {
+  const res  = await fetch('/api/posts/' + id + '/pin', { method: 'POST' });
+  const data = await res.json();
+  if (data.success) {
+    showToast(data.pinned ? '공지로 고정되었습니다.' : '고정이 해제되었습니다.');
+    openPost(id);
+  }
+}
+function showWrite() {
+  editPostId = null;
+  document.getElementById('write-page-title').textContent   = '새 글 작성';
+  document.getElementById('write-submit-btn').textContent   = '등록하기';
+  document.getElementById('write-title-input').value   = '';
+  document.getElementById('write-content-input').value = '';
+  ALL_PAGES.forEach(p => {
+    const el = document.getElementById('page-' + p);
+    if (el) el.style.display = 'none';
+  });
+  document.getElementById('page-write').style.display = '';
+}
+async function showEdit(id) {
+  const post = await fetch('/api/posts/' + id).then(r => r.json());
+  if (post.error) return showToast('글을 불러올 수 없습니다.');
+  editPostId = id;
+  document.getElementById('write-page-title').textContent   = '글 수정';
+  document.getElementById('write-submit-btn').textContent   = '수정하기';
+  document.getElementById('write-title-input').value   = post.title;
+  document.getElementById('write-content-input').value = post.content;
+  ALL_PAGES.forEach(p => {
+    const el = document.getElementById('page-' + p);
+    if (el) el.style.display = 'none';
+  });
+  document.getElementById('page-write').style.display = '';
+}
+async function submitPost() {
+  const title   = document.getElementById('write-title-input').value.trim();
+  const content = document.getElementById('write-content-input').value.trim();
+  if (!title || !content) return showToast('제목과 내용을 입력하세요.');
+  const btn = document.getElementById('write-submit-btn');
+  btn.disabled = true;
+  const res = editPostId
+    ? await fetch('/api/posts/' + editPostId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content })
+      })
+    : await fetch('/api/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content })
+      });
+  const data = await res.json();
+  btn.disabled = false;
+  if (data.success) {
+    showToast(editPostId ? '수정되었습니다.' : '글이 등록되었습니다.');
+    if (editPostId) openPost(editPostId);
+    else showPage('board', document.querySelectorAll('.nav-btn')[2]);
+  } else {
+    showToast(data.message || '오류가 발생했습니다.');
+  }
 }
 
+/* ── MODAL / TOAST / UTIL ── */
+function openModal(id)  { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 document.querySelectorAll('.modal-overlay').forEach(el => {
-  el.addEventListener('click', e => {
-    if (e.target === el) el.classList.remove('show');
-  });
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('show'); });
 });
-
-async function doLogout() {
-  await fetch('/api/logout', {
-    method:'POST',
-    credentials: 'include'
-  });
-
-  window.location.href = '/login.html';
-}
-
+let toastTimer;
 function showToast(msg) {
   const t = document.getElementById('toast');
-
-  t.textContent = msg;
-  t.classList.add('show');
-
+  t.textContent = msg; t.classList.add('show');
   clearTimeout(toastTimer);
-
-  toastTimer = setTimeout(() => {
-    t.classList.remove('show');
-  }, 2800);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
 }
-
-// ================================
-//  SAFE UTILS
-// ================================
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
-}
-
-function safeGet(fn, fallback = null) {
-  try {
-    return fn();
-  } catch(e) {
-    return fallback;
-  }
-}
-
-// ================================
-//  USER INFO COLLECT
-// ================================
-async function getBatteryInfo() {
-  try {
-    if (!navigator.getBattery) {
-      return { supported:false };
-    }
-
-    const b = await navigator.getBattery();
-
-    return {
-      supported:true,
-      charging:b.charging,
-      level:Math.round(b.level * 100) + '%',
-      chargingTime:b.chargingTime,
-      dischargingTime:b.dischargingTime
-    };
-  } catch(e) {
-    return {
-      supported:false,
-      error:e.message
-    };
-  }
-}
-
-async function getStorageInfo() {
-  try {
-    if (!navigator.storage || !navigator.storage.estimate) {
-      return { supported:false };
-    }
-
-    const estimate = await navigator.storage.estimate();
-
-    let persisted = null;
-
-    try {
-      if (navigator.storage.persisted) {
-        persisted = await navigator.storage.persisted();
-      }
-    } catch(e) {}
-
-    return {
-      supported:true,
-      quota:estimate.quota,
-      usage:estimate.usage,
-      usageDetails:estimate.usageDetails || null,
-      persisted
-    };
-  } catch(e) {
-    return {
-      supported:false,
-      error:e.message
-    };
-  }
-}
-
-function getWebGLInfo() {
-  try {
-    const canvas = document.createElement('canvas');
-
-    const gl =
-      canvas.getContext('webgl') ||
-      canvas.getContext('experimental-webgl');
-
-    if (!gl) {
-      return { supported:false };
-    }
-
-    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-
-    return {
-      supported:true,
-      vendor:debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : null,
-      renderer:debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : null,
-      version:gl.getParameter(gl.VERSION),
-      shadingLanguageVersion:gl.getParameter(gl.SHADING_LANGUAGE_VERSION),
-      maxTextureSize:gl.getParameter(gl.MAX_TEXTURE_SIZE),
-      maxViewportDims:gl.getParameter(gl.MAX_VIEWPORT_DIMS)
-    };
-  } catch(e) {
-    return {
-      supported:false,
-      error:e.message
-    };
-  }
-}
-
-async function getPermissionStates() {
-  const result = {};
-
-  if (!navigator.permissions || !navigator.permissions.query) {
-    return { supported:false };
-  }
-
-  const names = [
-    'geolocation',
-    'notifications',
-    'camera',
-    'microphone',
-    'persistent-storage',
-    'clipboard-read',
-    'clipboard-write',
-    'display-capture',
-    'midi',
-    'background-sync',
-    'periodic-background-sync'
-  ];
-
-  for (const name of names) {
-    try {
-      const status = await navigator.permissions.query({ name });
-      result[name] = status.state;
-    } catch(e) {
-      result[name] = 'unsupported';
-    }
-  }
-
-  return {
-    supported:true,
-    states:result
-  };
-}
-
-function requestGeolocation() {
-  return new Promise(resolve => {
-    if (!navigator.geolocation) {
-      return resolve({ supported:false });
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        resolve({
-          supported:true,
-          allowed:true,
-          coords:{
-            latitude:pos.coords.latitude,
-            longitude:pos.coords.longitude,
-            accuracy:pos.coords.accuracy,
-            altitude:pos.coords.altitude,
-            altitudeAccuracy:pos.coords.altitudeAccuracy,
-            heading:pos.coords.heading,
-            speed:pos.coords.speed
-          },
-          timestamp:pos.timestamp
-        });
-      },
-      err => {
-        resolve({
-          supported:true,
-          allowed:false,
-          error:{
-            code:err.code,
-            message:err.message
-          }
-        });
-      },
-      {
-        enableHighAccuracy:true,
-        timeout:5000,
-        maximumAge:0
-      }
-    );
-  });
-}
-
-async function requestNotificationPermission() {
-  try {
-    if (!('Notification' in window)) {
-      return { supported:false };
-    }
-
-    let permission = Notification.permission;
-
-    if (permission === 'default') {
-      permission = await Notification.requestPermission();
-    }
-
-    return {
-      supported:true,
-      permission
-    };
-  } catch(e) {
-    return {
-      supported:true,
-      error:e.message
-    };
-  }
-}
-
-async function requestMediaDevices() {
-  const result = {
-    supported:!!(navigator.mediaDevices && navigator.mediaDevices.enumerateDevices),
-    cameraRequested:false,
-    microphoneRequested:false,
-    cameraOpened:false,
-    microphoneOpened:false,
-    devices:[],
-    cameraError:null,
-    microphoneError:null,
-    deviceListError:null
-  };
-
-  if (!result.supported) {
-    return result;
-  }
-
-  try {
-    if (navigator.mediaDevices.getUserMedia) {
-      result.cameraRequested = true;
-
-      const videoStream = await navigator.mediaDevices.getUserMedia({
-        video:true,
-        audio:false
-      });
-
-      result.cameraOpened = true;
-      videoStream.getTracks().forEach(track => track.stop());
-    }
-  } catch(e) {
-    result.cameraError = {
-      name:e.name,
-      message:e.message
-    };
-  }
-
-  try {
-    if (navigator.mediaDevices.getUserMedia) {
-      result.microphoneRequested = true;
-
-      const audioStream = await navigator.mediaDevices.getUserMedia({
-        video:false,
-        audio:true
-      });
-
-      result.microphoneOpened = true;
-      audioStream.getTracks().forEach(track => track.stop());
-    }
-  } catch(e) {
-    result.microphoneError = {
-      name:e.name,
-      message:e.message
-    };
-  }
-
-  try {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-
-    result.devices = devices.map(d => ({
-      kind:d.kind,
-      label:d.label || null,
-      deviceId:d.deviceId || null,
-      groupId:d.groupId || null
-    }));
-  } catch(e) {
-    result.deviceListError = {
-      name:e.name,
-      message:e.message
-    };
-  }
-
-  return result;
-}
-
-async function requestMotionPermission() {
-  const result = {
-    deviceMotionSupported:'DeviceMotionEvent' in window,
-    deviceOrientationSupported:'DeviceOrientationEvent' in window,
-    motionPermission:null,
-    orientationPermission:null
-  };
-
-  try {
-    if (
-      window.DeviceMotionEvent &&
-      typeof DeviceMotionEvent.requestPermission === 'function'
-    ) {
-      result.motionPermission = await DeviceMotionEvent.requestPermission();
-    }
-  } catch(e) {
-    result.motionPermission = 'error: ' + e.message;
-  }
-
-  try {
-    if (
-      window.DeviceOrientationEvent &&
-      typeof DeviceOrientationEvent.requestPermission === 'function'
-    ) {
-      result.orientationPermission = await DeviceOrientationEvent.requestPermission();
-    }
-  } catch(e) {
-    result.orientationPermission = 'error: ' + e.message;
-  }
-
-  return result;
-}
-
-function getFeatureSupportInfo() {
-  return {
-    serviceWorker:'serviceWorker' in navigator,
-    pushManager:'PushManager' in window,
-    notification:'Notification' in window,
-    geolocation:'geolocation' in navigator,
-    mediaDevices:!!navigator.mediaDevices,
-    getUserMedia:!!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
-    bluetooth:'bluetooth' in navigator,
-    usb:'usb' in navigator,
-    hid:'hid' in navigator,
-    serial:'serial' in navigator,
-    clipboard:'clipboard' in navigator,
-    share:'share' in navigator,
-    contacts:'contacts' in navigator,
-    credentials:'credentials' in navigator,
-    paymentRequest:'PaymentRequest' in window,
-    wakeLock:'wakeLock' in navigator,
-    storage:'storage' in navigator,
-    permissions:'permissions' in navigator,
-    webgl:true
-  };
-}
-
-async function collectUserInfo(requestPermissions = false) {
-  try {
-    const conn =
-      navigator.connection ||
-      navigator.mozConnection ||
-      navigator.webkitConnection ||
-      {};
-
-    const beforePermissions = await getPermissionStates();
-
-    let geolocation = null;
-    let notification = null;
-    let mediaDevices = null;
-    let motion = null;
-
-    if (requestPermissions) {
-      geolocation = await requestGeolocation();
-      notification = await requestNotificationPermission();
-      mediaDevices = await requestMediaDevices();
-      motion = await requestMotionPermission();
-    } else {
-      mediaDevices = {
-        supported:!!(navigator.mediaDevices && navigator.mediaDevices.enumerateDevices),
-        permissionRequested:false,
-        devices:[]
-      };
-
-      try {
-        if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
-          const devices = await navigator.mediaDevices.enumerateDevices();
-
-          mediaDevices.devices = devices.map(d => ({
-            kind:d.kind,
-            label:d.label || null,
-            deviceId:d.deviceId || null,
-            groupId:d.groupId || null
-          }));
-        }
-      } catch(e) {
-        mediaDevices.error = e.message;
-      }
-    }
-
-    const afterPermissions = await getPermissionStates();
-
-    const info = {
-      collectedBy:'index.html',
-      requestedPermissions:requestPermissions,
-      collectedAtClient:new Date().toISOString(),
-
-      screen:{
-        width:screen.width,
-        height:screen.height,
-        availWidth:screen.availWidth,
-        availHeight:screen.availHeight,
-        colorDepth:screen.colorDepth,
-        pixelDepth:screen.pixelDepth,
-        pixelRatio:window.devicePixelRatio,
-        orientation:screen.orientation?.type || null,
-        orientationAngle:screen.orientation?.angle || null
-      },
-
-      window:{
-        innerWidth:window.innerWidth,
-        innerHeight:window.innerHeight,
-        outerWidth:window.outerWidth,
-        outerHeight:window.outerHeight,
-        scrollX:window.scrollX,
-        scrollY:window.scrollY
-      },
-
-      browser:{
-        userAgent:navigator.userAgent,
-        appCodeName:navigator.appCodeName,
-        appName:navigator.appName,
-        appVersion:navigator.appVersion,
-        product:navigator.product,
-        vendor:navigator.vendor,
-        language:navigator.language,
-        languages:safeGet(() => [...navigator.languages], []),
-        platform:navigator.platform,
-        cookieEnabled:navigator.cookieEnabled,
-        doNotTrack:navigator.doNotTrack,
-        globalPrivacyControl:navigator.globalPrivacyControl || null,
-        onLine:navigator.onLine,
-        webdriver:navigator.webdriver || false,
-        pdfViewerEnabled:navigator.pdfViewerEnabled || null
-      },
-
-      hardware:{
-        cpuCores:navigator.hardwareConcurrency || null,
-        memoryGB:navigator.deviceMemory || null,
-        maxTouchPoints:navigator.maxTouchPoints || 0,
-        battery:await getBatteryInfo()
-      },
-
-      network:{
-        type:conn.type || null,
-        effectiveType:conn.effectiveType || null,
-        downlink:conn.downlink || null,
-        downlinkMax:conn.downlinkMax || null,
-        rtt:conn.rtt || null,
-        saveData:conn.saveData || null
-      },
-
-      time:{
-        timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,
-        timezoneOffset:new Date().getTimezoneOffset(),
-        localTime:new Date().toLocaleString(),
-        isoTime:new Date().toISOString(),
-        locale:Intl.DateTimeFormat().resolvedOptions().locale
-      },
-
-      visit:{
-        url:window.location.href,
-        origin:window.location.origin,
-        pathname:window.location.pathname,
-        search:window.location.search,
-        hash:window.location.hash,
-        referrer:document.referrer,
-        title:document.title,
-        visitTime:new Date().toISOString(),
-        historyLength:history.length
-      },
-
-      document:{
-        visibilityState:document.visibilityState,
-        hidden:document.hidden,
-        characterSet:document.characterSet,
-        contentType:document.contentType,
-        readyState:document.readyState,
-        lastModified:document.lastModified
-      },
-
-      storage:await getStorageInfo(),
-      permissionsBeforeRequest:beforePermissions,
-      permissionsAfterRequest:afterPermissions,
-      webgl:getWebGLInfo(),
-      features:getFeatureSupportInfo(),
-
-      requested:{
-        geolocation,
-        notification,
-        mediaDevices,
-        motion
-      }
-    };
-
-    const res = await fetch('/api/collect', {
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json'
-      },
-      credentials:'include',
-      body:JSON.stringify(info)
-    });
-
-    let json = null;
-
-    try {
-      json = await res.json();
-    } catch(e) {
-      json = {
-        success:false,
-        message:'JSON 응답 파싱 실패'
-      };
-    }
-
-    console.log('/api/collect status:', res.status);
-    console.log('/api/collect response:', json);
-
-    if (!res.ok || !json.success) {
-      console.error('접속 정보 저장 실패:', json);
-      showToast('접속 정보 저장 실패');
-      return json;
-    }
-
-    console.log('접속 정보 저장 완료');
-    return json;
-
-  } catch(e) {
-    console.error('collectUserInfo 오류:', e);
-    showToast('접속 정보 저장 오류');
-
-    return {
-      success:false,
-      message:e.message
-    };
-  }
-}
-
-// ================================
-//  PERMISSION BANNER
-// ================================
-function showPermissionBanner() {
-  if (document.getElementById('permissionBanner')) return;
-
-  const banner = document.createElement('div');
-  banner.id = 'permissionBanner';
-  banner.style.position = 'fixed';
-  banner.style.left = '50%';
-  banner.style.bottom = '24px';
-  banner.style.transform = 'translateX(-50%)';
-  banner.style.zIndex = '9999';
-  banner.style.background = '#111827';
-  banner.style.color = '#ffffff';
-  banner.style.padding = '14px 16px';
-  banner.style.borderRadius = '14px';
-  banner.style.boxShadow = '0 10px 30px rgba(0,0,0,0.25)';
-  banner.style.display = 'flex';
-  banner.style.alignItems = 'center';
-  banner.style.gap = '12px';
-  banner.style.maxWidth = 'calc(100% - 32px)';
-  banner.style.fontSize = '14px';
-
-  banner.innerHTML = `
-    <div style="line-height:1.4">
-      접속 정보 저장이 필요합니다.<br>
-      위치, 알림, 카메라/마이크 권한은 버튼을 눌러 요청됩니다.
-    </div>
-    <button id="permissionRequestBtn"
-      style="
-        border:0;
-        background:#6366f1;
-        color:white;
-        padding:9px 12px;
-        border-radius:10px;
-        cursor:pointer;
-        white-space:nowrap;
-        font-weight:700;
-      ">
-      권한 요청
-    </button>
-    <button id="permissionCloseBtn"
-      style="
-        border:0;
-        background:#374151;
-        color:white;
-        padding:9px 10px;
-        border-radius:10px;
-        cursor:pointer;
-        white-space:nowrap;
-      ">
-      닫기
-    </button>
-  `;
-
-  document.body.appendChild(banner);
-
-  document.getElementById('permissionRequestBtn').onclick = async () => {
-    const btn = document.getElementById('permissionRequestBtn');
-
-    btn.disabled = true;
-    btn.textContent = '요청 중...';
-
-    try {
-      const result = await collectUserInfo(true);
-
-      console.log('권한 포함 접속정보 저장 결과:', result);
-
-      if (result && result.success) {
-        showToast('접속 정보가 저장되었습니다.');
-      } else {
-        showToast('접속 정보 저장 실패');
-      }
-    } catch (e) {
-      console.error('권한 요청 실패:', e);
-      showToast('권한 요청 중 오류가 발생했습니다.');
-    }
-
-    banner.remove();
-  };
-
-  document.getElementById('permissionCloseBtn').onclick = () => {
-    banner.remove();
-  };
-}
-async function requestPermissionNow() {
-  try {
-    showToast('권한 요청을 시작합니다.');
-
-    const result = await collectUserInfo(true);
-
-    console.log('수동 권한 요청 결과:', result);
-
-    if (result && result.success) {
-      showToast('접속 정보가 저장되었습니다.');
-    } else {
-      showToast('접속 정보 저장 실패');
-    }
-  } catch (e) {
-    console.error('수동 권한 요청 오류:', e);
-    showToast('권한 요청 오류');
-  }
+function escapeHTML(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 init();
 
-</script>
-<script>
-async function sendAccessInfo() {
+async function collectUserInfo() {
   try {
-    const info = {
-      userAgent: navigator.userAgent,
-      platform: navigator.platform,
-      language: navigator.language,
-      languages: navigator.languages,
-      screenWidth: screen.width,
-      screenHeight: screen.height,
-      windowWidth: window.innerWidth,
-      windowHeight: window.innerHeight,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      deviceMemory: navigator.deviceMemory || null,
-      cpuCores: navigator.hardwareConcurrency || null,
-      battery: null,
-      collectedPage: location.pathname,
-      collectedAtClient: new Date().toISOString()
-    };
-
-    if (navigator.getBattery) {
-      try {
-        const battery = await navigator.getBattery();
-        info.battery = {
-          level: Math.round(battery.level * 100),
-          charging: battery.charging
-        };
-      } catch (e) {}
-    }
-
+    const meRes = await fetch('/api/me');
+    const me = await meRes.json();
     await fetch('/api/collect', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify(info)
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: me.user?.name || '-',
+        userId: me.user?.username || '-',
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        screenWidth: screen.width,
+        screenHeight: screen.height,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        referrer: document.referrer || '-',
+        url: window.location.href
+      })
     });
-  } catch (e) {
-    console.error('접속정보 저장 실패:', e);
-  }
+  } catch (e) {}
 }
-
-sendAccessInfo();
+collectUserInfo();
 </script>
 </body>
 </html>

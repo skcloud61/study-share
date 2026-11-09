@@ -1,0 +1,25 @@
+/* =========================================================
+   StudyShare Modern Design Enhancements
+   Synced with style.css for consistent SaaS UI
+========================================================= */
+
+/* Ensure smooth font smoothing and micro-interactions */
+body {
+  text-rendering: optimizeLegibility;
+}
+
+/* Polished focus rings */
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Card hover micro-animations */
+.card, .subj-card, .stat-item {
+  will-change: transform, box-shadow;
+}
+
+/* Mobile tap highlights */
+* {
+  -webkit-tap-highlight-color: transparent;
+}

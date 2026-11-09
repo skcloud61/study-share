@@ -3,195 +3,58 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>접속정보 - Study Share</title>
+  <title>접속정보 모니터링 - StudyShare</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="stylesheet" href="style.css?v=3"/>
+  <link rel="stylesheet" href="design.css?v=3"/>
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f3f4f6;
-      color: #111827;
-    }
-
-    header {
-      height: 64px;
-      background: #4f46e5;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 24px;
-      box-sizing: border-box;
-    }
-
-    .logo {
-      font-size: 22px;
-      font-weight: 900;
-    }
-
-    .nav {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .nav button {
-      border: 0;
-      border-radius: 10px;
-      padding: 9px 13px;
-      cursor: pointer;
-      font-weight: 700;
-      background: rgba(255,255,255,0.16);
-      color: white;
-    }
-
-    .nav button:hover {
-      background: rgba(255,255,255,0.25);
-    }
-
-    main {
-      padding: 24px;
-      max-width: 1400px;
+    .userinfo-page-wrap {
+      max-width: 1300px;
       margin: 0 auto;
-    }
-
-    .top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 18px;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 26px;
-    }
-
-    .actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .actions button {
-      border: 0;
-      background: #4f46e5;
-      color: white;
-      padding: 10px 14px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 700;
-    }
-
-    .actions button.gray {
-      background: #374151;
-    }
-
-    .status {
-      background: white;
-      border-radius: 14px;
-      padding: 14px 16px;
-      margin-bottom: 16px;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    .status.ok {
-      border-left: 5px solid #10b981;
-    }
-
-    .status.err {
-      border-left: 5px solid #ef4444;
-    }
-
-    .table-wrap {
-      background: white;
-      border-radius: 14px;
-      overflow: auto;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 1200px;
-    }
-
-    th, td {
-      padding: 11px 12px;
-      border-bottom: 1px solid #e5e7eb;
-      text-align: left;
-      vertical-align: top;
-      font-size: 13px;
-    }
-
-    th {
-      background: #f9fafb;
-      font-size: 12px;
-      color: #374151;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    }
-
-    tr:hover {
-      background: #f9fafb;
-    }
-
-    .mono {
-      font-family: Consolas, Monaco, monospace;
-      font-size: 12px;
-      white-space: pre-wrap;
-      word-break: break-all;
-    }
-
-    .empty {
-      background: white;
-      padding: 40px;
-      border-radius: 14px;
-      text-align: center;
-      color: #6b7280;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
-    }
-
-    details {
-      max-width: 520px;
-    }
-
-    summary {
-      cursor: pointer;
-      color: #4f46e5;
-      font-weight: 700;
-    }
-
-    pre {
-      white-space: pre-wrap;
-      word-break: break-all;
-      background: #111827;
-      color: #e5e7eb;
-      padding: 12px;
-      border-radius: 10px;
-      max-height: 360px;
-      overflow: auto;
+      padding: 36px 24px 80px;
     }
   </style>
 </head>
 <body>
+
 <header>
-  <div class="logo">StudyShare 접속정보</div>
-  <div class="nav">
-    <button onclick="location.href='/'">홈</button>
-    <button onclick="location.href='/admin.html'">관리자</button>
-    <button onclick="reloadUserInfo()">새로고침</button>
-    <button onclick="doLogout()">로그아웃</button>
+  <div class="logo" onclick="location.href='/'">
+    <svg width="170" height="36" viewBox="0 0 170 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="userinfoLogoGrad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#4f46e5"/>
+          <stop offset="1" stop-color="#818cf8"/>
+        </linearGradient>
+      </defs>
+      <circle cx="10" cy="18" r="5" fill="url(#userinfoLogoGrad)"/>
+      <circle cx="28" cy="8" r="4.5" fill="#6366f1"/>
+      <circle cx="28" cy="28" r="4.5" fill="#38bdf8"/>
+      <line x1="14" y1="15" x2="24" y2="10" stroke="#4f46e5" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="14" y1="21" x2="24" y2="26" stroke="#4f46e5" stroke-width="2.5" stroke-linecap="round"/>
+      <text x="38" y="25" font-family="'Pretendard', sans-serif" font-size="21" font-weight="900" fill="#0f172a" letter-spacing="-0.04em">Study<tspan fill="#4f46e5">Share</tspan></text>
+    </svg>
+    <span class="badge badge-admin" style="margin-left:4px;">접속정보</span>
+  </div>
+  <nav>
+    <button class="nav-btn" onclick="location.href='/'">홈</button>
+    <button class="nav-btn" onclick="location.href='/admin.html'">관리자</button>
+  </nav>
+  <div class="header-right">
+    <button class="nav-btn" onclick="reloadUserInfo()">새로고침</button>
+    <button class="logout-btn" onclick="doLogout()">로그아웃</button>
   </div>
 </header>
 
-<main>
+<main class="userinfo-page-wrap">
   <div class="top">
-    <h1>접속 정보 확인</h1>
+    <div>
+      <h1>사용자 접속 및 기기 정보</h1>
+      <p style="font-size:0.9rem; color:var(--text-sub); margin-top:4px;">사용자 환경, 네트워크, 디바이스 스펙 수집 내역을 실시간으로 확인합니다.</p>
+    </div>
     <div class="actions">
       <button onclick="reloadUserInfo()">다시 불러오기</button>
       <button class="gray" onclick="openRawJson()">원본 JSON 보기</button>
@@ -268,8 +131,6 @@ async function reloadUserInfo() {
       cache: 'no-store'
     });
 
-    console.log('/api/admin/userinfo status:', res.status);
-
     let json;
 
     try {
@@ -279,8 +140,6 @@ async function reloadUserInfo() {
       setStatus('JSON 파싱 실패: ' + escapeHtml(text), false);
       return;
     }
-
-    console.log('/api/admin/userinfo response:', json);
 
     if (!res.ok) {
       setStatus('접속정보 조회 실패: HTTP ' + res.status + '<br><pre>' + escapeHtml(JSON.stringify(json, null, 2)) + '</pre>', false);
@@ -313,84 +172,83 @@ function renderTable(list) {
   if (!list.length) {
     content.innerHTML = `
       <div class="empty">
-        저장된 접속정보가 없습니다.<br><br>
-        일반 페이지에 접속해서 /api/collect가 성공해야 여기에 표시됩니다.
+        <p>저장된 접속정보가 없습니다.</p>
+        <span style="font-size:0.85rem; color:var(--text-dim);">일반 페이지에 접속해서 /api/collect가 성공해야 여기에 표시됩니다.</span>
       </div>
     `;
     return;
   }
 
   content.innerHTML = `
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>수집시각</th>
-            <th>사용자</th>
-            <th>아이디</th>
-            <th>User ID</th>
-            <th>IP</th>
-            <th>권한요청</th>
-            <th>브라우저</th>
-            <th>화면</th>
-            <th>위치</th>
-            <th>카메라/마이크</th>
-            <th>원본</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${list.map(item => {
-            const browser = item.browser || {};
-            const screen = item.screen || {};
-            const requested = item.requested || {};
-            const geo = requested.geolocation || {};
-            const media = requested.mediaDevices || requested.media || {};
+    <div class="tbl-wrap">
+      <div class="tbl-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>수집시각</th>
+              <th>사용자</th>
+              <th>아이디</th>
+              <th>User ID</th>
+              <th>IP</th>
+              <th>권한요청</th>
+              <th>브라우저</th>
+              <th>화면</th>
+              <th>위치</th>
+              <th>카메라/마이크</th>
+              <th>원본</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${list.map(item => {
+              const browser = item.browser || {};
+              const screen = item.screen || {};
+              const requested = item.requested || {};
+              const geo = requested.geolocation || {};
+              const media = requested.mediaDevices || requested.media || {};
 
-            return `
-              <tr>
-                <td>${escapeHtml(item.collectedAt || item.collectedAtClient || '-')}</td>
-                <td>${escapeHtml(item.userName || '-')}</td>
-                <td>${escapeHtml(item.username || '-')}</td>
-                <td>${escapeHtml(item.userId || '-')}</td>
-                <td>${escapeHtml(item.ip || '-')}</td>
-                <td>${escapeHtml(String(item.requestedPermissions ?? '-'))}</td>
-                <td class="mono">
-                  ${escapeHtml(browser.language || '-')}
-
-                  ${escapeHtml(short(browser.userAgent || '-', 120))}
-                </td>
-                <td class="mono">
-                  ${escapeHtml(screen.width || '-') } x ${escapeHtml(screen.height || '-')}
-                  DPR: ${escapeHtml(screen.pixelRatio || '-')}
-                </td>
-                <td class="mono">
-                  allowed: ${escapeHtml(String(geo.allowed ?? '-'))}
-                  lat: ${escapeHtml(geo.coords?.latitude ?? '-')}
-                  lon: ${escapeHtml(geo.coords?.longitude ?? '-')}
-                </td>
-                <td class="mono">
-                  cameraOpened: ${escapeHtml(String(media.cameraOpened ?? media.streamOpened ?? '-'))}
-                  microphoneOpened: ${escapeHtml(String(media.microphoneOpened ?? '-'))}
-                  devices: ${escapeHtml(String(media.devices?.length ?? 0))}
-                </td>
-                <td>
-                  <details>
-                    <summary>보기</summary>
-                    <pre>${escapeHtml(JSON.stringify(item, null, 2))}</pre>
-                  </details>
-                </td>
-              </tr>
-            `;
-          }).join('')}
-        </tbody>
-      </table>
+              return `
+                <tr>
+                  <td style="font-size:0.8rem; color:var(--text-sub); white-space:nowrap;">${escapeHtml(item.collectedAt || item.collectedAtClient || '-')}</td>
+                  <td style="font-weight:700;">${escapeHtml(item.userName || '-')}</td>
+                  <td style="color:var(--text-sub);">${escapeHtml(item.username || '-')}</td>
+                  <td style="color:var(--text-dim); font-size:0.8rem;">${escapeHtml(item.userId || '-')}</td>
+                  <td class="mono">${escapeHtml(item.ip || '-')}</td>
+                  <td><span class="badge badge-user">${escapeHtml(String(item.requestedPermissions ?? '-'))}</span></td>
+                  <td class="mono">
+                    <div>${escapeHtml(browser.language || '-')}</div>
+                    <div style="font-size:0.75rem; color:var(--text-dim);">${escapeHtml(short(browser.userAgent || '-', 90))}</div>
+                  </td>
+                  <td class="mono">
+                    ${escapeHtml(screen.width || '-') } x ${escapeHtml(screen.height || '-')}
+                    ${screen.pixelRatio ? `<br>DPR: ${escapeHtml(screen.pixelRatio)}` : ''}
+                  </td>
+                  <td class="mono">
+                    allowed: ${escapeHtml(String(geo.allowed ?? '-'))}
+                    ${geo.coords?.latitude ? `<br>${escapeHtml(geo.coords.latitude)}, ${escapeHtml(geo.coords.longitude)}` : ''}
+                  </td>
+                  <td class="mono">
+                    cam: ${escapeHtml(String(media.cameraOpened ?? media.streamOpened ?? '-'))}
+                    mic: ${escapeHtml(String(media.microphoneOpened ?? '-'))}
+                  </td>
+                  <td>
+                    <details>
+                      <summary>JSON</summary>
+                      <pre>${escapeHtml(JSON.stringify(item, null, 2))}</pre>
+                    </details>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
     </div>
   `;
 }
 
 function openRawJson() {
   const w = window.open('', '_blank');
-  w.document.write('<pre style="white-space:pre-wrap;word-break:break-all;font-family:Consolas,monospace;">' +
+  w.document.write('<pre style="white-space:pre-wrap;word-break:break-all;font-family:Consolas,monospace;background:#0f172a;color:#f8fafc;padding:24px;">' +
     escapeHtml(JSON.stringify(rawList, null, 2)) +
     '</pre>');
 }

@@ -2,127 +2,204 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>StudyShare</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>로그인 - StudyShare</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="stylesheet" href="style.css?v=3"/>
+  <link rel="stylesheet" href="design.css?v=3"/>
   <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  :root{
-    --primary:#4f46e5;--primary-dark:#3730a3;
-    --bg:#f5f5f7;--surface:#ffffff;--surface2:#f9f9fb;
-    --border:#e4e4ea;--text:#111118;--sub:#6b6b80;
-  }
-  body{
-    font-family:'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif;
-    background:var(--bg);color:var(--text);
-    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
-  }
-  .wrap{width:100%;max-width:420px;}
-  .brand{text-align:center;margin-bottom:32px;}
-  .brand h1{font-size:1.9rem;font-weight:900;letter-spacing:-1px;color:var(--text);}
-  .brand h1 span{color:var(--primary);}
-  .brand p{font-size:.85rem;color:var(--sub);margin-top:6px;}
-  .card{
-    background:var(--surface);border-radius:20px;padding:36px;
-    border:1px solid var(--border);box-shadow:0 4px 24px rgba(0,0,0,.08);
-  }
-  .tabs{display:flex;gap:0;margin-bottom:28px;
-    background:var(--surface2);border-radius:10px;padding:4px;border:1px solid var(--border);}
-  .tab{
-    flex:1;padding:10px;border:none;background:none;
-    color:var(--sub);font-size:.875rem;font-weight:700;
-    border-radius:8px;cursor:pointer;transition:all .2s;
-  }
-  .tab.active{background:var(--primary);color:#fff;}
-  .form-group{margin-bottom:16px;}
-  .form-group label{
-    display:block;font-size:.72rem;font-weight:700;
-    color:var(--sub);margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase;
-  }
-  .form-group input{
-    width:100%;padding:12px 16px;
-    background:var(--surface2);border:1.5px solid var(--border);
-    border-radius:10px;color:var(--text);font-size:.9rem;
-    font-family:inherit;outline:none;transition:border-color .2s;
-  }
-  .form-group input:focus{border-color:var(--primary);}
-  .btn{
-    width:100%;padding:13px;background:var(--primary);color:#fff;
-    border:none;border-radius:10px;font-size:.92rem;
-    font-weight:700;cursor:pointer;transition:background .2s;margin-top:4px;
-  }
-  .btn:hover{background:var(--primary-dark);}
-  .msg{
-    margin-top:14px;padding:12px 16px;border-radius:10px;
-    font-size:.85rem;font-weight:600;text-align:center;display:none;
-  }
-  .msg.error{background:#fef2f2;color:#dc2626;border:1px solid #fecaca;}
-  .msg.success{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;}
-</style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: var(--bg-gradient);
+    }
+    .login-container {
+      width: 100%;
+      max-width: 420px;
+      animation: fadeIn 0.3s ease-out;
+    }
+    .brand-wrap {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .brand-logo-svg {
+      margin: 0 auto 12px;
+      display: inline-block;
+    }
+    .brand-wrap p {
+      font-size: 0.9rem;
+      color: var(--text-sub);
+      margin-top: 4px;
+      font-weight: 500;
+    }
+    .auth-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 36px 32px;
+      box-shadow: var(--shadow-md);
+    }
+    .auth-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      padding: 4px;
+      margin-bottom: 26px;
+    }
+    .auth-tab {
+      flex: 1;
+      padding: 9px;
+      border: none;
+      background: none;
+      color: var(--text-sub);
+      font-size: 0.88rem;
+      font-weight: 700;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: var(--transition);
+      text-align: center;
+    }
+    .auth-tab.active {
+      background: var(--surface);
+      color: var(--primary);
+      box-shadow: var(--shadow-xs);
+    }
+    .input-wrap {
+      position: relative;
+    }
+    .auth-btn {
+      width: 100%;
+      padding: 13px;
+      background: var(--primary-gradient);
+      color: #ffffff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+      font-weight: 750;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.28);
+      transition: var(--transition);
+      margin-top: 8px;
+    }
+    .auth-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.38);
+    }
+    .auth-btn:active {
+      transform: translateY(0);
+    }
+    .auth-footer-tip {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="brand">
-    <h1>Study<span>Share</span></h1>
-    <p>학습 자료 공유 플랫폼</p>
+
+<div class="login-container">
+  <div class="brand-wrap">
+    <div class="brand-logo-svg">
+      <svg width="180" height="38" viewBox="0 0 170 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="loginLogoGrad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#4f46e5"/>
+            <stop offset="1" stop-color="#818cf8"/>
+          </linearGradient>
+        </defs>
+        <circle cx="10" cy="18" r="5" fill="url(#loginLogoGrad)"/>
+        <circle cx="28" cy="8" r="4.5" fill="#6366f1"/>
+        <circle cx="28" cy="28" r="4.5" fill="#38bdf8"/>
+        <line x1="14" y1="15" x2="24" y2="10" stroke="#4f46e5" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="14" y1="21" x2="24" y2="26" stroke="#4f46e5" stroke-width="2.5" stroke-linecap="round"/>
+        <text x="38" y="25" font-family="'Pretendard', sans-serif" font-size="21" font-weight="900" fill="#0f172a" letter-spacing="-0.04em">Study<tspan fill="#4f46e5">Share</tspan></text>
+      </svg>
+    </div>
+    <p>스마트 학습 자료 공유 커뮤니티</p>
   </div>
-  <div class="card">
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab('login',this)">로그인</button>
-      <button class="tab" onclick="switchTab('register',this)">가입 신청</button>
+
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <button class="auth-tab tab active" onclick="switchTab('login',this)">로그인</button>
+      <button class="auth-tab tab" onclick="switchTab('register',this)">가입 신청</button>
     </div>
 
     <!-- 로그인 -->
     <div id="tab-login">
       <div class="form-group">
         <label>아이디</label>
-        <input type="text" id="login-id" placeholder="아이디 입력" />
+        <input type="text" id="login-id" placeholder="아이디를 입력하세요" autocomplete="username" />
       </div>
       <div class="form-group">
         <label>비밀번호</label>
-        <input type="password" id="login-pw" placeholder="비밀번호 입력"
+        <input type="password" id="login-pw" placeholder="비밀번호를 입력하세요"
+               autocomplete="current-password"
                onkeydown="if(event.key==='Enter')doLogin()" />
       </div>
-      <button class="btn" onclick="doLogin()">로그인</button>
+      <button class="auth-btn btn" onclick="doLogin()">로그인하기</button>
       <div class="msg" id="login-msg"></div>
     </div>
 
     <!-- 가입 신청 -->
     <div id="tab-register" style="display:none">
       <div class="form-group">
-        <label>이름</label>
-        <input type="text" id="reg-name" placeholder="실명 입력" />
+        <label>실명 (이름)</label>
+        <input type="text" id="reg-name" placeholder="이름을 입력하세요" />
       </div>
       <div class="form-group">
         <label>아이디</label>
-        <input type="text" id="reg-id" placeholder="사용할 아이디" />
+        <input type="text" id="reg-id" placeholder="사용할 아이디를 입력하세요" autocomplete="username" />
       </div>
       <div class="form-group">
         <label>비밀번호</label>
-        <input type="password" id="reg-pw" placeholder="비밀번호" />
+        <input type="password" id="reg-pw" placeholder="비밀번호를 입력하세요"
+               autocomplete="new-password"
+               onkeydown="if(event.key==='Enter')doRegister()" />
       </div>
-      <button class="btn" onclick="doRegister()">가입 신청</button>
+      <button class="auth-btn btn" onclick="doRegister()">가입 신청하기</button>
       <div class="msg" id="reg-msg"></div>
+    </div>
+
+    <div class="auth-footer-tip">
+      안전하고 신뢰할 수 있는 학습 커뮤니티 StudyShare
     </div>
   </div>
 </div>
+
 <script>
   function switchTab(tab, btn) {
     document.getElementById('tab-login').style.display    = tab==='login'    ? '' : 'none';
     document.getElementById('tab-register').style.display = tab==='register' ? '' : 'none';
-    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.auth-tab').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
   }
 
   function showMsg(id, msg, type) {
     const el = document.getElementById(id);
-    el.textContent = msg; el.className = 'msg '+type; el.style.display='block';
+    el.textContent = msg;
+    el.className = 'msg ' + type;
+    el.style.display = 'block';
   }
 
   async function doLogin() {
     const username = document.getElementById('login-id').value.trim();
     const password = document.getElementById('login-pw').value;
     if (!username||!password) return showMsg('login-msg','모든 항목을 입력하세요.','error');
-    const res  = await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
+    const res  = await fetch('/api/login',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({username,password})
+    });
     const data = await res.json();
     if (data.success) {
       window.location.href = data.user.role==='admin' ? '/admin.html' : '/index.html';
@@ -136,7 +213,11 @@
     const username = document.getElementById('reg-id').value.trim();
     const password = document.getElementById('reg-pw').value;
     if (!name||!username||!password) return showMsg('reg-msg','모든 항목을 입력하세요.','error');
-    const res  = await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,username,password})});
+    const res  = await fetch('/api/register',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,username,password})
+    });
     const data = await res.json();
     showMsg('reg-msg', data.message, data.success?'success':'error');
   }
