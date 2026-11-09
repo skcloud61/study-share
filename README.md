@@ -1,1 +1,1 @@
-study share!
+study share! for HJ
