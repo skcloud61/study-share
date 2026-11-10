@@ -11,6 +11,55 @@
   <link rel="manifest" href="/site.webmanifest">
   <link rel="stylesheet" href="style.css?v=3"/>
   <link rel="stylesheet" href="design.css?v=3"/>
+  <style>
+    .admin-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .admin-stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow-xs);
+      transition: var(--transition);
+    }
+    .admin-stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+    .admin-stat-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .admin-stat-val {
+      font-size: 1.6rem;
+      font-weight: 850;
+      color: var(--primary);
+      letter-spacing: -0.03em;
+    }
+    .admin-stat-lbl {
+      font-size: 0.82rem;
+      color: var(--text-sub);
+      font-weight: 650;
+      margin-top: 2px;
+    }
+    .admin-stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+  </style>
 </head>
 <body>
 
@@ -39,6 +88,9 @@
       </svg>
       사이트로 이동
     </button>
+    <button class="nav-btn" onclick="window.location.href='/admin-userinfo.html'">
+      접속정보 모니터링
+    </button>
   </nav>
   <div class="header-right">
     <span class="user-name" id="header-username"></span>
@@ -47,6 +99,55 @@
 </header>
 
 <div class="admin-wrap">
+  <!-- 상단 요약 통계 -->
+  <div class="admin-stats-grid">
+    <div class="admin-stat-card">
+      <div class="admin-stat-info">
+        <div class="admin-stat-val" id="stat-total-users">-</div>
+        <div class="admin-stat-lbl">전체 회원</div>
+      </div>
+      <div class="admin-stat-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </div>
+    </div>
+    <div class="admin-stat-card">
+      <div class="admin-stat-info">
+        <div class="admin-stat-val" style="color:var(--danger);" id="stat-pending-users">-</div>
+        <div class="admin-stat-lbl">승인 대기 회원</div>
+      </div>
+      <div class="admin-stat-icon" style="background:var(--danger-light); color:var(--danger);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+      </div>
+    </div>
+    <div class="admin-stat-card">
+      <div class="admin-stat-info">
+        <div class="admin-stat-val" style="color:var(--accent);" id="stat-total-files">-</div>
+        <div class="admin-stat-lbl">등록된 자료</div>
+      </div>
+      <div class="admin-stat-icon" style="background:var(--accent-light); color:var(--accent);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+        </svg>
+      </div>
+    </div>
+    <div class="admin-stat-card">
+      <div class="admin-stat-info">
+        <div class="admin-stat-val" style="color:var(--purple);" id="stat-total-posts">-</div>
+        <div class="admin-stat-lbl">게시판 글</div>
+      </div>
+      <div class="admin-stat-icon" style="background:var(--purple-light); color:var(--purple);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- 관리자 탭 -->
   <div class="admin-tabs">
     <button class="admin-tab active" onclick="switchTab('users',this)">
       회원 관리
@@ -62,7 +163,7 @@
 
   <!-- 회원 관리 -->
   <div id="tab-users">
-    <div class="admin-section-title">회원 목록</div>
+    <div class="admin-section-title">회원 목록 및 권한 관리</div>
     <div class="tbl-wrap">
       <div class="tbl-scroll">
         <table>
@@ -116,12 +217,17 @@
 
   <!-- 접속 정보 -->
   <div id="tab-userinfo" style="display:none">
-    <div class="admin-section-title">사용자 접속 정보</div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:12px;">
+      <div class="admin-section-title" style="margin-bottom:0;">사용자 접속 정보 모니터링</div>
+      <button class="text-btn" style="padding:8px 16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface);" onclick="window.location.href='/admin-userinfo.html'">
+        전용 모니터링 페이지로 이동 &rarr;
+      </button>
+    </div>
     <div class="tbl-wrap">
       <div class="userinfo-search-wrap" style="padding:14px 18px; border-bottom:1px solid var(--border); background:var(--surface-alt);">
         <input type="text" class="board-search-input"
                id="userinfo-search"
-               placeholder="이름 또는 아이디로 검색..."
+               placeholder="이름, 아이디, IP 또는 OS/브라우저로 검색..."
                oninput="filterUserInfo()"/>
       </div>
       <div class="tbl-scroll">
@@ -188,8 +294,19 @@ const TYPE_LABELS = {
   performance:'수행평가', worksheet:'학습지'
 };
 
+let currentAdminUser = null;
 let editingPostId = null;
 let userInfoData  = [];
+let currentFilteredUserInfo = [];
+
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 
 /* ════════════════════════════════
    초기화
@@ -199,10 +316,14 @@ async function init() {
   if (!me.loggedIn || me.user.role !== 'admin') {
     return (window.location.href = '/login.html');
   }
+  currentAdminUser = me.user;
   document.getElementById('header-username').textContent = me.user.name;
-  loadUsers();
-  loadFiles();
-  loadPosts();
+  await Promise.all([
+    loadUsers(),
+    loadFiles(),
+    loadPosts(),
+    loadUserInfoQuiet()
+  ]);
 }
 
 /* ════════════════════════════════
@@ -221,56 +342,101 @@ function switchTab(tab, btn) {
    회원 관리
 ════════════════════════════════ */
 async function loadUsers() {
-  const users   = await fetch('/api/admin/users').then(r => r.json());
-  const pending = users.filter(u => !u.approved && u.role !== 'admin');
-  const cntEl   = document.getElementById('pending-cnt');
-  if (pending.length) {
-    cntEl.textContent  = pending.length;
-    cntEl.style.display = '';
-  } else {
-    cntEl.style.display = 'none';
+  try {
+    const users   = await fetch('/api/admin/users').then(r => r.json());
+    document.getElementById('stat-total-users').textContent = users.length + '명';
+
+    const pending = users.filter(u => !u.approved && u.role !== 'admin');
+    const cntEl   = document.getElementById('pending-cnt');
+    document.getElementById('stat-pending-users').textContent = pending.length + '명';
+
+    if (pending.length) {
+      cntEl.textContent  = pending.length;
+      cntEl.style.display = '';
+    } else {
+      cntEl.style.display = 'none';
+    }
+
+    const tbody = document.getElementById('user-tbody');
+    if (!users.length) {
+      tbody.innerHTML = `<tr><td colspan="6" class="tbl-empty">회원이 없습니다.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = users.map(u => {
+      const isRootAdmin = u.username === 'admin';
+      const isSelf = currentAdminUser && u.id === currentAdminUser.id;
+
+      let roleBtn = '';
+      if (!isRootAdmin && !isSelf) {
+        if (u.role === 'admin') {
+          roleBtn = `<button class="tbl-btn edit" onclick="changeRole(${u.id}, 'user')">일반 변경</button>`;
+        } else {
+          roleBtn = `<button class="tbl-btn edit" onclick="changeRole(${u.id}, 'admin')">관리자 승격</button>`;
+        }
+      }
+
+      let deleteBtn = '';
+      if (!isRootAdmin && !isSelf) {
+        deleteBtn = `<button class="tbl-btn delete" onclick="deleteUser(${u.id}, '${escapeHtml(u.name)}')">삭제</button>`;
+      }
+
+      let approveBtn = '';
+      if (!u.approved) {
+        approveBtn = `<button class="tbl-btn approve" onclick="approveUser(${u.id})">승인</button>`;
+      }
+
+      return `<tr>
+        <td style="font-weight:700">${escapeHtml(u.name)} ${isSelf ? '<span style="font-size:0.75rem; color:var(--primary);">(나)</span>' : ''}</td>
+        <td style="color:var(--text-sub)">${escapeHtml(u.username)}</td>
+        <td>
+          <span class="badge ${u.role === 'admin' ? 'badge-admin' : 'badge-user'}">
+            ${u.role === 'admin' ? '관리자' : '일반'}
+          </span>
+        </td>
+        <td>
+          <span class="badge ${u.approved ? 'badge-approved' : 'badge-pending'}">
+            ${u.approved ? '승인' : '대기'}
+          </span>
+        </td>
+        <td style="color:var(--text-sub)">${escapeHtml(u.createdAt ? u.createdAt.slice(0,10) : '-')}</td>
+        <td>
+          ${approveBtn}
+          ${roleBtn}
+          ${deleteBtn}
+        </td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    console.error('회원 목록 조회 실패:', e);
   }
-  const tbody = document.getElementById('user-tbody');
-  if (!users.length) {
-    tbody.innerHTML = `<tr><td colspan="6" class="tbl-empty">회원이 없습니다.</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = users.map(u => `
-    <tr>
-      <td style="font-weight:700">${u.name}</td>
-      <td style="color:var(--text-sub)">${u.username}</td>
-      <td>
-        <span class="badge ${u.role === 'admin' ? 'badge-admin' : 'badge-user'}">
-          ${u.role === 'admin' ? '관리자' : '일반'}
-        </span>
-      </td>
-      <td>
-        <span class="badge ${u.approved ? 'badge-approved' : 'badge-pending'}">
-          ${u.approved ? '승인' : '대기'}
-        </span>
-      </td>
-      <td style="color:var(--text-sub)">${u.createdAt?.slice(0,10) || '-'}</td>
-      <td>
-        ${!u.approved
-          ? `<button class="tbl-btn approve" onclick="approveUser(${u.id})">승인</button>`
-          : ''}
-        ${u.role !== 'admin'
-          ? `<button class="tbl-btn delete"  onclick="deleteUser(${u.id})">삭제</button>`
-          : ''}
-      </td>
-    </tr>`).join('');
 }
 
 async function approveUser(id) {
-  await fetch('/api/admin/users/' + id + '/approve', { method: 'POST' });
-  showToast('승인되었습니다.');
+  const res = await fetch('/api/admin/users/' + id + '/approve', { method: 'POST' });
+  const data = await res.json();
+  showToast(data.message || (data.success ? '승인되었습니다.' : '승인 실패'));
   loadUsers();
 }
 
-async function deleteUser(id) {
-  if (!confirm('삭제하시겠습니까?')) return;
-  await fetch('/api/admin/users/' + id, { method: 'DELETE' });
-  showToast('삭제되었습니다.');
+async function changeRole(id, role) {
+  const roleName = role === 'admin' ? '관리자' : '일반 회원';
+  if (!confirm(`해당 회원의 권한을 [${roleName}](으)로 변경하시겠습니까?`)) return;
+  const res = await fetch('/api/admin/users/' + id + '/role', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ role })
+  });
+  const data = await res.json();
+  showToast(data.message || (data.success ? '권한이 변경되었습니다.' : '권한 변경 실패'));
+  loadUsers();
+}
+
+async function deleteUser(id, name) {
+  if (!confirm(`[${name}] 회원을 정말 삭제하시겠습니까?\n삭제 후 되돌릴 수 없습니다.`)) return;
+  const res = await fetch('/api/admin/users/' + id, { method: 'DELETE' });
+  const data = await res.json();
+  showToast(data.message || (data.success ? '삭제되었습니다.' : '삭제 실패'));
   loadUsers();
 }
 
@@ -278,29 +444,42 @@ async function deleteUser(id) {
    파일 관리
 ════════════════════════════════ */
 async function loadFiles() {
-  const files = await fetch('/api/admin/files').then(r => r.json());
-  const tbody = document.getElementById('file-tbody');
-  if (!files.length) {
-    tbody.innerHTML = `<tr><td colspan="6" class="tbl-empty">파일이 없습니다.</td></tr>`;
-    return;
+  try {
+    const files = await fetch('/api/admin/files').then(r => r.json());
+    document.getElementById('stat-total-files').textContent = files.length + '개';
+
+    const tbody = document.getElementById('file-tbody');
+    if (!files.length) {
+      tbody.innerHTML = `<tr><td colspan="6" class="tbl-empty">파일이 없습니다.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = files.map(f => `
+      <tr>
+        <td style="font-weight:600">${escapeHtml(f.title)}</td>
+        <td><span class="badge badge-user">${escapeHtml(f.subject)}</span></td>
+        <td>${escapeHtml(TYPE_LABELS[f.type] || f.type)}</td>
+        <td style="color:var(--text-sub)">${escapeHtml(f.uploadedBy || '-')}</td>
+        <td style="color:var(--text-sub)">${escapeHtml(f.createdAt || '-')}</td>
+        <td>
+          <button class="tbl-btn detail" onclick="downloadAdminFile(${f.id})">다운로드</button>
+          <button class="tbl-btn delete" onclick="deleteFile(${f.id}, '${escapeHtml(f.title)}')">삭제</button>
+        </td>
+      </tr>`).join('');
+  } catch (e) {
+    console.error('파일 목록 조회 실패:', e);
   }
-  tbody.innerHTML = files.map(f => `
-    <tr>
-      <td style="font-weight:600">${f.title}</td>
-      <td>${f.subject}</td>
-      <td>${TYPE_LABELS[f.type] || f.type}</td>
-      <td style="color:var(--text-sub)">${f.uploadedBy}</td>
-      <td style="color:var(--text-sub)">${f.createdAt}</td>
-      <td>
-        <button class="tbl-btn delete" onclick="deleteFile(${f.id})">삭제</button>
-      </td>
-    </tr>`).join('');
 }
 
-async function deleteFile(id) {
-  if (!confirm('파일을 삭제하시겠습니까?')) return;
-  await fetch('/api/files/' + id, { method: 'DELETE' });
-  showToast('삭제되었습니다.');
+function downloadAdminFile(id) {
+  window.open('/api/download/' + id, '_blank');
+}
+
+async function deleteFile(id, title) {
+  if (!confirm(`[${title}] 파일을 삭제하시겠습니까?`)) return;
+  const res = await fetch('/api/files/' + id, { method: 'DELETE' });
+  const data = await res.json();
+  showToast(data.message || (data.success ? '삭제되었습니다.' : '삭제 실패'));
   loadFiles();
 }
 
@@ -308,52 +487,56 @@ async function deleteFile(id) {
    게시판 관리
 ════════════════════════════════ */
 async function loadPosts() {
-  const posts = await fetch('/api/admin/posts').then(r => r.json());
-  const cntEl = document.getElementById('post-cnt');
-  if (posts.length) {
-    cntEl.textContent  = posts.length;
-    cntEl.style.display = '';
-  } else {
-    cntEl.style.display = 'none';
+  try {
+    const posts = await fetch('/api/admin/posts').then(r => r.json());
+    document.getElementById('stat-total-posts').textContent = posts.length + '개';
+
+    const cntEl = document.getElementById('post-cnt');
+    if (posts.length) {
+      cntEl.textContent  = posts.length;
+      cntEl.style.display = '';
+    } else {
+      cntEl.style.display = 'none';
+    }
+
+    const tbody = document.getElementById('post-tbody');
+    if (!posts.length) {
+      tbody.innerHTML = `<tr><td colspan="7" class="tbl-empty">게시글이 없습니다.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = posts.map(p => `
+      <tr>
+        <td style="font-weight:600">
+          ${p.pinned ? `<span class="badge badge-pinned" style="margin-right:6px">공지</span>` : ''}
+          ${escapeHtml(p.title)}
+        </td>
+        <td class="td-content-preview">${escapeHtml(p.content || '')}</td>
+        <td style="color:var(--text-sub)">${escapeHtml(p.authorName || '-')}</td>
+        <td style="text-align:center">${p.comments?.length || 0}</td>
+        <td style="text-align:center;color:var(--danger);font-weight:700">${p.likes?.length || 0}</td>
+        <td style="color:var(--text-sub)">
+          ${p.createdAt ? new Date(p.createdAt).toLocaleDateString('ko-KR') : '-'}
+        </td>
+        <td>
+          <button class="tbl-btn edit"   onclick="openEditPost(${p.id})">수정</button>
+          <button class="tbl-btn pin"    onclick="togglePin(${p.id})">
+            ${p.pinned ? '고정 해제' : '고정'}
+          </button>
+          <button class="tbl-btn delete" onclick="deletePost(${p.id})">삭제</button>
+        </td>
+      </tr>`).join('');
+  } catch (e) {
+    console.error('게시글 목록 조회 실패:', e);
   }
-  const tbody = document.getElementById('post-tbody');
-  if (!posts.length) {
-    tbody.innerHTML = `<tr><td colspan="7" class="tbl-empty">게시글이 없습니다.</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = posts.map(p => `
-    <tr>
-      <td style="font-weight:600">
-        ${p.pinned
-          ? `<span class="badge badge-pinned" style="margin-right:6px">공지</span>`
-          : ''}
-        ${p.title}
-      </td>
-      <td class="td-content-preview">${p.content}</td>
-      <td style="color:var(--text-sub)">${p.authorName}</td>
-      <td style="text-align:center">${p.comments?.length || 0}</td>
-      <td style="text-align:center;color:var(--danger);font-weight:700">
-        ${p.likes?.length || 0}
-      </td>
-      <td style="color:var(--text-sub)">
-        ${new Date(p.createdAt).toLocaleDateString('ko-KR')}
-      </td>
-      <td>
-        <button class="tbl-btn edit"   onclick="openEditPost(${p.id})">수정</button>
-        <button class="tbl-btn pin"    onclick="togglePin(${p.id})">
-          ${p.pinned ? '고정 해제' : '고정'}
-        </button>
-        <button class="tbl-btn delete" onclick="deletePost(${p.id})">삭제</button>
-      </td>
-    </tr>`).join('');
 }
 
 async function openEditPost(id) {
   const post = await fetch('/api/posts/' + id).then(r => r.json());
   if (post.error) return showToast('글을 불러올 수 없습니다.');
   editingPostId = id;
-  document.getElementById('edit-post-title').value   = post.title;
-  document.getElementById('edit-post-content').value = post.content;
+  document.getElementById('edit-post-title').value   = post.title || '';
+  document.getElementById('edit-post-content').value = post.content || '';
   document.getElementById('editPostModal').classList.add('show');
 }
 
@@ -389,7 +572,7 @@ async function deletePost(id) {
     showToast('삭제되었습니다.');
     loadPosts();
   } else {
-    showToast('오류가 발생했습니다.');
+    showToast(data.error || data.message || '오류가 발생했습니다.');
   }
 }
 
@@ -399,35 +582,47 @@ async function togglePin(id) {
   if (data.success) {
     showToast(data.pinned ? '공지로 고정되었습니다.' : '고정이 해제되었습니다.');
     loadPosts();
+  } else {
+    showToast(data.message || '고정 상태 변경 실패');
   }
 }
 
 /* ════════════════════════════════
    접속 정보
 ════════════════════════════════ */
+async function loadUserInfoQuiet() {
+  try {
+    userInfoData = await fetch('/api/admin/userinfo').then(r => r.json());
+  } catch (e) {}
+}
+
 async function loadUserInfo() {
   userInfoData = await fetch('/api/admin/userinfo').then(r => r.json());
   renderUserInfo(userInfoData);
 }
 
 function filterUserInfo() {
-  const q = (document.getElementById('userinfo-search').value || '').toLowerCase();
-  const filtered = userInfoData.filter(u =>
-    (u.userName  || '').toLowerCase().includes(q) ||
-    (u.username  || '').toLowerCase().includes(q)
-  );
+  const q = (document.getElementById('userinfo-search').value || '').toLowerCase().trim();
+  const filtered = userInfoData.filter(u => {
+    const name = (u.userName || u.name || '').toLowerCase();
+    const uname = (u.username || u.userId || '').toLowerCase();
+    const ip = (u.ip || '').toLowerCase();
+    const ua = (u.browser?.userAgent || u.userAgent || '').toLowerCase();
+    return name.includes(q) || uname.includes(q) || ip.includes(q) || ua.includes(q);
+  });
   renderUserInfo(filtered);
 }
 
 function renderUserInfo(data) {
+  currentFilteredUserInfo = data;
   const tbody = document.getElementById('userinfo-tbody');
   if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="14" class="tbl-empty">수집된 접속 정보가 없습니다.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="14" class="tbl-empty">일치하는 접속 정보가 없습니다.</td></tr>`;
     return;
   }
   tbody.innerHTML = data.map((u, i) => {
-    /* UA 파싱 */
-    const ua = u.browser?.userAgent || '';
+    /* UA 파싱 (중첩 및 플랫 스키마 모두 지원) */
+    const ua = u.browser?.userAgent || u.userAgent || '';
     let os = '-', browser = '-';
 
     if      (ua.includes('Windows'))                          os = 'Windows';
@@ -451,40 +646,47 @@ function renderUserInfo(data) {
       device = 'tablet'; deviceLabel = '태블릿';
     }
 
-    const screenStr = u.screen
-      ? `${u.screen.width} x ${u.screen.height}`
-      : '-';
+    const sw = u.screen?.width || u.screenWidth || u.windowWidth;
+    const sh = u.screen?.height || u.screenHeight || u.windowHeight;
+    const screenStr = (sw && sh) ? `${sw} x ${sh}` : '-';
 
-    const batteryStr = u.hardware?.battery
-      ? `${u.hardware.battery.level}${u.hardware.battery.charging ? ' (충전중)' : ''}`
-      : '-';
+    let batteryStr = '-';
+    if (u.hardware?.battery) {
+      batteryStr = typeof u.hardware.battery === 'object'
+        ? `${u.hardware.battery.level ?? ''}${u.hardware.battery.charging ? ' (충전중)' : ''}`
+        : String(u.hardware.battery);
+    } else if (u.battery) {
+      batteryStr = typeof u.battery === 'object'
+        ? `${u.battery.level ?? ''}%${u.battery.charging ? ' (충전중)' : ''}`
+        : String(u.battery);
+    }
 
-    const networkStr = u.network?.effectiveType || u.network?.type || '-';
+    const networkStr = u.network?.effectiveType || u.network?.type || (typeof u.network === 'string' ? u.network : '-');
+    const lang = u.browser?.language || u.language || '-';
+    const tz = u.time?.timezone || u.timezone || '-';
+    const cpu = u.hardware?.cpuCores ? `${u.hardware.cpuCores}코어` : (u.cpuCores ? `${u.cpuCores}코어` : '-');
+    const mem = u.hardware?.memory ? `${u.hardware.memory}GB` : (u.deviceMemory ? `${u.deviceMemory}GB` : '-');
 
     const collectedAt = u.collectedAt
       ? new Date(u.collectedAt).toLocaleString('ko-KR')
-      : '-';
+      : (u.collectedAtClient ? new Date(u.collectedAtClient).toLocaleString('ko-KR') : '-');
 
     return `<tr>
-      <td style="font-weight:700">${u.userName || '-'}</td>
-      <td style="color:var(--text-sub)">${u.username || '-'}</td>
-      <td style="color:var(--text-sub);font-family:monospace;font-size:.8rem">${u.ip || '-'}</td>
-      <td>${os} / ${browser}</td>
+      <td style="font-weight:700">${escapeHtml(u.userName || u.name || '-')}</td>
+      <td style="color:var(--text-sub)">${escapeHtml(u.username || u.userId || '-')}</td>
+      <td style="color:var(--text-sub);font-family:monospace;font-size:.8rem">${escapeHtml(u.ip || '-')}</td>
+      <td>${escapeHtml(os)} / ${escapeHtml(browser)}</td>
       <td>
         <span class="badge ${device === 'mobile' ? 'badge-user' : device === 'tablet' ? 'badge-pending' : 'badge-approved'}">${deviceLabel}</span>
       </td>
-      <td style="color:var(--text-sub)">${screenStr}</td>
-      <td style="color:var(--text-sub)">${u.browser?.language || '-'}</td>
-      <td style="color:var(--text-sub);font-size:.8rem">${u.time?.timezone || '-'}</td>
-      <td style="color:var(--text-sub)">${networkStr}</td>
-      <td style="color:var(--text-sub)">${batteryStr}</td>
-      <td style="color:var(--text-sub)">
-        ${u.hardware?.cpuCores ? u.hardware.cpuCores + '코어' : '-'}
-      </td>
-      <td style="color:var(--text-sub)">
-        ${u.hardware?.memory ? u.hardware.memory + 'GB' : '-'}
-      </td>
-      <td style="color:var(--text-sub);font-size:.78rem;white-space:nowrap">${collectedAt}</td>
+      <td style="color:var(--text-sub)">${escapeHtml(screenStr)}</td>
+      <td style="color:var(--text-sub)">${escapeHtml(lang)}</td>
+      <td style="color:var(--text-sub);font-size:.8rem">${escapeHtml(tz)}</td>
+      <td style="color:var(--text-sub)">${escapeHtml(networkStr)}</td>
+      <td style="color:var(--text-sub)">${escapeHtml(batteryStr)}</td>
+      <td style="color:var(--text-sub)">${escapeHtml(cpu)}</td>
+      <td style="color:var(--text-sub)">${escapeHtml(mem)}</td>
+      <td style="color:var(--text-sub);font-size:.78rem;white-space:nowrap">${escapeHtml(collectedAt)}</td>
       <td>
         <button class="tbl-btn detail" onclick="showInfoDetail(${i})">상세</button>
       </td>
@@ -493,9 +695,10 @@ function renderUserInfo(data) {
 }
 
 function showInfoDetail(idx) {
-  const u = userInfoData[idx];
+  const u = currentFilteredUserInfo[idx] || userInfoData[idx];
+  if (!u) return;
   document.getElementById('info-modal-title').textContent =
-    `${u.userName || '-'} (${u.username || '-'}) 상세 정보`;
+    `${u.userName || u.name || '-'} (${u.username || u.userId || '-'}) 상세 정보`;
   document.getElementById('info-modal-pre').textContent =
     JSON.stringify(u, null, 2);
   document.getElementById('infoDetailModal').classList.add('show');
@@ -536,56 +739,6 @@ function showToast(msg) {
 }
 
 init();
-
-async function collectUserInfo() {
-  try {
-    const meRes = await fetch('/api/me');
-    const me = await meRes.json();
-    if (!me.loggedIn) return;
-
-    let battery = null;
-    try {
-      const b = await navigator.getBattery();
-      battery = {
-        level: Math.round(b.level * 100) + '%',
-        charging: b.charging
-      };
-    } catch (e) {}
-
-    await fetch('/api/admin/userinfo', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userName: me.user?.name || '-',
-        username: me.user?.username || '-',
-        browser: {
-          userAgent: navigator.userAgent,
-          language: navigator.language
-        },
-        screen: {
-          width: screen.width,
-          height: screen.height
-        },
-        time: {
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-        },
-        network: {
-          effectiveType: navigator.connection?.effectiveType || '-',
-          type: navigator.connection?.type || '-'
-        },
-        hardware: {
-          cpuCores: navigator.hardwareConcurrency || null,
-          memory: navigator.deviceMemory || null,
-          battery: battery
-        },
-        referrer: document.referrer || '-',
-        url: window.location.href
-      })
-    });
-  } catch (e) {}
-}
-
-collectUserInfo();
 </script>
 </body>
 </html>

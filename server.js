@@ -1370,69 +1370,111 @@ app.post('/api/admin/users/:id/approve', requireAdmin, async (req, res) => {
     });
 
     if (!user) {
-      return res.json({
-        success: false
+      return res.status(404).json({
+        success: false,
+        message: '사용자를 찾을 수 없습니다.'
       });
     }
 
     user.approved = true;
-
     await user.save();
 
     res.json({
-      success: true
+      success: true,
+      message: '승인되었습니다.'
     });
   } catch (e) {
     console.error('사용자 승인 오류:', e.message);
-
-    res.json({
-      success: false
+    res.status(500).json({
+      success: false,
+      message: '사용자 승인 중 오류가 발생했습니다.'
     });
   }
 });
 
 app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
   try {
+    const targetUser = await User.findOne({
+      id: Number(req.params.id)
+    });
+
+    if (!targetUser) {
+      return res.status(404).json({
+        success: false,
+        message: '사용자를 찾을 수 없습니다.'
+      });
+    }
+
+    if (targetUser.username === 'admin') {
+      return res.status(400).json({
+        success: false,
+        message: '기본 관리자 계정은 삭제할 수 없습니다.'
+      });
+    }
+
+    if (targetUser.id === req.session.user.id) {
+      return res.status(400).json({
+        success: false,
+        message: '현재 로그인 중인 관리자 계정은 삭제할 수 없습니다.'
+      });
+    }
+
     await User.deleteOne({
       id: Number(req.params.id)
     });
 
     res.json({
-      success: true
+      success: true,
+      message: '회원이 삭제되었습니다.'
     });
   } catch (e) {
     console.error('사용자 삭제 오류:', e.message);
-
-    res.json({
-      success: false
+    res.status(500).json({
+      success: false,
+      message: '사용자 삭제 중 오류가 발생했습니다.'
     });
   }
 });
 
 app.post('/api/admin/users/:id/role', requireAdmin, async (req, res) => {
   try {
-    const user = await User.findOne({
+    const targetUser = await User.findOne({
       id: Number(req.params.id)
     });
 
-    if (!user) {
-      return res.json({
-        success: false
+    if (!targetUser) {
+      return res.status(404).json({
+        success: false,
+        message: '사용자를 찾을 수 없습니다.'
       });
     }
 
-    user.role = req.body.role;
+    const newRole = req.body.role === 'admin' ? 'admin' : 'user';
 
-    await user.save();
+    if (targetUser.username === 'admin' && newRole !== 'admin') {
+      return res.status(400).json({
+        success: false,
+        message: '기본 관리자 계정의 권한은 변경할 수 없습니다.'
+      });
+    }
+
+    targetUser.role = newRole;
+    if (newRole === 'admin') {
+      targetUser.approved = true;
+    }
+
+    await targetUser.save();
 
     res.json({
-      success: true
+      success: true,
+      role: targetUser.role,
+      message: `권한이 ${newRole === 'admin' ? '관리자' : '일반 회원'}(으)로 변경되었습니다.`
     });
   } catch (e) {
     console.error('권한 변경 오류:', e.message);
-
-    res.json({
-      success: false
+    res.status(500).json({
+      success: false,
+      message: '권한 변경 중 오류가 발생했습니다.'
     });
   }
 });

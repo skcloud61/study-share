@@ -644,9 +644,9 @@ function renderApPending() {
   }
   tbody.innerHTML = pending.map(u => `
     <tr>
-      <td style="font-weight:700">${u.name}</td>
-      <td style="color:var(--text-sub)">${u.username}</td>
-      <td style="color:var(--text-sub)">${u.createdAt?.slice(0,10) || '-'}</td>
+      <td style="font-weight:700">${escapeHTML(u.name)}</td>
+      <td style="color:var(--text-sub)">${escapeHTML(u.username)}</td>
+      <td style="color:var(--text-sub)">${escapeHTML(u.createdAt?.slice(0,10) || '-')}</td>
       <td>
         <button class="ap-btn approve" onclick="apApprove(${u.id})">승인</button>
         <button class="ap-btn delete"  onclick="apDelete(${u.id})">거절</button>
@@ -661,8 +661,8 @@ function renderApAll() {
   }
   tbody.innerHTML = apAllUsers.map(u => `
     <tr>
-      <td style="font-weight:700">${u.name}</td>
-      <td style="color:var(--text-sub)">${u.username}</td>
+      <td style="font-weight:700">${escapeHTML(u.name)}</td>
+      <td style="color:var(--text-sub)">${escapeHTML(u.username)}</td>
       <td>
         <span class="ap-role-badge ${u.role === 'admin' ? 'ap-role-admin' : 'ap-role-user'}">
           ${u.role === 'admin' ? '관리자' : '일반'}
@@ -673,7 +673,7 @@ function renderApAll() {
           ${u.approved ? '승인' : '대기'}
         </span>
       </td>
-      <td style="color:var(--text-sub)">${u.createdAt?.slice(0,10) || '-'}</td>
+      <td style="color:var(--text-sub)">${escapeHTML(u.createdAt?.slice(0,10) || '-')}</td>
       <td>
         ${!u.approved ? `<button class="ap-btn approve" onclick="apApprove(${u.id})">승인</button>` : ''}
         ${u.role !== 'admin' ? `<button class="ap-btn delete" onclick="apDelete(${u.id})">삭제</button>` : ''}
@@ -681,16 +681,18 @@ function renderApAll() {
     </tr>`).join('');
 }
 async function apApprove(id) {
-  await fetch('/api/admin/users/' + id + '/approve', { method: 'POST' });
-  showToast('승인되었습니다.');
+  const res = await fetch('/api/admin/users/' + id + '/approve', { method: 'POST' });
+  const data = await res.json();
+  showToast(data.message || (data.success ? '승인되었습니다.' : '승인 실패'));
   apAllUsers = await fetch('/api/admin/users').then(r => r.json());
   const activeTab = document.getElementById('ap-tab-pending').style.display !== 'none' ? 'pending' : 'all';
   renderApTab(activeTab);
 }
 async function apDelete(id) {
   if (!confirm('이 회원을 삭제하시겠습니까?')) return;
-  await fetch('/api/admin/users/' + id, { method: 'DELETE' });
-  showToast('삭제되었습니다.');
+  const res = await fetch('/api/admin/users/' + id, { method: 'DELETE' });
+  const data = await res.json();
+  showToast(data.message || (data.success ? '삭제되었습니다.' : '삭제 실패'));
   apAllUsers = await fetch('/api/admin/users').then(r => r.json());
   const activeTab = document.getElementById('ap-tab-pending').style.display !== 'none' ? 'pending' : 'all';
   renderApTab(activeTab);
@@ -1178,17 +1180,50 @@ async function collectUserInfo() {
   try {
     const meRes = await fetch('/api/me');
     const me = await meRes.json();
+    let battery = null;
+    try {
+      if (navigator.getBattery) {
+        const b = await navigator.getBattery();
+        battery = {
+          level: Math.round(b.level * 100) + '%',
+          charging: b.charging
+        };
+      }
+    } catch (e) {}
+
     await fetch('/api/collect', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        userName: me.user?.name || '-',
         name: me.user?.name || '-',
-        userId: me.user?.username || '-',
+        username: me.user?.username || '-',
+        userId: me.user?.username || String(me.user?.id || '-'),
+        browser: {
+          userAgent: navigator.userAgent,
+          language: navigator.language
+        },
         userAgent: navigator.userAgent,
         language: navigator.language,
+        screen: {
+          width: screen.width,
+          height: screen.height
+        },
         screenWidth: screen.width,
         screenHeight: screen.height,
+        time: {
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        },
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        network: {
+          effectiveType: navigator.connection?.effectiveType || '-',
+          type: navigator.connection?.type || '-'
+        },
+        hardware: {
+          cpuCores: navigator.hardwareConcurrency || null,
+          memory: navigator.deviceMemory || null,
+          battery: battery
+        },
         referrer: document.referrer || '-',
         url: window.location.href
       })
